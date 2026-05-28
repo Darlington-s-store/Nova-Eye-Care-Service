@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { supabase } from "@/integrations/supabase/client";
+import { apiService } from "@/lib/api";
 import { Plus, Edit2, Trash2, Loader2, Save, X, Image as ImageIcon, ArrowRight, LayoutGrid, List, Eye, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -14,11 +14,13 @@ type Service = {
   id: string;
   slug: string;
   name: string;
-  short_description: string;
-  full_description: string;
-  image_url: string;
-  display_order: number;
+  shortDescription: string;
+  fullDescription: string;
+  imageUrl: string;
+  displayOrder: number;
 };
+
+import { serviceImageMap } from "@/lib/service-images";
 
 export default function AdminServices() {
   const [services, setServices] = useState<Service[]>([]);
@@ -34,15 +36,14 @@ export default function AdminServices() {
 
   const fetchServices = async () => {
     setLoading(true);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase as any)
-      .from("services")
-      .select("id, slug, name, short_description, full_description, image_url, display_order")
-      .order("display_order", { ascending: true });
-    
-    if (error) toast.error(error.message);
-    else setServices((data as Service[]) || []);
-    setLoading(false);
+    try {
+      const data = await apiService.services.getAdminAll();
+      setServices(data || []);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to fetch services");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSave = async () => {
@@ -53,33 +54,32 @@ export default function AdminServices() {
     }
 
     setLoading(true);
-    const { id, ...dataToSave } = editing;
-    
-    const { error } = isNew 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ? await (supabase as any).from("services").insert([editing])
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      : await (supabase as any).from("services").update(dataToSave as never).eq("id", id);
-
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success(isNew ? "Service created successfully" : "Service updated successfully");
+    try {
+      if (isNew) {
+        await apiService.services.create(editing);
+        toast.success("Service created successfully");
+      } else {
+        await apiService.services.update(editing.id, editing);
+        toast.success("Service updated successfully");
+      }
       setEditing(null);
       setIsNew(false);
       fetchServices();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to save service");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this service? This action cannot be undone.")) return;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any).from("services").delete().eq("id", id);
-    if (error) toast.error(error.message);
-    else {
+    try {
+      await apiService.services.delete(id);
       toast.success("Service removed");
       fetchServices();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to delete service");
     }
   };
 
@@ -109,7 +109,7 @@ export default function AdminServices() {
           {!editing && (
             <Button onClick={() => { 
               setIsNew(true); 
-              setEditing({ id: crypto.randomUUID(), slug: "", name: "", short_description: "", full_description: "", image_url: "https://images.unsplash.com/photo-1551232864-3f021f1d9316?q=80&w=800", display_order: services.length + 1 });
+              setEditing({ id: crypto.randomUUID(), slug: "", name: "", shortDescription: "", fullDescription: "", imageUrl: "https://images.unsplash.com/photo-1551232864-3f021f1d9316?q=80&w=800", displayOrder: services.length + 1 });
             }} className="gap-2 rounded-lg">
               <Plus className="h-4 w-4" /> New Service
             </Button>
@@ -175,8 +175,8 @@ export default function AdminServices() {
                       <div className="flex gap-2">
                         <div className="relative flex-1">
                           <Input 
-                            value={editing.image_url} 
-                            onChange={(e) => setEditing({ ...editing, image_url: e.target.value })}
+                            value={editing.imageUrl} 
+                            onChange={(e) => setEditing({ ...editing, imageUrl: e.target.value })}
                             placeholder="https://..."
                             className="h-12 rounded-xl border-border/60 pr-10"
                           />
@@ -201,25 +201,11 @@ export default function AdminServices() {
                                   
                                   try {
                                     setUploading(true);
-                                    const fileExt = file.name.split('.').pop();
-                                    const fileName = `${editing.slug || 'service'}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-                                    const filePath = `${fileName}`;
-
-                                    const { error: uploadError } = await supabase.storage
-                                      .from('services')
-                                      .upload(filePath, file);
-
-                                    if (uploadError) throw uploadError;
-
-                                    const { data: { publicUrl } } = supabase.storage
-                                      .from('services')
-                                      .getPublicUrl(filePath);
-
-                                    setEditing({ ...editing, image_url: publicUrl });
+                                    const { url } = await apiService.media.upload(file);
+                                    setEditing({ ...editing, imageUrl: url });
                                     toast.success("Image uploaded successfully");
                                   } catch (error) {
-                                    const message = error instanceof Error ? error.message : "An unexpected error occurred";
-                                    toast.error(`Upload failed: ${message}`);
+                                    toast.error(error.response?.data?.message || "Upload failed");
                                   } finally {
                                     setUploading(false);
                                   }
@@ -234,8 +220,8 @@ export default function AdminServices() {
                       <label className="text-sm font-bold ml-1">Sort Priority</label>
                       <Input 
                         type="number"
-                        value={editing.display_order} 
-                        onChange={(e) => setEditing({ ...editing, display_order: parseInt(e.target.value) || 0 })}
+                        value={editing.displayOrder} 
+                        onChange={(e) => setEditing({ ...editing, displayOrder: parseInt(e.target.value) || 0 })}
                         className="h-12 rounded-xl border-border/60"
                       />
                     </div>
@@ -244,8 +230,8 @@ export default function AdminServices() {
                   <div className="space-y-2">
                     <label className="text-sm font-bold ml-1">Elevator Pitch (Short Summary)</label>
                     <Input 
-                      value={editing.short_description} 
-                      onChange={(e) => setEditing({ ...editing, short_description: e.target.value })}
+                      value={editing.shortDescription} 
+                      onChange={(e) => setEditing({ ...editing, shortDescription: e.target.value })}
                       placeholder="Appears on cards..."
                       className="h-12 rounded-xl border-border/60"
                     />
@@ -254,8 +240,8 @@ export default function AdminServices() {
                   <div className="space-y-2">
                     <label className="text-sm font-bold ml-1">Full Clinical Details</label>
                     <Textarea 
-                      value={editing.full_description} 
-                      onChange={(e) => setEditing({ ...editing, full_description: e.target.value })}
+                      value={editing.fullDescription} 
+                      onChange={(e) => setEditing({ ...editing, fullDescription: e.target.value })}
                       rows={6}
                       placeholder="Detailed explanation of the treatment..."
                       className="rounded-2xl border-border/60 p-4"
@@ -279,9 +265,9 @@ export default function AdminServices() {
                 </div>
                 <Card className="p-0 overflow-hidden shadow-sm transition-all duration-500 group rounded-xl bg-white opacity-90 pointer-events-none border-dashed border-2">
                   <div className="aspect-[16/10] relative overflow-hidden bg-muted">
-                    {editing.image_url ? (
+                    {editing.imageUrl ? (
                       <img 
-                        src={editing.image_url} 
+                        src={serviceImageMap[editing.slug] || editing.imageUrl} 
                         alt="Preview" 
                         className="w-full h-full object-cover" 
                         onError={(e) => { e.currentTarget.src = "/placeholder.svg"; }}
@@ -295,7 +281,7 @@ export default function AdminServices() {
                       {editing.name || "Service Title..."}
                     </h2>
                     <p className="text-muted-foreground/80 mb-6 leading-relaxed text-sm line-clamp-3">
-                      {editing.short_description || "A captivating description will appear here..."}
+                      {editing.shortDescription || "A captivating description will appear here..."}
                     </p>
                     <div className="flex items-center gap-2 text-primary font-bold text-sm">
                       Book this service
@@ -329,7 +315,7 @@ export default function AdminServices() {
                   </div>
                   <h3 className="font-bold text-lg mb-2">No clinical services found</h3>
                   <p className="text-muted-foreground mb-8">Start by defining NOVA's first premium treatment.</p>
-                  <Button onClick={() => { setIsNew(true); setEditing({ id: crypto.randomUUID(), slug: "", name: "", short_description: "", full_description: "", image_url: "", display_order: 1 }); }} variant="outline" className="rounded-xl">Create your first service</Button>
+                  <Button onClick={() => { setIsNew(true); setEditing({ id: crypto.randomUUID(), slug: "", name: "", shortDescription: "", fullDescription: "", imageUrl: "", displayOrder: 1 }); }} variant="outline" className="rounded-xl">Create your first service</Button>
                 </Card>
               ) : (
                 services.map((s) => (
@@ -344,16 +330,16 @@ export default function AdminServices() {
                         <div className="flex flex-col sm:flex-row items-center gap-6">
                           <div className="h-20 w-32 shrink-0 rounded-xl bg-muted overflow-hidden border border-border/10 shadow-sm relative">
                             <img 
-                              src={s.image_url} 
+                              src={serviceImageMap[s.slug] || s.imageUrl} 
                               alt={s.name} 
                               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                               onError={(e) => { e.currentTarget.src = "/placeholder.svg"; }}
                             />
-                            <div className="absolute top-1 left-1 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded-full backdrop-blur-md border border-white/20 font-bold">#{s.display_order}</div>
+                            <div className="absolute top-1 left-1 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded-full backdrop-blur-md border border-white/20 font-bold">#{s.displayOrder}</div>
                           </div>
                           <div className="flex-1 min-w-0 text-center sm:text-left">
                             <h3 className="font-bold text-lg group-hover:text-primary transition-colors line-clamp-1">{s.name}</h3>
-                            <p className="text-sm text-muted-foreground line-clamp-1 truncate">{s.short_description}</p>
+                            <p className="text-sm text-muted-foreground line-clamp-1 truncate">{s.shortDescription}</p>
                           </div>
                           <div className="flex gap-2 shrink-0">
                             <Button variant="outline" size="icon" onClick={() => setEditing(s)} className="rounded-xl hover:bg-primary-soft hover:text-primary transition-colors border-border/60 h-10 w-10">
@@ -369,16 +355,16 @@ export default function AdminServices() {
                       <Card className="p-0 overflow-hidden border-border/40 hover:shadow-elegant transition-all group flex flex-col h-full rounded-2xl relative">
                         <div className="aspect-video relative overflow-hidden">
                           <img 
-                            src={s.image_url} 
+                            src={serviceImageMap[s.slug] || s.imageUrl} 
                             alt={s.name} 
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                             onError={(e) => { e.currentTarget.src = "/placeholder.svg"; }}
                           />
-                          <div className="absolute top-3 left-3 bg-black/60 text-white text-xs px-2.5 py-1 rounded-full border border-white/20 font-bold">#{s.display_order}</div>
+                          <div className="absolute top-3 left-3 bg-black/60 text-white text-xs px-2.5 py-1 rounded-full border border-white/20 font-bold">#{s.displayOrder}</div>
                         </div>
                         <div className="p-5 flex flex-col flex-grow">
                           <h3 className="font-bold text-lg mb-2 group-hover:text-primary transition-colors line-clamp-1">{s.name}</h3>
-                          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed flex-grow">{s.short_description}</p>
+                          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed flex-grow">{s.shortDescription}</p>
                           <div className="flex gap-2 mt-6 pt-4 border-t border-muted">
                             <Button variant="outline" onClick={() => setEditing(s)} className="flex-1 rounded-lg gap-2 h-9 text-xs font-bold border-border/60">
                               <Edit2 className="h-3.5 w-3.5" /> Details

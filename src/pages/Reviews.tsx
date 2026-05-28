@@ -7,20 +7,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { PageHero } from "@/components/PageHero";
-import { supabase } from "@/integrations/supabase/client";
+import { apiService } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
-import { notifyAdmins } from "@/lib/notify";
 import { toast } from "sonner";
 import { Loader2, Star, Quote, MessageSquareQuote } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import heroAbout from "@/assets/hero-about.jpg";
+import heroAbout from "@/assets/nova.jpeg";
 
 type Review = {
   id: string;
-  author_name: string;
+  authorName: string;
   rating: number;
   content: string;
-  created_at: string;
+  createdAt: string;
 };
 
 const Stars = ({ value, onChange, readOnly }: { value: number; onChange?: (v: number) => void; readOnly?: boolean }) => (
@@ -60,27 +59,33 @@ const item = {
 const ReviewsPage = () => {
   const { user, session } = useAuth();
   const [approved, setApproved] = useState<Review[]>([]);
-  const [form, setForm] = useState({ author_name: "", rating: 5, content: "" });
+  const [form, setForm] = useState({ authorName: "", rating: 5, content: "" });
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    (async () => {
-      const { data } = await supabase
-        .from("reviews")
-        .select("id, author_name, rating, content, created_at")
-        .eq("approved", true)
-        .order("created_at", { ascending: false });
-      setApproved((data as Review[]) ?? []);
-      setLoading(false);
-    })();
+    fetchApproved();
   }, []);
+
+  const fetchApproved = async () => {
+    try {
+      const data = await apiService.reviews.getApproved();
+      setApproved(data || []);
+    } catch (err) {
+      toast.error("Failed to load reviews");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("full_name").eq("id", user.id).single()
-      .then(({ data }) => {
-        if (data?.full_name) setForm((f) => ({ ...f, author_name: data.full_name }));
+    apiService.profiles.getMe()
+      .then((data) => {
+        if (data?.fullName) setForm((f) => ({ ...f, authorName: data.fullName }));
+      })
+      .catch(() => {
+        // Fallback or ignore
       });
   }, [user]);
 
@@ -90,26 +95,23 @@ const ReviewsPage = () => {
       toast.error("Please sign in to leave a review");
       return;
     }
-    if (form.author_name.trim().length < 2) { toast.error("Please enter your name"); return; }
+    if (form.authorName.trim().length < 2) { toast.error("Please enter your name"); return; }
     if (form.content.trim().length < 10) { toast.error("Please write at least 10 characters"); return; }
+    
     setSubmitting(true);
-    const { error } = await supabase.from("reviews").insert({
-      user_id: user.id,
-      author_name: form.author_name.trim(),
-      rating: form.rating,
-      content: form.content.trim(),
-    });
-    if (!error) {
-      await notifyAdmins({
-        title: "New review pending",
-        body: `${form.author_name.trim()} left a ${form.rating}-star review.`,
-        link: "/admin/reviews",
+    try {
+      await apiService.reviews.create({
+        authorName: form.authorName.trim(),
+        rating: form.rating,
+        content: form.content.trim(),
       });
+      toast.success("Thank you! Your review will appear after approval.");
+      setForm({ authorName: form.authorName, rating: 5, content: "" });
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to submit review");
+    } finally {
+      setSubmitting(false);
     }
-    setSubmitting(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Thank you! Your review will appear after approval.");
-    setForm({ author_name: form.author_name, rating: 5, content: "" });
   };
 
   return (
@@ -164,8 +166,8 @@ const ReviewsPage = () => {
                     <Label htmlFor="name" className="text-sm font-bold">Your name</Label>
                     <Input 
                       id="name" 
-                      value={form.author_name}
-                      onChange={(e) => setForm({ ...form, author_name: e.target.value })}
+                      value={form.authorName}
+                      onChange={(e) => setForm({ ...form, authorName: e.target.value })}
                       className="h-12 rounded-xl border-border/60 px-4 focus-visible:ring-primary/20" 
                     />
                   </div>
@@ -232,11 +234,11 @@ const ReviewsPage = () => {
                     <p className="text-base text-foreground/80 mb-8 leading-relaxed italic font-medium">"{r.content}"</p>
                     <div className="flex items-center gap-4 mt-auto pt-6 border-t border-border/40">
                       <div className="h-10 w-10 rounded-full bg-primary-soft/50 flex items-center justify-center font-bold text-primary border border-primary/10">
-                        {r.author_name[0].toUpperCase()}
+                        {r.authorName[0].toUpperCase()}
                       </div>
                       <div>
-                        <p className="font-bold text-foreground leading-none mb-1">{r.author_name}</p>
-                        <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">{new Date(r.created_at).toLocaleDateString("en-GB", { month: "short", year: "numeric" })}</p>
+                        <p className="font-bold text-foreground leading-none mb-1">{r.authorName}</p>
+                        <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">{new Date(r.createdAt).toLocaleDateString("en-GB", { month: "short", year: "numeric" })}</p>
                       </div>
                     </div>
                   </Card>

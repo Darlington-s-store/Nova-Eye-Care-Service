@@ -1,37 +1,20 @@
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/Layout";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { SERVICES, CLINIC } from "@/lib/clinic";
+import { CLINIC } from "@/lib/clinic";
 import { getCMSContent, HeroContent, Announcements, getClinicContact, ClinicContact } from "@/lib/cms";
 import { ApprovedReviews } from "@/components/ApprovedReviews";
+import { Hero } from "@/components/Hero";
+import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import {
-  Eye, CircleDot, Glasses, Sparkles, Building2, Users, Car,
-  Clock, Award, HeartHandshake, Microscope, ArrowRight, CalendarCheck, Phone, MapPin
+  Eye, CircleDot, Glasses, Building2, Users, Car,
+  Clock, Award, HeartHandshake, Microscope, ArrowRight, Phone, MapPin,
+  Loader2
 } from "lucide-react";
-import heroHome from "@/assets/hero-home.jpg";
-import generalEye from "@/assets/general-eye.jpg";
-import contactLens from "@/assets/contact-lens-services.jpg";
-import binocularVision from "@/assets/binocular-vision-services.jpg";
-import lowVision from "@/assets/low-vision-rehabilitation.jpg";
-import corporateEye from "@/assets/corporate-eye-health-services.jpg";
-import publicEye from "@/assets/public-eye-health.jpg";
-import dvlaImage from "@/assets/dvla-eye-testing.jpg";
-
-const SERVICE_IMAGES: Record<string, string> = {
-  "general-eye-health": generalEye,
-  "contact-lens": contactLens,
-  "binocular-vision": binocularVision,
-  "low-vision": lowVision,
-  "corporate-eye-health": corporateEye,
-  "public-eye-health": publicEye,
-  "dvla": dvlaImage,
-};
-
-const ICONS = { Eye, CircleDot, Glasses, Sparkles, Building2, Users, Car };
+import { apiService, Service } from "@/lib/api";
+import { serviceImageMap } from "@/lib/service-images";
 
 const trustPoints = [
   { icon: Award, title: "Qualified Specialists", text: "Licensed optometrists with years of clinical experience." },
@@ -40,27 +23,15 @@ const trustPoints = [
   { icon: Clock, title: "Flexible Hours", text: "Weekday and Saturday appointments to fit your schedule." },
 ];
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.3,
-    },
-  },
-} as const;
-
-const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: { y: 0, opacity: 1, transition: { duration: 0.5, ease: "easeOut" } },
-} as const;
-
 const Home = () => {
   const [hero, setHero] = useState<HeroContent | null>(null);
   const [announcement, setAnnouncement] = useState<Announcements | null>(null);
   const [hours, setHours] = useState<Record<string, string> | null>(null);
   const [clinic, setClinic] = useState<ClinicContact | null>(null);
+  const [services, setServices] = useState<Service[]>([]);
+  const [loadingServices, setLoadingServices] = useState(true);
+
+
 
   useEffect(() => {
     const fetchContent = async () => {
@@ -72,6 +43,15 @@ const Home = () => {
       if (newsData) setAnnouncement(newsData);
       if (hoursData) setHours(hoursData);
       setClinic(clinicData);
+
+      try {
+        const servicesData = await apiService.services.getAll();
+        setServices(servicesData || []);
+      } catch (err) {
+        console.error("Failed to fetch services:", err);
+      } finally {
+        setLoadingServices(false);
+      }
     };
     fetchContent();
   }, []);
@@ -80,283 +60,175 @@ const Home = () => {
     <Layout>
       {/* Announcement Banner */}
       {announcement?.enabled && (
-        <div className="bg-primary text-white py-3 px-4 text-center text-sm font-bold animate-in slide-in-from-top duration-700 relative z-50 shadow-lg">
-          <p className="flex items-center justify-center gap-2">
-            <Sparkles className="h-4 w-4 animate-pulse" />
-            {announcement.message}
-          </p>
+        <div className="bg-primary text-white py-3 px-4 text-center text-sm font-bold border-b border-white/10">
+          <p>{announcement.message}</p>
         </div>
       )}
 
-      {/* Hero */}
-      <section className="relative overflow-hidden text-primary-foreground min-h-[85vh] flex items-center">
-        <motion.div
-          initial={{ scale: 1.1, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 1.5, ease: "easeOut" }}
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${heroHome})` }}
-          aria-hidden
-        />
-        <div className="absolute inset-0 bg-hero-gradient opacity-80" aria-hidden />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/25 to-transparent" aria-hidden />
-        <div className="absolute inset-0 opacity-15 [background-image:radial-gradient(circle_at_20%_20%,white_1px,transparent_1px)] [background-size:32px_32px]" />
-        <div className="container relative py-20 md:py-32">
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="max-w-4xl mx-auto text-center"
-          >
-            <motion.span variants={itemVariants} className="inline-block px-4 py-1.5 text-[10px] font-bold rounded-full bg-white/10 backdrop-blur-md mb-8 tracking-[0.3em] uppercase border border-white/20">
-              Transforming Vision · Nova Eye Care
-            </motion.span>
-            <motion.h1 variants={itemVariants} className="text-4xl sm:text-5xl md:text-8xl font-black leading-[1] mb-8 drop-shadow-xl text-balance">
-              {hero?.heading || CLINIC.name}
-            </motion.h1>
-            <motion.p variants={itemVariants} className="text-xl md:text-2xl font-medium mb-10 opacity-90 max-w-2xl mx-auto leading-relaxed">
-              {hero?.subheading || "Comprehensive eye care for every stage of life — from routine exams to specialty vision services and DVLA testing."}
-            </motion.p>
-            <motion.div variants={itemVariants} className="flex flex-wrap gap-5 justify-center">
-              <Button asChild size="lg" className="bg-white text-primary hover:bg-primary hover:text-white shadow-[0_20px_50px_rgba(0,0,0,0.3)] px-10 py-8 text-xl rounded-2xl transition-all duration-500 overflow-hidden relative group">
-                <Link to="/book" className="flex items-center font-bold">
-                  <CalendarCheck className="h-6 w-6 mr-3 group-hover:scale-110 transition-transform" /> 
-                  {hero?.cta1 || "Book Appointment"}
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="bg-white/5 backdrop-blur-xl border-white/30 text-white hover:bg-white/10 px-10 py-8 text-xl rounded-2xl font-bold transition-all duration-500">
-                <Link to="/services" className="flex items-center">
-                  {hero?.cta2 || "Our Services"} <ArrowRight className="h-5 w-5 ml-3" />
-                </Link>
-              </Button>
-            </motion.div>
-          </motion.div>
+      <Hero hero={hero} />
+
+      {/* Working hours bar */}
+      <section className="bg-slate-50 border-b border-slate-200 py-6">
+        <div className="container flex flex-wrap items-center justify-center gap-x-12 gap-y-4 text-xs font-bold uppercase tracking-wider text-slate-600">
+          <span className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-primary" />
+            Mon - Fri: {hours?.Monday || CLINIC.hours.weekdays} {hours?.Monday_to ? `- ${hours.Monday_to}` : ''}
+          </span>
+          <span className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-primary" />
+            Sat: {hours?.Saturday || CLINIC.hours.saturday} {hours?.Saturday_to ? `- ${hours.Saturday_to}` : ''}
+          </span>
+          <a href={`tel:${CLINIC.phones[0]}`} className="flex items-center gap-2 hover:text-primary transition-colors">
+            <Phone className="h-4 w-4 text-primary" />
+            Call: {CLINIC.phones[0]}
+          </a>
         </div>
       </section>
 
-      {/* Working hours bar */}
-      <section className="bg-primary-soft border-y border-primary/10 overflow-hidden relative group">
-        <div className="absolute inset-0 bg-primary/5 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out opacity-20" />
-        <motion.div 
-          initial={{ y: 20, opacity: 0 }}
-          whileInView={{ y: 0, opacity: 1 }}
-          viewport={{ once: true }}
-          className="container py-5 flex flex-wrap items-center justify-center gap-x-12 gap-y-4 text-xs text-primary font-black uppercase tracking-widest"
-        >
-          <span className="flex items-center gap-2.5">
-            <Clock className="h-4 w-4 opacity-40" /> 
-            Mon - Fri: {hours?.Monday || CLINIC.hours.weekdays} {hours?.Monday_to ? `- ${hours.Monday_to}` : ''}
-          </span>
-          <span className="hidden md:inline opacity-10 text-xl font-thin">|</span>
-          <span className="flex items-center gap-2.5">
-            <Clock className="h-4 w-4 opacity-40" /> 
-            Sat: {hours?.Saturday || CLINIC.hours.saturday} {hours?.Saturday_to ? `- ${hours.Saturday_to}` : ''}
-          </span>
-          <span className="hidden md:inline opacity-10 text-xl font-thin">|</span>
-          <a href={`tel:${CLINIC.phones[0]}`} className="flex items-center gap-2.5 group/phone hover:text-primary-dark transition-colors">
-            <Phone className="h-4 w-4 opacity-40 group-hover/phone:rotate-12 transition-transform" /> 
-            Emergency: {CLINIC.phones[0]}
-          </a>
-        </motion.div>
+      {/* Services overview */}
+      <section className="relative py-20 md:py-28 overflow-hidden bg-white text-slate-900 border-b border-slate-100">
+        <div className="container relative z-10">
+          <div className="text-center mb-16 max-w-2xl mx-auto">
+            <Badge className="mb-4 bg-primary/20 text-primary border border-primary/30 px-4 py-1.5 uppercase tracking-widest text-[10px] md:text-xs font-extrabold shadow-sm">
+              Nova Care Options
+            </Badge>
+            <h2 className="text-3xl md:text-5xl font-bold mb-4 tracking-tight">Our Services</h2>
+            <p className="text-slate-600 text-base md:text-lg">
+              Professional eye care using modern diagnostic technology.
+            </p>
+          </div>
+          {loadingServices ? (
+            <div className="py-20 flex flex-col items-center justify-center gap-4 text-slate-500">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-sm font-medium animate-pulse">Loading clinical services...</p>
+            </div>
+          ) : services.length === 0 ? (
+            <div className="py-20 text-center text-slate-500">
+              <p>No services registered currently.</p>
+            </div>
+          ) : (
+            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {services.map((s) => {
+                const sImage = serviceImageMap[s.slug] || s.imageUrl;
+                return (
+                  <Link key={s.slug} to="/services" className="group">
+                    <Card className="h-full bg-slate-50/50 hover:bg-white border border-slate-200/80 rounded-xl overflow-hidden hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300">
+                      <div className="h-48 overflow-hidden relative">
+                        <img
+                          src={sImage}
+                          alt={s.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          onError={(e) => { e.currentTarget.src = "/placeholder.svg"; }}
+                        />
+                        <div className="absolute inset-0 bg-slate-950/5 group-hover:bg-slate-950/0 transition-colors duration-300" />
+                      </div>
+                      <div className="p-6">
+                        <h3 className="font-bold text-xl mb-2 text-slate-900 group-hover:text-primary transition-colors">{s.name}</h3>
+                        <p className="text-sm text-slate-600 mb-4 leading-relaxed line-clamp-3">{s.shortDescription}</p>
+                        <span className="text-sm text-primary font-bold inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                          Details <ArrowRight className="h-4 w-4" />
+                        </span>
+                      </div>
+                    </Card>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </section>
 
-    {/* Services overview */}
-    <section className="container py-20 md:py-28">
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6 }}
-        className="text-center mb-16 max-w-2xl mx-auto"
-      >
-        <h2 className="text-3xl md:text-5xl font-bold mb-4 tracking-tight">Our Services</h2>
-        <p className="text-muted-foreground text-lg">
-          Complete optometry care delivered by qualified professionals using modern equipment.
-        </p>
-      </motion.div>
-      <motion.div 
-        variants={containerVariants}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-100px" }}
-        className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
-      >
-        {SERVICES.map((s) => {
-          const sImage = SERVICE_IMAGES[s.slug] || s.image;
-          return (
-            <motion.div key={s.slug} variants={itemVariants}>
-              <Link to="/services" className="group block h-full">
-                <Card className="h-full hover:shadow-elegant transition-all duration-500 border-border/60 group-hover:border-primary/20 relative overflow-hidden flex flex-col rounded-3xl">
-                  <div className="h-48 overflow-hidden relative">
-                    <img 
-                      src={sImage} 
-                      alt={s.name} 
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                      onError={(e) => { e.currentTarget.src = "/placeholder.svg"; }}
-                    />
-                    <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-300" />
-                  </div>
-                  <div className="p-8 flex-1 flex flex-col">
-                    <h3 className="font-bold text-xl mb-3 group-hover:text-primary transition-colors line-clamp-1">{s.name}</h3>
-                    <p className="text-sm text-muted-foreground mb-6 leading-relaxed flex-1 line-clamp-2">{s.short}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="inline-flex items-center gap-2 text-sm text-primary font-bold">
-                        Learn more <ArrowRight className="h-4 w-4 group-hover:translate-x-2 transition-transform duration-300" />
-                      </span>
-                    </div>
-                  </div>
-                </Card>
-              </Link>
-            </motion.div>
-          );
-        })}
-      </motion.div>
-    </section>
-
-    {/* Why choose us */}
-    <section className="bg-soft-gradient relative py-20 md:py-28 overflow-hidden">
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, black 1px, transparent 0)', backgroundSize: '40px 40px' }} />
-      <div className="container relative">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          className="text-center mb-16 max-w-2xl mx-auto"
-        >
-          <h2 className="text-3xl md:text-5xl font-bold mb-4 tracking-tight">Why Choose Us</h2>
-          <p className="text-muted-foreground text-lg">
-            Trusted by patients across Ghana for compassionate, expert eye care.
-          </p>
-        </motion.div>
-        <motion.div 
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
-        >
-          {trustPoints.map((t) => (
-            <motion.div key={t.title} variants={itemVariants}>
-              <div className="text-center p-8 rounded-3xl bg-card shadow-card hover:shadow-elegant transition-all duration-500 group">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-hero-gradient text-primary-foreground mb-6 transform group-hover:rotate-6 transition-transform shadow-lg">
-                  <t.icon className="h-8 w-8" />
+      {/* Why choose us */}
+      <section className="bg-slate-50 py-20 md:py-28">
+        <div className="container">
+          <div className="text-center mb-16 max-w-2xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Why Choose Us</h2>
+            <p className="text-muted-foreground text-lg">
+              Trusted by patients for compassionate and expert eye care.
+            </p>
+          </div>
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            {trustPoints.map((t) => (
+              <Card key={t.title} className="p-6 text-center border border-slate-200 rounded-xl shadow-none bg-white">
+                <div className="mx-auto h-14 w-14 flex items-center justify-center rounded-full bg-primary/10 text-primary mb-6">
+                  <t.icon className="h-7 w-7" />
                 </div>
                 <h3 className="font-bold text-lg mb-2">{t.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{t.text}</p>
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
-      </div>
-    </section>
-
-    {/* Reviews */}
-    <motion.div
-      initial={{ opacity: 0 }}
-      whileInView={{ opacity: 1 }}
-      viewport={{ once: true }}
-    >
-      <ApprovedReviews />
-    </motion.div>
-
-    {/* Location Section */}
-    <section className="container py-20 md:py-28 overflow-hidden">
-      <div className="grid lg:grid-cols-2 gap-12 items-center">
-        <motion.div
-          initial={{ opacity: 0, x: -40 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-          className="space-y-8"
-        >
-          <div>
-            <span className="text-primary font-bold text-sm tracking-widest uppercase mb-4 block">Visit Us</span>
-            <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-6 leading-tight">We are located at the heart of Abuakwa</h2>
-            <p className="text-muted-foreground text-lg leading-relaxed max-w-lg">
-              Our modern facility is conveniently situated opposite Kasapreko Company Limited. We offer a comfortable environment with the latest diagnostic technology.
-            </p>
+              </Card>
+            ))}
           </div>
+        </div>
+      </section>
 
-          <div className="space-y-6">
-            <div className="flex gap-4 items-start group">
-              <div className="h-12 w-12 rounded-2xl bg-primary-soft flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all shadow-sm shrink-0">
-                <MapPin className="h-6 w-6" />
-              </div>
-              <div>
-                <h4 className="font-bold text-lg mb-1">Clinic Address</h4>
-                <p className="text-muted-foreground">{clinic?.address || CLINIC.address}</p>
-              </div>
-            </div>
+      {/* Reviews */}
+      <ApprovedReviews />
 
-            <div className="flex gap-4 items-start group">
-              <div className="h-12 w-12 rounded-2xl bg-primary-soft flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all shadow-sm shrink-0">
-                <Clock className="h-6 w-6" />
+      {/* Location Section */}
+      <section className="container py-20 md:py-28">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div>
+            <span className="text-primary font-bold text-sm uppercase tracking-wider mb-4 block">Visit Us</span>
+            <h2 className="text-3xl md:text-4xl font-bold mb-6">Located inside Kan Royal Filling Station, Abuakwa</h2>
+            <p className="text-muted-foreground text-lg mb-8 leading-relaxed">
+              Our modern facility is conveniently situated on GE20 Dolores St (GPS address: AH-1192-7988).
+            </p>
+
+            <div className="space-y-6">
+              <div className="flex gap-4">
+                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                  <MapPin className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="font-bold">Clinic Address</h4>
+                  <p className="text-muted-foreground text-sm">{clinic?.address || CLINIC.address}</p>
+                </div>
               </div>
-              <div>
-                <h4 className="font-bold text-lg mb-1">Working Hours</h4>
-                <div className="text-sm text-muted-foreground space-y-1">
-                  <p>Mon - Fri: {hours?.Monday || "8:00 am"} - {hours?.Monday_to || "5:00 pm"}</p>
-                  <p>Sat: {hours?.Saturday || "9:00 am"} - {hours?.Saturday_to || "2:00 pm"}</p>
+
+              <div className="flex gap-4">
+                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                  <Clock className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="font-bold">Working Hours</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Mon-Fri: {hours?.Monday || "8am"} - {hours?.Monday_to || "5pm"}<br />
+                    Sat: {hours?.Saturday || "9am"} - {hours?.Saturday_to || "2pm"}
+                  </p>
                 </div>
               </div>
             </div>
+
+            <Button asChild variant="outline" size="lg" className="mt-10 rounded-lg font-bold">
+              <Link to="/contact">Get Directions</Link>
+            </Button>
           </div>
 
-          <Button asChild variant="outline" size="lg" className="rounded-2xl px-8 h-14 font-bold border-2 hover:bg-primary/5">
-            <Link to="/contact">Get Directions <ArrowRight className="h-5 w-5 ml-2" /></Link>
-          </Button>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, x: 40 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-          className="relative group h-[450px] lg:h-[600px]"
-        >
-          <div className="absolute inset-0 bg-primary/20 rounded-[2.5rem] rotate-3 scale-105 group-hover:rotate-1 group-hover:scale-100 transition-transform duration-700 -z-10" />
-          <Card className="h-full w-full overflow-hidden border-border/40 rounded-[2.5rem] shadow-elegant relative z-10">
+          <div className="h-[400px] rounded-xl overflow-hidden border border-slate-200 shadow-sm">
             <iframe
-              title="NOVA Eye Care Location"
-              src={`https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3962.48422471!2d-1.72472!3d6.69472!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNsKwNDEnNDEuMCJOIDHCsDQzJzI5LjAiVw!5e0!3m2!1sen!2sgh!4v1700000000000&q=${encodeURIComponent(clinic?.mapQuery || "Kasapreko PLC Abuakwa Factory")}`}
+              title="Location"
+              src={`https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3962.48422471!2d-1.72472!3d6.69472!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNsKwNDEnNDEuMCJOIDHCsDQzJzI5LjAiVw!5e0!3m2!1sen!2sgh!4v1700000000000&q=${encodeURIComponent(clinic?.mapQuery || "Kan Royal Filling Station Abuakwa")}`}
               width="100%"
               height="100%"
-              style={{ border: 0, filter: "contrast(1.1) brightness(0.95)" }}
+              style={{ border: 0 }}
               loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
             />
-            <div className="absolute top-6 left-6 right-6 flex justify-between items-start pointer-events-none">
-              <Badge className="bg-white/90 backdrop-blur text-primary border-white/20 shadow-lg px-4 py-2 rounded-xl text-xs font-bold pointer-events-auto">
-                Open Now
-              </Badge>
-              <Button size="icon" className="bg-white/90 backdrop-blur text-primary border-white/20 shadow-lg h-12 w-12 rounded-2xl pointer-events-auto hover:bg-white" onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clinic?.mapQuery || clinic?.address || CLINIC.address)}`, '_blank')}>
-                <MapPin className="h-6 w-6" />
-              </Button>
-            </div>
-          </Card>
-        </motion.div>
-      </div>
-    </section>
+          </div>
+        </div>
+      </section>
 
-    {/* CTA */}
-    <section className="container py-20 md:py-28">
-      <motion.div 
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-        className="bg-hero-gradient rounded-[2.5rem] p-10 md:p-20 text-center text-primary-foreground shadow-elegant relative overflow-hidden"
-      >
-        <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '30px 30px' }} />
-        <div className="relative z-10">
-          <h2 className="text-3xl md:text-6xl font-bold mb-6 tracking-tight">Ready to see clearly?</h2>
-          <p className="text-lg md:text-xl opacity-90 mb-10 max-w-xl mx-auto font-light leading-relaxed">
+      {/* CTA */}
+      <section className="container py-20">
+        <div className="bg-primary rounded-2xl p-10 md:p-20 text-center text-white shadow-lg">
+          <h2 className="text-3xl md:text-5xl font-bold mb-6">Ready to see clearly?</h2>
+          <p className="text-lg opacity-90 mb-10 max-w-xl mx-auto">
             Book your appointment today and experience the NOVA difference with our expert care.
           </p>
-          <Button asChild size="lg" className="bg-white text-primary hover:bg-white/90 px-10 py-8 text-xl rounded-2xl shadow-glow">
-            <Link to="/book"><CalendarCheck className="h-6 w-6 mr-2" /> Book an Appointment</Link>
+          <Button asChild size="lg" variant="secondary" className="rounded-lg px-10 h-16 font-bold text-lg">
+            <Link to="/book">Book an Appointment</Link>
           </Button>
         </div>
-      </motion.div>
-    </section>
+      </section>
     </Layout>
   );
 };

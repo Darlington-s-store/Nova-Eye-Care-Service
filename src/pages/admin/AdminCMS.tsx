@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { supabase } from "@/integrations/supabase/client";
+import { apiService } from "@/lib/api";
 import { toast } from "sonner";
 import { 
   Save, 
@@ -15,23 +15,78 @@ import {
   Clock, 
   Phone, 
   Megaphone, 
-  Eye, 
   Plus, 
   Trash2,
   Image as ImageIcon
 } from "lucide-react";
 
+interface HeroContent {
+  heading: string;
+  subheading: string;
+  backgroundImage: string;
+  cta1: string;
+  cta2: string;
+}
+
+interface TeamMember {
+  name: string;
+  title: string;
+  bio: string;
+  photo: string;
+}
+
+interface TeamContent {
+  members: TeamMember[];
+}
+
+interface ClinicContent {
+  name: string;
+  tagline: string;
+  email: string;
+  phone1: string;
+  phone2: string;
+  address: string;
+  mapQuery: string;
+}
+
+interface AnnouncementsContent {
+  enabled: boolean;
+  message: string;
+}
+
+interface CMSDataMap {
+  hero: HeroContent;
+  team: TeamContent;
+  clinic: ClinicContent;
+  announcements: AnnouncementsContent;
+  hours: Record<string, string>;
+}
+
+const DEFAULT_CMS: CMSDataMap = {
+  hero: { heading: "", subheading: "", backgroundImage: "", cta1: "", cta2: "" },
+  team: { members: [] },
+  clinic: {
+    name: "NOVA Eye Care Services",
+    tagline: "See Better! Live Brighter!",
+    email: "info@novaeyecareservice.com",
+    phone1: "+233544172089",
+    phone2: "+233246613184",
+    address: "GE20 Dolores St, AH-1192-8485, Kan Royal Filling Station, Abuakwa. GPS address: AH-1192-7988",
+    mapQuery: "Kan Royal Filling Station Abuakwa"
+  },
+  announcements: { enabled: false, message: "" },
+  hours: {}
+};
+
 type CMSSection = {
-  section_key: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  content_json: any;
+  sectionKey: string;
+  contentJson: Record<string, unknown>;
 };
 
 export default function AdminCMS() {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [sections, setSections] = useState<Record<string, any>>({});
+  const [sections, setSections] = useState<CMSDataMap>(DEFAULT_CMS);
 
   useEffect(() => {
     fetchCMS();
@@ -39,58 +94,44 @@ export default function AdminCMS() {
 
   const fetchCMS = async () => {
     setFetching(true);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase as any)
-      .from("cms_content")
-      .select("*");
-    
-    if (error) {
-      toast.error(error.message);
-    } else if (data) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const cmsData: Record<string, any> = {};
-      data.forEach((s: CMSSection) => {
-        cmsData[s.section_key] = s.content_json;
-      });
-      
-      // Seed defaults if missing for clinic
-      if (!cmsData.clinic) {
-        cmsData.clinic = {
-          name: "NOVA Eye Care Services",
-          email: "info@novaeyecareservice.com",
-          phone1: "0544172089",
-          phone2: "0246613184",
-          address: "Abuakwa - NsoNyamey3, Opposite Kasapreko Company Limited, Ashanti Region, Ghana",
-          mapQuery: "Kasapreko PLC Abuakwa Factory",
-          tagline: "See Better | Live Brighter"
-        };
+    try {
+      const data = await apiService.cms.getAll();
+      if (data) {
+        const cmsData = { ...DEFAULT_CMS };
+        data.forEach((s: CMSSection) => {
+          const key = s.sectionKey as keyof CMSDataMap;
+          if (key in cmsData) {
+            (cmsData as Record<string, unknown>)[key] = s.contentJson;
+          }
+        });
+        setSections(cmsData);
       }
-      
-      setSections(cmsData);
+    } catch (err) {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error.response?.data?.message || "Failed to load CMS content");
+    } finally {
+      setFetching(false);
     }
-    setFetching(false);
   };
 
   const handleSave = async (key: string) => {
-    setLoading(true);
-    const content = sections[key];
-    
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any)
-      .from("cms_content")
-      .upsert({ 
-        section_key: key, 
-        content_json: content,
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'section_key' });
+    const sectionKey = key as keyof CMSDataMap;
+    const content = sections[sectionKey];
+    if (!content) return;
 
-    if (error) toast.error(error.message);
-    else toast.success(`${key.toUpperCase()} section updated successfully`);
-    setLoading(false);
+    setLoading(true);
+    try {
+      await apiService.cms.updateSection(key, content as Record<string, unknown>);
+      toast.success(`${key.toUpperCase()} section updated successfully`);
+    } catch (err) {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error.response?.data?.message || "Failed to save changes");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const updateSection = (key: string, data: any) => {
+  const updateSection = <K extends keyof CMSDataMap>(key: K, data: CMSDataMap[K]) => {
     setSections(prev => ({ ...prev, [key]: data }));
   };
 
@@ -157,6 +198,42 @@ export default function AdminCMS() {
                   placeholder="We combine expert care with precision technology..."
                 />
               </div>
+              <div className="space-y-2">
+                <label className="text-sm font-bold ml-1">Hero Background Image URL(s)</label>
+                <div className="flex gap-4">
+                  <Input 
+                    value={sections.hero?.backgroundImage || ""} 
+                    onChange={(e) => updateSection("hero", { ...sections.hero, backgroundImage: e.target.value })}
+                    placeholder="e.g. https://images.unsplash.com/photo-1, https://images.unsplash.com/photo-2"
+                  />
+                </div>
+                <p className="text-[10px] font-bold text-slate-400 uppercase ml-1">
+                  Leave empty to use default high-resolution 4K slideshow. Separate multiple URLs with commas to create a custom slideshow.
+                </p>
+                {sections.hero?.backgroundImage && (
+                  <div className="flex flex-wrap gap-3 mt-3">
+                    {sections.hero.backgroundImage.split(",")
+                      .map(url => url.trim())
+                      .filter(Boolean)
+                      .map((url, idx) => (
+                        <div key={idx} className="relative w-24 h-16 rounded-lg overflow-hidden border bg-muted shadow-sm group">
+                          <img 
+                            src={url} 
+                            alt={`Preview ${idx + 1}`} 
+                            className="w-full h-full object-cover" 
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=100&q=50";
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                            <span className="text-[9px] text-white font-bold px-1 text-center truncate w-full">Slide {idx + 1}</span>
+                          </div>
+                        </div>
+                      ))
+                    }
+                  </div>
+                )}
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-bold ml-1">CTA Label 1 (Primary)</label>
@@ -196,16 +273,14 @@ export default function AdminCMS() {
             </div>
             
             <div className="grid gap-6">
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              {(sections.team?.members || []).map((m: any, idx: number) => (
+              {(sections.team?.members as TeamMember[] || []).map((m: TeamMember, idx: number) => (
                 <div key={idx} className="p-6 bg-muted/30 rounded-xl border relative group">
                   <Button 
                     variant="ghost" 
                     size="icon" 
                     className="absolute -top-2 -right-2 bg-background border text-destructive hover:bg-destructive hover:text-white rounded-full opacity-0 group-hover:opacity-100 transition-all h-8 w-8"
                     onClick={() => {
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      const newMembers = sections.team.members.filter((_: any, i: number) => i !== idx);
+                      const newMembers = (sections.team.members as TeamMember[]).filter((_: TeamMember, i: number) => i !== idx);
                       updateSection("team", { ...sections.team, members: newMembers });
                     }}
                   >
@@ -221,7 +296,7 @@ export default function AdminCMS() {
                         value={m.photo} 
                         className="text-xs"
                         onChange={(e) => {
-                          const newMembers = [...sections.team.members];
+                          const newMembers = [...(sections.team.members as TeamMember[])];
                           newMembers[idx].photo = e.target.value;
                           updateSection("team", { ...sections.team, members: newMembers });
                         }}
@@ -233,7 +308,7 @@ export default function AdminCMS() {
                           placeholder="Full Name" 
                           value={m.name} 
                           onChange={(e) => {
-                            const newMembers = [...sections.team.members];
+                            const newMembers = [...(sections.team.members as TeamMember[])];
                             newMembers[idx].name = e.target.value;
                             updateSection("team", { ...sections.team, members: newMembers });
                           }}
@@ -242,7 +317,7 @@ export default function AdminCMS() {
                           placeholder="Title / Specialist" 
                           value={m.title} 
                           onChange={(e) => {
-                            const newMembers = [...sections.team.members];
+                            const newMembers = [...(sections.team.members as TeamMember[])];
                             newMembers[idx].title = e.target.value;
                             updateSection("team", { ...sections.team, members: newMembers });
                           }}
@@ -253,7 +328,7 @@ export default function AdminCMS() {
                         rows={3} 
                         value={m.bio} 
                         onChange={(e) => {
-                          const newMembers = [...sections.team.members];
+                          const newMembers = [...(sections.team.members as TeamMember[])];
                           newMembers[idx].bio = e.target.value;
                           updateSection("team", { ...sections.team, members: newMembers });
                         }}

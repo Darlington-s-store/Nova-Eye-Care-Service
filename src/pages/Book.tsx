@@ -8,14 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SERVICES, TIME_SLOTS_WEEKDAY, TIME_SLOTS_SATURDAY, CLINIC } from "@/lib/clinic";
-import { supabase } from "@/integrations/supabase/client";
-import { notifyAdmins, notifyUser } from "@/lib/notify";
-import { automation } from "@/lib/automation";
+import { apiService } from "@/lib/api";
 import { CheckCircle2, CalendarCheck, Loader2, Clock, Phone, Mail, Sparkles, ShieldCheck, ArrowRight, ArrowLeft } from "lucide-react";
 import { z } from "zod";
 import { PageHero } from "@/components/PageHero";
-import { motion, AnimatePresence } from "framer-motion";
-import heroBook from "@/assets/hero-book.jpg";
+import heroBook from "@/assets/ioi.jpeg";
 
 const schema = z.object({
   full_name: z.string().trim().min(2, "Please enter your full name").max(100),
@@ -29,11 +26,7 @@ const schema = z.object({
 
 const STEPS = ["Service", "Schedule", "Your details"] as const;
 
-const stepVariants = {
-  initial: { opacity: 0, x: 20 },
-  animate: { opacity: 1, x: 0 },
-  exit: { opacity: 0, x: -20 },
-} as const;
+
 
 const Book = () => {
   const [searchParams] = useSearchParams();
@@ -61,21 +54,20 @@ const Book = () => {
 
   useEffect(() => {
     const fetchServices = async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase as any)
-        .from("services")
-        .select("name, slug, short_description")
-        .order("display_order", { ascending: true });
-      
-      if (data) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setServices((data as any[]).map(s => ({ 
-          name: s.name, 
-          slug: s.slug, 
-          short: s.short_description 
-        })));
+      try {
+        const data = await apiService.services.getAll();
+        if (data) {
+          setServices(data.map((s) => ({ 
+            name: s.name, 
+            slug: s.slug, 
+            short: s.shortDescription 
+          })));
+        }
+      } catch (err) {
+        console.error("Failed to fetch services:", err);
+      } finally {
+        setLoadingServices(false);
       }
-      setLoadingServices(false);
     };
     fetchServices();
   }, []);
@@ -88,24 +80,23 @@ const Book = () => {
   }, [loadingServices, presetSlug, services, update]);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) {
-        setUserId(data.user.id);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (supabase as any).from("profiles").select("full_name, phone, email").eq("id", data.user.id).single()
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .then(({ data: p }: { data: any }) => {
-            if (p) {
-              setForm((f) => ({
-                ...f,
-                full_name: f.full_name || p.full_name || "",
-                phone: f.phone || p.phone || "",
-                email: f.email || p.email || data.user!.email || "",
-              }));
-            }
-          });
+    const loadProfile = async () => {
+      try {
+        const p = await apiService.profiles.getMe();
+        if (p) {
+          setUserId(p.id);
+          setForm((f) => ({
+            ...f,
+            full_name: f.full_name || p.fullName || "",
+            phone: f.phone || p.phone || "",
+            email: f.email || p.email || "",
+          }));
+        }
+      } catch (err) {
+        // Not logged in or error, ignore
       }
-    });
+    };
+    loadProfile();
   }, []);
 
   const dayOfWeek = form.appointment_date ? new Date(form.appointment_date).getDay() : null;
@@ -139,58 +130,32 @@ const Book = () => {
     }
     setSubmitting(true);
     
-    const { error } = await supabase.from("appointments").insert({
-      full_name: parsed.data.full_name,
-      phone: parsed.data.phone,
-      email: parsed.data.email,
-      service: parsed.data.service,
-      appointment_date: parsed.data.appointment_date,
-      appointment_time: parsed.data.appointment_time,
-      notes: parsed.data.notes ?? null,
-      user_id: userId,
-    });
-    if (!error) {
-      await notifyAdmins({
-        title: "New appointment request",
-        body: `${parsed.data.full_name} requested ${parsed.data.service} on ${new Date(parsed.data.appointment_date).toLocaleDateString("en-GB")} at ${parsed.data.appointment_time}.`,
-        link: "/admin/appointments",
-      });
-      if (userId) {
-        await notifyUser(userId, {
-          title: "Appointment request received",
-          body: `We'll confirm your ${parsed.data.service} on ${new Date(parsed.data.appointment_date).toLocaleDateString("en-GB")} at ${parsed.data.appointment_time}.`,
-          link: "/dashboard",
-        });
-      }
-      
-      // Trigger Automated Email
-      await automation.onAppointmentBooked({
-        full_name: parsed.data.full_name,
+    try {
+      await apiService.appointments.create({
+        fullName: parsed.data.full_name,
+        phone: parsed.data.phone,
         email: parsed.data.email,
         service: parsed.data.service,
-        appointment_date: parsed.data.appointment_date,
-        appointment_time: parsed.data.appointment_time
+        appointmentDate: parsed.data.appointment_date,
+        appointmentTime: parsed.data.appointment_time,
+        notes: parsed.data.notes ?? null,
       });
+      
+      setSuccess(form);
+      setForm({ full_name: "", phone: "", email: "", service: "", appointment_date: "", appointment_time: "", notes: "" });
+      setStep(0);
+    } catch (err) {
+      setErrors({ form: err.response?.data?.message || "Failed to book appointment" });
+    } finally {
+      setSubmitting(false);
     }
-    setSubmitting(false);
-    if (error) {
-      setErrors({ form: error.message });
-      return;
-    }
-    setSuccess(form);
-    setForm({ full_name: "", phone: "", email: "", service: "", appointment_date: "", appointment_time: "", notes: "" });
-    setStep(0);
   };
 
   if (success) {
     return (
       <Layout>
         <section className="container py-24">
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-          >
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <Card className="max-w-2xl mx-auto p-12 text-center shadow-elegant rounded-[2rem] border-primary/10">
               <div className="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-full bg-primary-soft text-primary shadow-sm ring-8 ring-primary-soft/50">
                 <CheckCircle2 className="h-10 w-10" />
@@ -214,7 +179,7 @@ const Book = () => {
                 )}
               </div>
             </Card>
-          </motion.div>
+          </div>
         </section>
       </Layout>
     );
@@ -232,12 +197,7 @@ const Book = () => {
       <section className="container py-16 md:py-24">
         <div className="grid gap-12 lg:grid-cols-3">
           {/* Sidebar info */}
-          <motion.aside 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-            className="lg:col-span-1 space-y-6 order-2 lg:order-1"
-          >
+          <aside className="lg:col-span-1 space-y-6 order-2 lg:order-1">
             <Card className="p-8 bg-hero-gradient text-primary-foreground border-0 shadow-elegant rounded-3xl relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-700" />
               <h3 className="font-bold text-xl mb-4 flex items-center gap-2"><Sparkles className="h-5 w-5" /> why NOVA?</h3>
@@ -275,14 +235,11 @@ const Book = () => {
               <ShieldCheck className="h-4 w-4 text-primary mt-0.5 shrink-0" />
               Your data is encrypted and handled according to healthcare privacy standards.
             </p>
-          </motion.aside>
+          </aside>
 
           {/* Form */}
           <div className="lg:col-span-2 order-1 lg:order-2">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
+            <div>
               <Card className="p-8 md:p-12 shadow-card rounded-[2rem] border-border/60">
                 {/* Stepper */}
                 <div className="flex items-center justify-between mb-12 relative">
@@ -292,30 +249,20 @@ const Book = () => {
                     const done = i < step;
                     return (
                       <div key={label} className="relative z-10 flex flex-col items-center gap-3 bg-card px-2">
-                        <motion.span 
-                          animate={active ? { scale: 1.1 } : { scale: 1 }}
+                        <span 
                           className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold shrink-0 transition-colors duration-500 ${
                             done ? "bg-primary text-primary-foreground shadow-lg" : active ? "bg-primary-soft text-primary ring-2 ring-primary shadow-md" : "bg-muted text-muted-foreground"
                           }`}
                         >
                           {done ? <CheckCircle2 className="h-5 w-5" /> : i + 1}
-                        </motion.span>
+                        </span>
                         <span className={`text-xs font-bold uppercase tracking-wider ${active ? "text-primary" : "text-muted-foreground"}`}>{label}</span>
                       </div>
                     );
                   })}
                 </div>
   
-                <AnimatePresence mode="wait" initial={false}>
-                  <motion.form 
-                    key={step}
-                    variants={stepVariants}
-                    initial="initial"
-                    animate="animate"
-                    exit="exit"
-                    onSubmit={onSubmit} 
-                    className="space-y-8"
-                  >
+                <form onSubmit={onSubmit} className="space-y-8">
                     {step === 0 && (
                       <div className="space-y-6">
                         <div>
@@ -376,11 +323,7 @@ const Book = () => {
                           </div>
                         </div>
                         {form.appointment_date && form.appointment_time && (
-                          <motion.div 
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="rounded-2xl bg-primary-soft p-6 flex items-center gap-4 text-primary shadow-sm"
-                          >
+                          <div className="rounded-2xl bg-primary-soft p-6 flex items-center gap-4 text-primary shadow-sm">
                             <div className="h-12 w-12 rounded-xl bg-white/50 flex items-center justify-center text-primary shadow-inner">
                               <CalendarCheck className="h-6 w-6" />
                             </div>
@@ -388,7 +331,7 @@ const Book = () => {
                               Booking <strong>{form.service}</strong> on <br />
                               <span className="font-bold">{new Date(form.appointment_date).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}</span> at <span className="font-bold">{form.appointment_time}</span>
                             </p>
-                          </motion.div>
+                          </div>
                         )}
                       </div>
                     )}
@@ -446,10 +389,9 @@ const Book = () => {
                         Want to track and reschedule? <Link to="/auth" className="text-primary font-bold hover:underline">Create an account</Link>.
                       </p>
                     )}
-                  </motion.form>
-                </AnimatePresence>
+                  </form>
               </Card>
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>

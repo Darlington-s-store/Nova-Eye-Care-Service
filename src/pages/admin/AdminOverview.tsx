@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import { supabase } from "@/integrations/supabase/client";
+import { apiService } from "@/lib/api";
 import { CalendarDays, Star, Users, Clock, ArrowRight, Loader2 } from "lucide-react";
 
 type Stats = {
@@ -19,33 +19,31 @@ const AdminOverview = () => {
   const [stats, setStats] = useState<Stats | null>(null);
   const [recent, setRecent] = useState<{
     id: string;
-    full_name: string;
+    fullName: string;
     service: string;
-    appointment_date: string;
-    appointment_time: string;
+    appointmentDate: string;
+    appointmentTime: string;
     status: string;
   }[]>([]);
 
   useEffect(() => {
-    (async () => {
-      const today = new Date().toISOString().split("T")[0];
-      const [a, p, t, r, u, recentAppts] = await Promise.all([
-        supabase.from("appointments").select("id", { count: "exact", head: true }),
-        supabase.from("appointments").select("id", { count: "exact", head: true }).eq("status", "pending"),
-        supabase.from("appointments").select("id", { count: "exact", head: true }).eq("appointment_date", today),
-        supabase.from("reviews").select("id", { count: "exact", head: true }).eq("approved", false),
-        supabase.from("profiles").select("id", { count: "exact", head: true }),
-        supabase.from("appointments").select("id, full_name, service, appointment_date, appointment_time, status").order("created_at", { ascending: false }).limit(5),
-      ]);
-      setStats({
-        totalAppts: a.count ?? 0,
-        pendingAppts: p.count ?? 0,
-        todayAppts: t.count ?? 0,
-        pendingReviews: r.count ?? 0,
-        totalUsers: u.count ?? 0,
-      });
-      setRecent(recentAppts.data ?? []);
-    })();
+    const fetchStats = async () => {
+      try {
+        const data = await apiService.dashboard.getAdminStats();
+        setStats({
+          totalAppts: data.summary.totalAppointments,
+          pendingAppts: data.summary.pendingAppointments,
+          todayAppts: data.summary.todayAppointments,
+          pendingReviews: data.summary.pendingReviews,
+          totalUsers: data.summary.totalUsers,
+        });
+        setRecent(data.recentAppointments);
+      } catch (err) {
+        const error = err as { response?: { data?: { message?: string } } };
+        console.error("Failed to fetch admin stats:", error.response?.data?.message || err);
+      }
+    };
+    fetchStats();
   }, []);
 
   const cards = [
@@ -78,32 +76,66 @@ const AdminOverview = () => {
             ))}
           </div>
 
-          <Card className="p-5 md:p-6 border shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-lg">Recent appointments</h2>
-              <Button asChild variant="ghost" size="sm">
-                <Link to="/admin/appointments">View all <ArrowRight className="h-4 w-4" /></Link>
-              </Button>
+          <div className="grid md:grid-cols-2 gap-8">
+            <Card className="p-5 md:p-6 border shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-semibold text-lg">Recent appointments</h2>
+                <Button asChild variant="ghost" size="sm">
+                  <Link to="/admin/appointments">View all <ArrowRight className="h-4 w-4" /></Link>
+                </Button>
+              </div>
+              {recent.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">No appointments yet.</p>
+              ) : (
+                <ul className="divide-y">
+                  {recent.map((a) => (
+                    <li key={a.id} className="py-3 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">{a.fullName}</p>
+                        <p className="text-xs text-muted-foreground truncate">{a.service}</p>
+                      </div>
+                      <div className="text-right text-xs text-muted-foreground shrink-0">
+                        <p>{new Date(a.appointmentDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} · {a.appointmentTime}</p>
+                        <Badge variant="secondary" className="mt-1 capitalize">{a.status}</Badge>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+
+            <div className="space-y-6">
+              <h2 className="font-semibold text-lg ml-1">Quick Actions</h2>
+              <div className="grid gap-4">
+                <Link to="/admin/cms?tab=hero">
+                  <Card className="p-4 border hover:bg-muted/30 transition-all group">
+                    <div className="flex items-center gap-4">
+                      <div className="h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                        <ArrowRight className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-sm">Manage Homepage Hero</h4>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase">Change text & background image</p>
+                      </div>
+                    </div>
+                  </Card>
+                </Link>
+                <Link to="/admin/chatbot">
+                  <Card className="p-4 border hover:bg-muted/30 transition-all group">
+                    <div className="flex items-center gap-4">
+                      <div className="h-10 w-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
+                        <ArrowRight className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-sm">Update AI Knowledge</h4>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase">Train your clinical assistant</p>
+                      </div>
+                    </div>
+                  </Card>
+                </Link>
+              </div>
             </div>
-            {recent.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">No appointments yet.</p>
-            ) : (
-              <ul className="divide-y">
-                {recent.map((a) => (
-                  <li key={a.id} className="py-3 flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-medium truncate">{a.full_name}</p>
-                      <p className="text-xs text-muted-foreground truncate">{a.service}</p>
-                    </div>
-                    <div className="text-right text-xs text-muted-foreground shrink-0">
-                      <p>{new Date(a.appointment_date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} · {a.appointment_time}</p>
-                      <Badge variant="secondary" className="mt-1 capitalize">{a.status}</Badge>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
+          </div>
         </>
       )}
     </AdminLayout>

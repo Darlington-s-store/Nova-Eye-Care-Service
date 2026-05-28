@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
+import { apiService } from "@/lib/api";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -37,50 +37,56 @@ export default function RegisterPatient() {
   const [fetchingProfile, setFetchingProfile] = useState(true);
   
   const [form, setForm] = useState({
-    full_name: "",
-    date_of_birth: "",
+    fullName: "",
+    dateOfBirth: "",
     gender: "",
     nationality: "",
     phone: "",
     email: "",
     address: "",
-    blood_group: "",
-    medical_history: "",
-    emergency_contact_name: "",
-    emergency_contact_phone: "",
+    bloodGroup: "",
+    medicalHistory: "",
+    emergencyContactName: "",
+    emergencyContactPhone: "",
   });
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        navigate("/auth");
-        return;
-      }
-      
-      // Load existing info if any
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: profile } = await (supabase as any)
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-        
-      if (profile) {
-        if (profile.registration_completed) {
-          toast.info("Registration already completed!");
-          navigate("/dashboard");
+      try {
+        const user = await apiService.auth.getMe();
+        if (!user) {
+          navigate("/auth");
           return;
         }
-        setForm(f => ({
-          ...f,
-          full_name: profile.full_name || "",
-          phone: profile.phone || "",
-          email: user.email || "",
-          nationality: (profile as Record<string, string>).nationality || "",
-        }));
+        
+        const profile = await apiService.profiles.getMe();
+          
+        if (profile) {
+          if (profile.registrationCompleted) {
+            toast.info("Registration already completed!");
+            navigate("/dashboard");
+            return;
+          }
+          setForm(f => ({
+            ...f,
+            fullName: profile.fullName || "",
+            phone: profile.phone || "",
+            email: user.email || "",
+            nationality: profile.nationality || "",
+            gender: profile.gender || "",
+            dateOfBirth: profile.dateOfBirth || "",
+            address: profile.address || "",
+            bloodGroup: profile.bloodGroup || "",
+            medicalHistory: profile.medicalHistory || "",
+            emergencyContactName: profile.emergencyContactName || "",
+            emergencyContactPhone: profile.emergencyContactPhone || "",
+          }));
+        }
+      } catch (err) {
+        navigate("/auth");
+      } finally {
+        setFetchingProfile(false);
       }
-      setFetchingProfile(false);
     };
     checkUser();
   }, [navigate]);
@@ -95,26 +101,18 @@ export default function RegisterPatient() {
 
   const handleSubmit = async () => {
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any)
-      .from("profiles")
-      .update({
+    try {
+      await apiService.profiles.updateMe({
         ...form,
-        registration_completed: true,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", user.id);
-
-    if (error) {
-      toast.error(error.message);
-    } else {
+        registrationCompleted: true,
+      });
       toast.success("Welcome to NOVA Eye Care! Registration complete.");
       navigate("/dashboard");
+    } catch (err) {
+      toast.error((err as { response?: { data?: { message?: string } } }).response?.data?.message || "Failed to save registration");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   if (fetchingProfile) {
@@ -198,8 +196,8 @@ export default function RegisterPatient() {
                       <div className="space-y-2">
                         <Label className="text-sm font-bold ml-1">Full Name</Label>
                         <Input 
-                          value={form.full_name}
-                          onChange={(e) => setForm({...form, full_name: e.target.value})}
+                          value={form.fullName}
+                          onChange={(e) => setForm({...form, fullName: e.target.value})}
                           placeholder="Akua Bio"
                           className="h-12 rounded-xl"
                         />
@@ -210,8 +208,8 @@ export default function RegisterPatient() {
                           <div className="relative">
                             <Input 
                               type="date"
-                              value={form.date_of_birth}
-                              onChange={(e) => setForm({...form, date_of_birth: e.target.value})}
+                              value={form.dateOfBirth}
+                              onChange={(e) => setForm({...form, dateOfBirth: e.target.value})}
                               className="h-12 rounded-xl pr-10"
                             />
                             <CalendarDays className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
@@ -286,8 +284,8 @@ export default function RegisterPatient() {
                       <div className="space-y-2 w-1/2">
                         <Label className="text-sm font-bold ml-1">Blood Group (Optional)</Label>
                         <Select 
-                          value={form.blood_group} 
-                          onValueChange={(v) => setForm({...form, blood_group: v})}
+                          value={form.bloodGroup} 
+                          onValueChange={(v) => setForm({...form, bloodGroup: v})}
                         >
                           <SelectTrigger className="h-12 rounded-xl">
                             <SelectValue placeholder="Select..." />
@@ -307,8 +305,8 @@ export default function RegisterPatient() {
                       <div className="space-y-2">
                         <Label className="text-sm font-bold ml-1">Medical Conditions / History</Label>
                         <Textarea 
-                          value={form.medical_history}
-                          onChange={(e) => setForm({...form, medical_history: e.target.value})}
+                          value={form.medicalHistory}
+                          onChange={(e) => setForm({...form, medicalHistory: e.target.value})}
                           placeholder="e.g. Glaucoma history in family, Allergies to eye drops..."
                           rows={4}
                           className="rounded-2xl"
@@ -322,8 +320,8 @@ export default function RegisterPatient() {
                       <div className="space-y-2">
                         <Label className="text-sm font-bold ml-1">Emergency Contact Name</Label>
                         <Input 
-                          value={form.emergency_contact_name}
-                          onChange={(e) => setForm({...form, emergency_contact_name: e.target.value})}
+                          value={form.emergencyContactName}
+                          onChange={(e) => setForm({...form, emergencyContactName: e.target.value})}
                           placeholder="Relation / Full Name"
                           className="h-12 rounded-xl"
                         />
@@ -331,8 +329,8 @@ export default function RegisterPatient() {
                       <div className="space-y-2">
                         <Label className="text-sm font-bold ml-1">Emergency Contact Phone</Label>
                         <Input 
-                          value={form.emergency_contact_phone}
-                          onChange={(e) => setForm({...form, emergency_contact_phone: e.target.value})}
+                          value={form.emergencyContactPhone}
+                          onChange={(e) => setForm({...form, emergencyContactPhone: e.target.value})}
                           placeholder="024 XXX XXXX"
                           className="h-12 rounded-xl"
                         />

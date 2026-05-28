@@ -1,14 +1,14 @@
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   SidebarProvider, Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
-  SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarTrigger, useSidebar,
+  SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarTrigger, useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { apiService } from "@/lib/api";
 import {
   LayoutDashboard, CalendarDays, Users, Star, MessageSquare, BookOpen,
-  LogOut, Home as HomeIcon, ShieldCheck, Settings, ChevronDown, Briefcase, Eye, FileText, Settings2, ChevronLeft
+  Home as HomeIcon, Settings, Briefcase, Eye, FileText, Settings2, ChevronLeft, User, LogOut
 } from "lucide-react";
 import logo from "@/assets/logo.jpeg";
 import { NotificationBell } from "@/components/NotificationBell";
@@ -29,6 +29,7 @@ const allItems = [
   { to: "/admin/services", label: "Services", icon: Briefcase },
   { to: "/admin/screenings", label: "Eye Screenings", icon: Eye },
   { to: "/admin/notifications", label: "Notifications", icon: MessageSquare },
+  { to: "/admin/sms", label: "SMS Management", icon: MessageSquare },
   { to: "/admin/chatbot", label: "Chatbot KB", icon: BookOpen },
   { to: "/admin/cms", label: "Website CMS", icon: FileText },
   { to: "/admin/settings", label: "Settings", icon: Settings2 },
@@ -40,32 +41,37 @@ const AdminSidebarInner = () => {
   const location = useLocation();
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarContent>
-        <div className={`px-4 py-5 border-b border-sidebar-border ${collapsed ? "px-2" : ""}`}>
-          <Link to="/admin" className="flex items-center gap-2 font-bold text-sidebar-primary">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white overflow-hidden shadow-card shrink-0 border border-border/10">
-              <img src={logo} alt="NOVA Eye Care Logo" className="h-full w-full object-contain p-0.5" />
-            </span>
-            {!collapsed && <span className="text-sm leading-tight text-foreground">NOVA <span className="block text-[10px] font-bold text-primary uppercase tracking-widest opacity-80">Admin Center</span></span>}
+    <Sidebar collapsible="icon" className="border-r border-border bg-white">
+      <SidebarContent className="bg-white">
+        <div className={`px-6 py-6 border-b border-border ${collapsed ? "px-2" : ""}`}>
+          <Link to="/admin" className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg overflow-hidden shrink-0 border border-border">
+              <img src={logo} alt="NOVA Logo" className="h-full w-full object-contain" />
+            </div>
+            {!collapsed && (
+              <span className="text-xl font-bold tracking-tight text-foreground">NOVA Admin</span>
+            )}
           </Link>
         </div>
-        <SidebarGroup>
-          <SidebarGroupLabel>{!collapsed && "Manage"}</SidebarGroupLabel>
+        <SidebarGroup className="px-3 py-4">
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-1">
               {allItems.map((it) => {
                 const isActive = it.end ? location.pathname === it.to : location.pathname.startsWith(it.to);
                 return (
                   <SidebarMenuItem key={it.to}>
-                    <SidebarMenuButton asChild>
+                    <SidebarMenuButton asChild className="h-12 rounded-lg">
                       <NavLink
                         to={it.to}
                         end={it.end}
-                        className={`flex items-center gap-2 ${isActive ? "bg-sidebar-accent text-sidebar-primary font-medium" : "hover:bg-sidebar-accent/50"}`}
+                        className={`flex items-center gap-3 px-4 w-full transition-colors ${
+                          isActive 
+                            ? "bg-primary text-white" 
+                            : "text-muted-foreground hover:bg-muted"
+                        }`}
                       >
-                        <it.icon className="h-4 w-4 shrink-0" />
-                        {!collapsed && <span>{it.label}</span>}
+                        <it.icon className={`h-5 w-5 shrink-0 ${isActive ? "text-white" : "text-primary"}`} />
+                        {!collapsed && <span className="font-semibold text-[15px]">{it.label}</span>}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -87,91 +93,88 @@ interface AdminLayoutProps {
 
 export const AdminLayout = ({ children, title, subtitle }: AdminLayoutProps) => {
   const navigate = useNavigate();
-  const signOut = async () => {
-    await supabase.auth.signOut();
+  const location = useLocation();
+  
+  const signOut = () => {
+    apiService.auth.logout();
     navigate("/admin/login", { replace: true });
   };
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-soft-gradient">
+      <div className="min-h-screen flex w-full bg-slate-50">
         <AdminSidebarInner />
 
         <div className="flex-1 flex flex-col min-w-0">
           {/* Topbar */}
-          <header className="h-14 sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur flex items-center justify-between px-4 gap-3">
-            <div className="flex items-center gap-2 min-w-0">
-              <SidebarTrigger />
-              <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
-                <ShieldCheck className="h-3.5 w-3.5 text-primary" /> Admin Console
-              </div>
+          <header className="h-16 sticky top-0 z-30 border-b border-border bg-white flex items-center justify-between px-6 shadow-sm">
+            <div className="flex items-center gap-4">
+              <SidebarTrigger className="h-9 w-9 border border-border rounded-md hover:bg-muted transition-colors" />
+              <div className="h-6 w-[1px] bg-border hidden sm:block" />
+              <span className="hidden sm:block text-sm font-medium text-muted-foreground">Nova Eye Care Administration</span>
             </div>
-            <div className="flex items-center gap-2">
+            
+            <div className="flex items-center gap-3">
               <NotificationBell audience="admin" />
+              
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="gap-2 px-2 hover:bg-primary-soft h-10 rounded-full">
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 shrink-0">
-                       <ShieldCheck className="h-4 w-4 text-primary" />
-                    </div>
-                    <span className="hidden sm:inline-block text-xs font-bold text-foreground/80">Admin</span>
-                    <ChevronDown className="h-3 w-3 opacity-50" />
+                  <Button variant="outline" className="h-10 px-3 flex items-center gap-2 rounded-lg border-border hover:bg-muted transition-colors">
+                    <User className="h-4 w-4 text-primary" />
+                    <span className="hidden sm:block text-sm font-semibold">Administrator</span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 p-2 rounded-xl shadow-elegant border-border/40 backdrop-blur bg-card/95">
-                  <DropdownMenuLabel className="px-2 py-1.5 text-xs text-muted-foreground font-normal">
-                    Management Control
+                <DropdownMenuContent align="end" className="w-56 p-1 rounded-lg shadow-lg border-border">
+                  <DropdownMenuLabel className="px-3 py-2 text-xs font-bold text-muted-foreground uppercase">
+                    Account Actions
                   </DropdownMenuLabel>
-                  <DropdownMenuItem asChild className="rounded-lg cursor-pointer focus:bg-primary-soft py-2.5">
-                    <Link to="/" className="flex items-center w-full">
-                      <HomeIcon className="mr-2 h-4 w-4 text-primary" />
-                      <span>View Website</span>
+                  <DropdownMenuItem asChild className="cursor-pointer focus:bg-muted py-2 px-3 rounded-md">
+                    <Link to="/" className="flex items-center w-full gap-2">
+                      <HomeIcon className="h-4 w-4" />
+                      <span className="text-sm font-medium">View Website</span>
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="rounded-lg cursor-pointer focus:bg-primary-soft py-2.5">
-                    <Link to="/admin/services" className="flex items-center w-full">
-                      <Briefcase className="mr-2 h-4 w-4 text-primary" />
-                      <span>Manage Services</span>
+                  <DropdownMenuItem asChild className="cursor-pointer focus:bg-muted py-2 px-3 rounded-md">
+                    <Link to="/admin/settings" className="flex items-center w-full gap-2">
+                      <Settings className="h-4 w-4" />
+                      <span className="text-sm font-medium">Settings</span>
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="rounded-lg cursor-pointer focus:bg-primary-soft py-2.5">
-                    <Link to="/admin/settings" className="flex items-center w-full">
-                      <Settings className="mr-2 h-4 w-4 text-primary" />
-                      <span>Admin Settings</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator className="my-2 bg-border/40" />
+                  <DropdownMenuSeparator className="my-1" />
                   <DropdownMenuItem 
                     onClick={signOut}
-                    className="rounded-lg cursor-pointer focus:bg-red-50 text-red-600 focus:text-red-700 font-bold py-2.5"
+                    className="cursor-pointer focus:bg-red-50 text-red-600 focus:text-red-700 font-medium py-2 px-3 rounded-md flex items-center gap-2"
                   >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Sign Out</span>
+                    <LogOut className="h-4 w-4" />
+                    <span className="text-sm">Log out</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </header>
 
-          <main className="flex-1 p-4 md:p-6 overflow-x-hidden">
-            <div className="mb-6 flex flex-col gap-2">
-              {location.pathname !== "/admin" && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="-ml-2 w-fit h-7 px-2 text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 group"
-                  onClick={() => navigate("/admin")}
-                >
-                  <ChevronLeft className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform" />
-                  <span className="text-xs font-semibold tracking-tight">Back to Dashboard</span>
-                </Button>
-              )}
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold">{title}</h1>
-                {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
+          <main className="flex-1 p-6 lg:p-10">
+            <div className="max-w-6xl mx-auto">
+              <div className="mb-8">
+                {location.pathname !== "/admin" && (
+                  <Button 
+                    variant="link" 
+                    size="sm" 
+                    className="p-0 h-auto text-primary mb-4 flex items-center gap-1 hover:no-underline font-semibold"
+                    onClick={() => navigate("/admin")}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Back to Dashboard
+                  </Button>
+                )}
+                <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">{title}</h1>
+                {subtitle && <p className="text-lg text-slate-500 mt-2 font-medium">{subtitle}</p>}
+              </div>
+              
+              <div className="animate-fade-in">
+                {children}
               </div>
             </div>
-            {children}
           </main>
         </div>
       </div>

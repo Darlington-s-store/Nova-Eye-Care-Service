@@ -7,18 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
+import { apiService, KB } from "@/lib/api";
 import { toast } from "sonner";
 import { Loader2, Plus, Trash2, BookOpen, Save } from "lucide-react";
-
-type KB = {
-  id: string;
-  question: string;
-  answer: string;
-  category: string | null;
-  active: boolean;
-  updated_at: string;
-};
 
 const AdminChatbot = () => {
   const [items, setItems] = useState<KB[]>([]);
@@ -27,44 +18,61 @@ const AdminChatbot = () => {
   const [saving, setSaving] = useState(false);
 
   const load = async () => {
-    const { data } = await supabase.from("chatbot_knowledge").select("*").order("updated_at", { ascending: false });
-    setItems((data as KB[]) ?? []);
-    setLoading(false);
+    setLoading(true);
+    try {
+      const data = await apiService.chatbot.getAllKnowledge();
+      setItems(data || []);
+    } catch (err) {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error.response?.data?.message || "Failed to load knowledge base");
+    } finally {
+      setLoading(false);
+    }
   };
   useEffect(() => { load(); }, []);
 
   const save = async () => {
     if (!editing?.question || !editing?.answer) { toast.error("Question and answer are required"); return; }
     setSaving(true);
-    if (editing.id) {
-      const { error } = await supabase.from("chatbot_knowledge").update({
-        question: editing.question, answer: editing.answer,
-        category: editing.category ?? null, active: editing.active ?? true,
-      }).eq("id", editing.id);
-      if (error) { toast.error(error.message); setSaving(false); return; }
-    } else {
-      const { error } = await supabase.from("chatbot_knowledge").insert({
-        question: editing.question, answer: editing.answer,
-        category: editing.category ?? null, active: editing.active ?? true,
+    try {
+      await apiService.chatbot.upsertKnowledge({
+        id: editing.id,
+        question: editing.question,
+        answer: editing.answer,
+        category: editing.category,
+        active: editing.active ?? true,
       });
-      if (error) { toast.error(error.message); setSaving(false); return; }
+      toast.success("Saved");
+      setEditing(null);
+      load();
+    } catch (err) {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error.response?.data?.message || "Failed to save entry");
+    } finally {
+      setSaving(false);
     }
-    toast.success("Saved");
-    setEditing(null);
-    setSaving(false);
-    load();
   };
 
   const toggle = async (kb: KB) => {
-    await supabase.from("chatbot_knowledge").update({ active: !kb.active }).eq("id", kb.id);
-    load();
+    try {
+      await apiService.chatbot.toggleKnowledge(kb.id);
+      load();
+    } catch (err) {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error.response?.data?.message || "Failed to toggle status");
+    }
   };
 
   const remove = async (id: string) => {
     if (!confirm("Delete this entry? The chatbot will no longer use it.")) return;
-    await supabase.from("chatbot_knowledge").delete().eq("id", id);
-    toast.success("Deleted");
-    load();
+    try {
+      await apiService.chatbot.deleteKnowledge(id);
+      toast.success("Deleted");
+      load();
+    } catch (err) {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error.response?.data?.message || "Failed to delete entry");
+    }
   };
 
   return (

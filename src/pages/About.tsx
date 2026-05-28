@@ -3,7 +3,7 @@ import { PageHero } from "@/components/PageHero";
 import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { Award, Heart, Microscope, Eye, User, Sparkles } from "lucide-react";
-import heroAbout from "@/assets/hero-about.jpg";
+import heroAbout from "@/assets/nova.jpeg";
 import { useState, useEffect } from "react";
 import { getCMSContent, TeamMember } from "@/lib/cms";
 

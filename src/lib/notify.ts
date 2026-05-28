@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { apiService } from "./api";
 
 type NotificationInput = {
   title: string;
@@ -7,22 +7,29 @@ type NotificationInput = {
 };
 
 export const notifyUser = async (recipientId: string, n: NotificationInput) => {
-  await supabase.from("notifications").insert({
-    recipient_id: recipientId,
-    audience: "user",
-    title: n.title,
-    body: n.body,
-    link: n.link ?? null,
-  });
+  try {
+    await apiService.notifications.create({
+      recipientId,
+      audience: "user",
+      title: n.title,
+      body: n.body,
+      link: n.link ?? null,
+    });
+  } catch (err) {
+    console.error("Failed to notify user:", err);
+  }
 };
 
 export const notifyAdmins = async (n: NotificationInput) => {
-  // recipient_id null + audience admin -> visible to any admin via RLS
-  await supabase.from("notifications").insert({
-    recipient_id: null,
-    audience: "admin",
-    title: n.title,
-    body: n.body,
-    link: n.link ?? null,
-  });
+  try {
+    await apiService.notifications.create({
+      recipientId: null,
+      audience: "admin",
+      title: n.title,
+      body: n.body,
+      link: n.link ?? null,
+    });
+  } catch (err) {
+    console.error("Failed to notify admins:", err);
+  }
 };

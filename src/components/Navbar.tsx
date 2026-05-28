@@ -1,10 +1,10 @@
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Menu, X, LogOut, User, LayoutDashboard, ChevronDown } from "lucide-react";
+import { Menu, X, LogOut, User, LayoutDashboard, ChevronDown, ShieldCheck } from "lucide-react";
 import logo from "@/assets/logo.jpeg";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
-import type { Session } from "@supabase/supabase-js";
+import { useAuth } from "@/hooks/useAuth";
+import { apiService } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
@@ -28,35 +28,27 @@ const links = [
 
 export const Navbar = () => {
   const [open, setOpen] = useState(false);
-  const [session, setSession] = useState<Session | null>(null);
+  const { session, refresh, isAdmin } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setSession(data.session));
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
-    
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
-    
-    return () => {
-      sub.subscription.unsubscribe();
-      window.removeEventListener("scroll", handleScroll);
-    };
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   useEffect(() => { setOpen(false); }, [location.pathname]);
 
   const handleLogout = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      apiService.auth.logout();
+      await refresh();
       toast.success("Signed out successfully");
       navigate("/");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Error signing out";
-      toast.error(message);
+      toast.error("Error signing out");
     }
   };
 
@@ -64,8 +56,8 @@ export const Navbar = () => {
     <header 
       className={`sticky top-0 z-50 w-full transition-all duration-500 ${
         scrolled 
-          ? "border-b border-border/60 bg-background/90 backdrop-blur-xl py-3 shadow-md" 
-          : "bg-transparent py-5"
+          ? "border-b border-border/60 bg-white/95 backdrop-blur-xl py-3 shadow-md" 
+          : "bg-white/80 backdrop-blur-md py-5 border-b border-border/10 shadow-sm"
       }`}
     >
       <div className="container flex h-16 items-center justify-between gap-4">
@@ -125,10 +117,18 @@ export const Navbar = () => {
                 <DropdownMenuLabel className="px-2 py-1.5 text-xs text-muted-foreground font-normal">
                   Manage Account
                 </DropdownMenuLabel>
+                {isAdmin && (
+                  <DropdownMenuItem asChild className="rounded-lg cursor-pointer focus:bg-primary-soft">
+                    <Link to="/admin" className="flex items-center w-full">
+                      <ShieldCheck className="mr-2 h-4 w-4 text-primary" />
+                      <span className="font-bold text-primary">Admin Dashboard</span>
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem asChild className="rounded-lg cursor-pointer focus:bg-primary-soft">
                   <Link to="/dashboard" className="flex items-center w-full">
                     <LayoutDashboard className="mr-2 h-4 w-4 text-primary" />
-                    <span>Dashboard</span>
+                    <span>Patient Portal</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="rounded-lg cursor-pointer focus:bg-primary-soft">
@@ -153,7 +153,7 @@ export const Navbar = () => {
             </Button>
           )}
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button asChild variant="hero" className="rounded-xl px-7 font-bold shadow-lg shadow-primary/20"><Link to="/book">Book Now</Link></Button>
+            <Button asChild className="rounded-xl px-7 font-bold shadow-lg shadow-primary/20 bg-primary text-white hover:bg-primary/90"><Link to="/book">Book Now</Link></Button>
           </motion.div>
         </div>
 
@@ -211,10 +211,18 @@ export const Navbar = () => {
               <motion.div variants={{ hidden: { y: 20, opacity: 0 }, show: { y: 0, opacity: 1 } }} className="flex flex-col gap-3 pt-4">
                 {session ? (
                   <>
+                    {isAdmin && (
+                      <Button asChild variant="outline" className="w-full rounded-xl h-12 font-bold justify-start px-5 bg-primary/5 border-primary/20" onClick={() => setOpen(false)}>
+                        <Link to="/admin" className="flex items-center">
+                          <ShieldCheck className="mr-2 h-4 w-4 text-primary" />
+                          Admin Dashboard
+                        </Link>
+                      </Button>
+                    )}
                     <Button asChild variant="outline" className="w-full rounded-xl h-12 font-bold justify-start px-5" onClick={() => setOpen(false)}>
                       <Link to="/dashboard" className="flex items-center">
                         <LayoutDashboard className="mr-2 h-4 w-4 text-primary" />
-                        Dashboard
+                        Patient Portal
                       </Link>
                     </Button>
                     <Button asChild variant="outline" className="w-full rounded-xl h-12 font-bold justify-start px-5" onClick={() => setOpen(false)}>
@@ -243,7 +251,7 @@ export const Navbar = () => {
                     <Link to="/auth">Sign in</Link>
                   </Button>
                 )}
-                <Button asChild variant="hero" className="w-full rounded-xl h-12 font-bold shadow-lg shadow-primary/20" onClick={() => setOpen(false)}>
+                <Button asChild className="w-full rounded-xl h-12 font-bold shadow-lg shadow-primary/20 bg-primary text-white hover:bg-primary/90" onClick={() => setOpen(false)}>
                   <Link to="/book">Book Now</Link>
                 </Button>
               </motion.div>

@@ -72,10 +72,10 @@ export const TIME_SLOTS_SATURDAY = [
 
 export const CLINIC = {
   name: "NOVA Eye Care Services",
-  tagline: "See Better | Live Brighter",
-  phones: ["0544172089", "0246613184"],
+  tagline: "See Better! Live Brighter!",
+  phones: ["+233544172089", "+233246613184"],
   email: "info@novaeyecareservice.com",
-  address: "Abuakwa - NsoNyamey3, Opposite Kasapreko Company Limited, Ashanti Region, Ghana",
+  address: "GE20 Dolores St, AH-1192-8485, Kan Royal Filling Station, Abuakwa. GPS address: AH-1192-7988",
   hours: {
     weekdays: "Mon–Fri: 8:00 am – 5:00 pm",
     saturday: "Saturday: 9:00 am – 2:00 pm",

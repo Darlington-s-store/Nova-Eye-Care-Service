@@ -2,12 +2,12 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 type ScreeningData = {
-  patient_name: string;
-  screening_date: string;
-  va_right: string;
-  va_left: string;
-  iop_right: number;
-  iop_left: number;
+  patientName: string;
+  screeningDate: string;
+  vaRight: string;
+  vaLeft: string;
+  iopRight: number;
+  iopLeft: number;
   diagnosis: string;
   followup: string;
 };
@@ -33,8 +33,8 @@ export const generateScreeningPDF = (data: ScreeningData) => {
 
   // Patient Info
   doc.setFontSize(11);
-  doc.text(`Patient Name: ${data.patient_name}`, 20, 55);
-  doc.text(`Date of Examination: ${new Date(data.screening_date).toLocaleDateString()}`, 20, 62);
+  doc.text(`Patient Name: ${data.patientName}`, 20, 55);
+  doc.text(`Date of Examination: ${new Date(data.screeningDate).toLocaleDateString()}`, 20, 62);
   doc.text(`Report ID: NOVA-${Math.random().toString(36).substr(2, 6).toUpperCase()}`, pageWidth - 70, 55);
 
   // Clinical Table
@@ -42,8 +42,8 @@ export const generateScreeningPDF = (data: ScreeningData) => {
     startY: 75,
     head: [["Assessment Field", "Right Eye (OD)", "Left Eye (OS)"]],
     body: [
-      ["Visual Acuity (V.A)", data.va_right || "N/A", data.va_left || "N/A"],
-      ["Intraocular Pressure (IOP)", `${data.iop_right || "N/A"} mmHg`, `${data.iop_left || "N/A"} mmHg`],
+      ["Visual Acuity (V.A)", data.vaRight || "N/A", data.vaLeft || "N/A"],
+      ["Intraocular Pressure (IOP)", `${data.iopRight || "N/A"} mmHg`, `${data.iopLeft || "N/A"} mmHg`],
     ],
     headStyles: { fillColor: [10, 45, 100], textColor: [255, 255, 255], fontStyle: 'bold' },
     theme: 'grid',
@@ -81,5 +81,5 @@ export const generateScreeningPDF = (data: ScreeningData) => {
   doc.text("This is a computer-generated medical record from the Nova Eye Care Portal.", 20, footerY);
   doc.text("www.novaeyecare.com | Specialized Eye Health Services", pageWidth - 20, footerY, { align: "right" });
 
-  doc.save(`Nova_Screening_${data.patient_name.replace(/\s+/g, '_')}.pdf`);
+  doc.save(`Nova_Screening_${data.patientName.replace(/\s+/g, '_')}.pdf`);
 };

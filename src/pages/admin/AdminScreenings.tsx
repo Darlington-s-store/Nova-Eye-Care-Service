@@ -8,7 +8,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
   DialogDescription, DialogFooter 
 } from "@/components/ui/dialog";
-import { supabase } from "@/integrations/supabase/client";
+import { apiService } from "@/lib/api";
 import { generateScreeningPDF } from "@/lib/pdf-utils";
 import { toast } from "sonner";
 import { 
@@ -20,24 +20,23 @@ import {
   CheckCircle2, 
   User, 
   Loader2,
-  Filter
+  Edit2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 type Screening = {
   id: string;
-  patient_id: string;
-  screening_date: string;
+  patientId: string;
+  screeningDate: string;
   diagnosis: string;
-  va_right_eye: string;
-  va_left_eye: string;
-  iop_right: number;
-  iop_left: number;
-  recommended_followup: string;
-  is_visible_to_patient: boolean;
-  profiles: {
-    full_name: string;
-  };
+  vaRightEye: string;
+  vaLeftEye: string;
+  iopRight: number;
+  iopLeft: number;
+  recommendedFollowup: string;
+  isVisibleToPatient: boolean;
+  patientName: string;
+  colourVisionResult?: string;
 };
 
 export default function AdminScreenings() {
@@ -48,18 +47,20 @@ export default function AdminScreenings() {
   
   // New Screening State
   const [newScreening, setNewScreening] = useState({
-    patient_id: "",
-    va_right_eye: "",
-    va_left_eye: "",
-    iop_right: "",
-    iop_left: "",
-    colour_vision_result: "",
+    patientId: "",
+    vaRightEye: "",
+    vaLeftEye: "",
+    iopRight: "",
+    iopLeft: "",
+    colourVisionResult: "",
     diagnosis: "",
-    recommended_followup: "",
-    is_visible_to_patient: true
+    recommendedFollowup: "",
+    isVisibleToPatient: true
   });
 
-  const [patients, setPatients] = useState<{id: string, full_name: string}[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  const [patients, setPatients] = useState<{id: string, fullName: string}[]>([]);
 
   useEffect(() => {
     fetchScreenings();
@@ -67,47 +68,116 @@ export default function AdminScreenings() {
   }, []);
 
   const fetchPatients = async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (supabase as any).from("profiles").select("id, full_name").eq("role", "patient");
-    if (data) setPatients(data);
+    try {
+      const data = await apiService.profiles.getAll();
+      if (data) setPatients(data);
+    } catch (err) {
+      console.error("Failed to fetch patients:", err);
+    }
   };
 
   const fetchScreenings = async () => {
     setLoading(true);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase as any)
-      .from("eye_screenings")
-      .select("*, profiles!patient_id(full_name)")
-      .order("created_at", { ascending: false });
+    try {
+      const data = await apiService.medical.getAllScreenings();
+      setScreenings(data || []);
+    } catch (err) {
+      toast.error("Failed to load screening records");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    if (error) toast.error(error.message);
-    else setScreenings(data || []);
-    setLoading(false);
+  const resetForm = () => {
+    setNewScreening({
+      patientId: "",
+      vaRightEye: "",
+      vaLeftEye: "",
+      iopRight: "",
+      iopLeft: "",
+      colourVisionResult: "",
+      diagnosis: "",
+      recommendedFollowup: "",
+      isVisibleToPatient: true
+    });
+    setEditingId(null);
+  };
+
+  const handleEditClick = (s: Screening) => {
+    setEditingId(s.id);
+    setNewScreening({
+      patientId: s.patientId,
+      vaRightEye: s.vaRightEye || "",
+      vaLeftEye: s.vaLeftEye || "",
+      iopRight: s.iopRight ? s.iopRight.toString() : "",
+      iopLeft: s.iopLeft ? s.iopLeft.toString() : "",
+      colourVisionResult: s.colourVisionResult || "",
+      diagnosis: s.diagnosis || "",
+      recommendedFollowup: s.recommendedFollowup || "",
+      isVisibleToPatient: s.isVisibleToPatient
+    });
+    setIsRecording(true);
   };
 
   const handleCreateScreening = async () => {
-    if (!newScreening.patient_id) {
+    if (!newScreening.patientId) {
       toast.error("Please select a patient first");
       return;
     }
 
     setLoading(true);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any).from("eye_screenings").insert([{
-      ...newScreening,
-      iop_right: parseFloat(newScreening.iop_right) || 0,
-      iop_left: parseFloat(newScreening.iop_left) || 0,
-      screening_date: new Date().toISOString().split('T')[0]
-    }]);
-
-    if (error) {
-      toast.error(error.message);
-    } else {
+    try {
+      await apiService.medical.createScreening({
+        patientId: newScreening.patientId,
+        vaRight: newScreening.vaRightEye,
+        vaLeft: newScreening.vaLeftEye,
+        iopRight: parseFloat(newScreening.iopRight) || 0,
+        iopLeft: parseFloat(newScreening.iopLeft) || 0,
+        colourVision: newScreening.colourVisionResult,
+        diagnosis: newScreening.diagnosis,
+        followup: newScreening.recommendedFollowup,
+        isVisible: newScreening.isVisibleToPatient
+      });
       toast.success("Health screening record saved successfully");
       setIsRecording(false);
+      resetForm();
       fetchScreenings();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to save record");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
+  };
+
+  const handleUpdateScreening = async () => {
+    if (!editingId) return;
+    if (!newScreening.patientId) {
+      toast.error("Please select a patient first");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await apiService.medical.updateScreening(editingId, {
+        patientId: newScreening.patientId,
+        vaRight: newScreening.vaRightEye,
+        vaLeft: newScreening.vaLeftEye,
+        iopRight: parseFloat(newScreening.iopRight) || 0,
+        iopLeft: parseFloat(newScreening.iopLeft) || 0,
+        colourVision: newScreening.colourVisionResult,
+        diagnosis: newScreening.diagnosis,
+        followup: newScreening.recommendedFollowup,
+        isVisible: newScreening.isVisibleToPatient
+      });
+      toast.success("Health screening record updated successfully");
+      setIsRecording(false);
+      resetForm();
+      fetchScreenings();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to update record");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -125,58 +195,77 @@ export default function AdminScreenings() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground opacity-50 group-focus-within:text-primary transition-colors" />
           </div>
 
-          <Dialog open={isRecording} onOpenChange={setIsRecording}>
+          <Dialog open={isRecording} onOpenChange={(open) => {
+            setIsRecording(open);
+            if (!open) resetForm();
+          }}>
             <DialogTrigger asChild>
-              <Button className="rounded-lg gap-2 px-6 h-11 font-bold">
+              <Button onClick={resetForm} className="rounded-lg gap-2 px-6 h-11 font-bold">
                 <Plus className="h-4 w-4" /> New Diagnosis
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl rounded-xl p-8 border shadow-lg">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-                  New Eye Screening Record
+                  {editingId ? "Edit Eye Screening Record" : "New Eye Screening Record"}
                 </DialogTitle>
-                <DialogDescription>Enter clinical findings for the patient's current visit.</DialogDescription>
+                <DialogDescription>
+                  {editingId ? "Modify clinical findings for this patient's visit." : "Enter clinical findings for the patient's current visit."}
+                </DialogDescription>
               </DialogHeader>
               
               <div className="grid gap-6 mt-4">
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Patient Selection</label>
                   <select 
-                    className="w-full h-11 rounded-lg border bg-background px-3 outline-none focus:ring-1 focus:ring-primary transition-all font-medium"
-                    value={newScreening.patient_id}
-                    onChange={(e) => setNewScreening({...newScreening, patient_id: e.target.value})}
+                    className="w-full h-11 rounded-lg border bg-background px-3 outline-none focus:ring-1 focus:ring-primary transition-all font-medium disabled:opacity-50"
+                    value={newScreening.patientId}
+                    disabled={!!editingId}
+                    onChange={(e) => setNewScreening({...newScreening, patientId: e.target.value})}
                   >
                     <option value="">Choose a registered patient...</option>
-                    {patients.map(p => <option key={p.id} value={p.id}>{p.full_name}</option>)}
+                    {patients.map(p => <option key={p.id} value={p.id}>{p.fullName}</option>)}
                   </select>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-4 p-4 bg-muted rounded-lg border">
                     <h3 className="text-xs font-bold text-primary uppercase">Right Eye (OD)</h3>
-                    <Input placeholder="Visual Acuity" value={newScreening.va_right_eye} onChange={e => setNewScreening({...newScreening, va_right_eye: e.target.value})} className="bg-background border shadow-none" />
-                    <Input placeholder="IOP (mmHg)" type="number" value={newScreening.iop_right} onChange={e => setNewScreening({...newScreening, iop_right: e.target.value})} className="bg-background border shadow-none" />
+                    <Input placeholder="Visual Acuity" value={newScreening.vaRightEye} onChange={e => setNewScreening({...newScreening, vaRightEye: e.target.value})} className="bg-background border shadow-none" />
+                    <Input placeholder="IOP (mmHg)" type="number" value={newScreening.iopRight} onChange={e => setNewScreening({...newScreening, iopRight: e.target.value})} className="bg-background border shadow-none" />
                   </div>
                   <div className="space-y-4 p-4 bg-muted rounded-lg border">
                     <h3 className="text-xs font-bold text-primary uppercase">Left Eye (OS)</h3>
-                    <Input placeholder="Visual Acuity" value={newScreening.va_left_eye} onChange={e => setNewScreening({...newScreening, va_left_eye: e.target.value})} className="bg-background border shadow-none" />
-                    <Input placeholder="IOP (mmHg)" type="number" value={newScreening.iop_left} onChange={e => setNewScreening({...newScreening, iop_left: e.target.value})} className="bg-background border shadow-none" />
+                    <Input placeholder="Visual Acuity" value={newScreening.vaLeftEye} onChange={e => setNewScreening({...newScreening, vaLeftEye: e.target.value})} className="bg-background border shadow-none" />
+                    <Input placeholder="IOP (mmHg)" type="number" value={newScreening.iopLeft} onChange={e => setNewScreening({...newScreening, iopLeft: e.target.value})} className="bg-background border shadow-none" />
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Clinical Assessment</label>
                   <Textarea placeholder="Diagnosis & Impression..." rows={3} value={newScreening.diagnosis} onChange={e => setNewScreening({...newScreening, diagnosis: e.target.value})} />
-                  <Textarea placeholder="Recommended Follow-up..." rows={2} value={newScreening.recommended_followup} onChange={e => setNewScreening({...newScreening, recommended_followup: e.target.value})} />
+                  <Textarea placeholder="Recommended Follow-up..." rows={2} value={newScreening.recommendedFollowup} onChange={e => setNewScreening({...newScreening, recommendedFollowup: e.target.value})} />
+                </div>
+
+                <div className="flex items-center gap-2 mt-2">
+                  <input 
+                    type="checkbox" 
+                    id="isVisibleToPatient" 
+                    checked={newScreening.isVisibleToPatient} 
+                    onChange={e => setNewScreening({...newScreening, isVisibleToPatient: e.target.checked})} 
+                    className="h-4 w-4 rounded border-border text-primary focus:ring-primary cursor-pointer"
+                  />
+                  <label htmlFor="isVisibleToPatient" className="text-sm font-medium text-foreground select-none cursor-pointer">
+                    Visible to patient in portal
+                  </label>
                 </div>
               </div>
 
               <DialogFooter className="mt-8">
                 <Button variant="outline" onClick={() => setIsRecording(false)} className="rounded-lg">Discard</Button>
-                <Button onClick={handleCreateScreening} disabled={loading} className="rounded-lg px-8 font-bold gap-2">
+                <Button onClick={editingId ? handleUpdateScreening : handleCreateScreening} disabled={loading} className="rounded-lg px-8 font-bold gap-2">
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                  Save Medical Record
+                  {editingId ? "Update Medical Record" : "Save Medical Record"}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -211,29 +300,29 @@ export default function AdminScreenings() {
                 </thead>
                 <tbody className="divide-y divide-muted/40">
                   {screenings.filter(s => 
-                    s.profiles.full_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                    s.diagnosis.toLowerCase().includes(searchTerm.toLowerCase())
+                    s.patientName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                    s.diagnosis?.toLowerCase().includes(searchTerm.toLowerCase())
                   ).map((s) => (
                     <tr key={s.id} className="hover:bg-primary/[0.02] transition-colors group">
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-3">
                           <div className="h-9 w-9 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold text-xs"><User className="h-4 w-4" /></div>
-                          <span className="font-bold text-foreground">{s.profiles.full_name}</span>
+                          <span className="font-bold text-foreground">{s.patientName}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-5 text-sm text-muted-foreground">{new Date(s.screening_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+                      <td className="px-6 py-5 text-sm text-muted-foreground">{new Date(s.screeningDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
                       <td className="px-6 py-5">
                         <span className="text-sm font-medium line-clamp-1">{s.diagnosis || "No diagnosis recorded"}</span>
                       </td>
                       <td className="px-6 py-5">
                         <div className="flex gap-2">
-                          <Badge variant="outline" className="bg-muted/50 border-0">{s.va_right_eye || '-'}</Badge>
-                          <Badge variant="outline" className="bg-muted/50 border-0">{s.va_left_eye || '-'}</Badge>
+                          <Badge variant="outline" className="bg-muted/50 border-0">{s.vaRightEye || '-'}</Badge>
+                          <Badge variant="outline" className="bg-muted/50 border-0">{s.vaLeftEye || '-'}</Badge>
                         </div>
                       </td>
                       <td className="px-6 py-5">
-                        <Badge className={`${s.is_visible_to_patient ? 'bg-green-500/10 text-green-600' : 'bg-amber-500/10 text-amber-600'} border-0 px-3`}>
-                          {s.is_visible_to_patient ? 'Patient Visible' : 'Internal Only'}
+                        <Badge className={`${s.isVisibleToPatient ? 'bg-green-500/10 text-green-600' : 'bg-amber-500/10 text-amber-600'} border-0 px-3`}>
+                          {s.isVisibleToPatient ? 'Patient Visible' : 'Internal Only'}
                         </Badge>
                       </td>
                       <td className="px-6 py-5 text-right">
@@ -243,19 +332,27 @@ export default function AdminScreenings() {
                             size="icon" 
                             className="h-9 w-9 rounded-xl text-primary hover:bg-primary/10 transition-all opacity-0 group-hover:opacity-100"
                             onClick={() => generateScreeningPDF({
-                              patient_name: s.profiles.full_name,
-                              screening_date: s.screening_date,
-                              va_right: s.va_right_eye,
-                              va_left: s.va_left_eye,
-                              iop_right: s.iop_right,
-                              iop_left: s.iop_left,
+                              patientName: s.patientName,
+                              screeningDate: s.screeningDate,
+                              vaRight: s.vaRightEye,
+                              vaLeft: s.vaLeftEye,
+                              iopRight: s.iopRight,
+                              iopLeft: s.iopLeft,
                               diagnosis: s.diagnosis,
-                              followup: s.recommended_followup
+                              followup: s.recommendedFollowup
                             })}
                           >
                             <Download className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-primary hover:bg-primary/10 transition-all opacity-0 group-hover:opacity-100"><FileText className="h-4 w-4" /></Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-9 w-9 rounded-xl text-primary hover:bg-primary/10 transition-all opacity-0 group-hover:opacity-100"
+                            onClick={() => handleEditClick(s)}
+                            title="Edit Record"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </td>
                     </tr>

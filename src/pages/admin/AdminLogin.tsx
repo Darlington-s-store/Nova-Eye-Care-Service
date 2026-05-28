@@ -5,14 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { supabase } from "@/integrations/supabase/client";
+import { apiService } from "@/lib/api";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 import { Eye, EyeOff, Loader2, ShieldCheck, Lock } from "lucide-react";
 import logo from "@/assets/logo.jpeg";
-import authBg from "@/assets/hero-auth.jpg";
+import authBg from "@/assets/hero.jpeg";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
+  const { refresh } = useAuth();
   const [tab, setTab] = useState<"signin" | "signup">("signin");
   const [loading, setLoading] = useState(false);
   const [show, setShow] = useState(false);
@@ -20,11 +22,15 @@ const AdminLogin = () => {
 
   useEffect(() => {
     const check = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) return;
-      const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", data.session.user.id);
-      if ((roles ?? []).some((r) => r.role === "admin")) {
-        navigate("/admin", { replace: true });
+      const token = localStorage.getItem('nova_auth_token');
+      if (!token) return;
+      try {
+        const user = await apiService.auth.getMe();
+        if (user && user.role === "admin") {
+          navigate("/admin", { replace: true });
+        }
+      } catch (err) {
+        // Token might be invalid, just stay on login
       }
     };
     check();
@@ -33,60 +39,51 @@ const AdminLogin = () => {
   const onSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { data, error } = await supabase.auth.signInWithPassword(form);
-    if (error) {
+    try {
+      const data = await apiService.auth.login(form);
+      if (data.user.role !== "admin") {
+        apiService.auth.logout();
+        toast.error("This account does not have admin access.");
+        setLoading(false);
+        return;
+      }
+      await refresh();
+      toast.success("Welcome, Admin");
+      window.location.href = "/admin";
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Login failed");
+    } finally {
       setLoading(false);
-      toast.error(error.message);
-      return;
     }
-    // Verify admin role
-    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", data.user.id);
-    setLoading(false);
-    if (!(roles ?? []).some((r) => r.role === "admin")) {
-      await supabase.auth.signOut();
-      toast.error("This account does not have admin access.");
-      return;
-    }
-    toast.success("Welcome, Admin");
-    navigate("/admin", { replace: true });
   };
 
   const onSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (form.password.length < 8) { toast.error("Use at least 8 characters"); return; }
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/admin`,
-        data: { full_name: "Administrator", phone: "" },
-      },
-    });
-    if (error) {
+    try {
+      // For admin signup, we might need a special flag or the backend might default to patient
+      // Assuming register endpoint handles creating admin if first user or via specific logic
+      const data = await apiService.auth.register({
+        ...form,
+        role: 'admin' // Backend should validate if this is allowed
+      });
+      
+      if (data.user.role !== "admin") {
+        apiService.auth.logout();
+        toast.error("Admin account created but role not assigned. Contact support.");
+        setLoading(false);
+        return;
+      }
+      
+      await refresh();
+      toast.success("Admin account created");
+      window.location.href = "/admin";
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Registration failed");
+    } finally {
       setLoading(false);
-      if (error.message.toLowerCase().includes("already")) {
-        toast.error("Admin account already exists. Sign in instead.");
-        setTab("signin");
-      } else toast.error(error.message);
-      return;
     }
-    // Try to auto sign-in (auto-confirm is enabled)
-    const { data: signInData, error: siErr } = await supabase.auth.signInWithPassword(form);
-    setLoading(false);
-    if (siErr) {
-      toast.success("Admin account created. Please sign in.");
-      setTab("signin");
-      return;
-    }
-    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", signInData.user.id);
-    if (!(roles ?? []).some((r) => r.role === "admin")) {
-      await supabase.auth.signOut();
-      toast.error("Admin role not assigned. Contact support.");
-      return;
-    }
-    toast.success("Admin account created");
-    navigate("/admin", { replace: true });
   };
 
   return (

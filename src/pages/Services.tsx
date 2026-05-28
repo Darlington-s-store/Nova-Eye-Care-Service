@@ -3,19 +3,21 @@ import { Link } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { PageHero } from "@/components/PageHero";
 import { Card } from "@/components/ui/card";
-import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { ArrowRight, Loader2 } from "lucide-react";
-import heroServices from "@/assets/hero-services.jpg";
+import { apiService } from "@/lib/api";
+import heroServices from "@/assets/nova serv.jpeg";
 
 type Service = {
   id: string;
   slug: string;
   name: string;
-  short_description: string;
-  image_url: string;
-  display_order: number;
+  shortDescription: string;
+  imageUrl: string;
+  displayOrder: number;
 };
+
+import { serviceImageMap } from "@/lib/service-images";
 
 const container = {
   hidden: { opacity: 0 },
@@ -38,16 +40,14 @@ const Services = () => {
 
   useEffect(() => {
     const fetchServices = async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any)
-        .from("services")
-        .select("id, slug, name, short_description, image_url, display_order")
-        .order("display_order", { ascending: true });
-      
-      if (!error && data) {
-        setServices(data as Service[]);
+      try {
+        const data = await apiService.services.getAll();
+        setServices(data || []);
+      } catch (err) {
+        console.error("Failed to fetch services:", err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     fetchServices();
@@ -80,7 +80,7 @@ const Services = () => {
                 <Card id={s.slug} className="p-0 overflow-hidden border-orange-50/10 hover:shadow-2xl transition-all duration-500 scroll-mt-24 group h-full flex flex-col rounded-[1.5rem] bg-white">
                   <div className="aspect-[16/10] relative overflow-hidden">
                     <img 
-                      src={s.image_url} 
+                      src={serviceImageMap[s.slug] || s.imageUrl} 
                       alt={s.name} 
                       className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
                       onError={(e) => { e.currentTarget.src = "/placeholder.svg"; }}
@@ -92,7 +92,7 @@ const Services = () => {
                       {s.name}
                     </h2>
                     <p className="text-muted-foreground/80 mb-6 leading-relaxed text-sm md:text-base line-clamp-3 flex-grow">
-                      {s.short_description}
+                      {s.shortDescription}
                     </p>
                     <Link 
                       to={`/book?service=${s.slug}`} 

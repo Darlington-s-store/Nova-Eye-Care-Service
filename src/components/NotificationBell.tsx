@@ -1,20 +1,21 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Bell, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
+import { apiService } from "@/lib/api";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 
 type Notification = {
   id: string;
   title: string;
-  body: string;
-  link: string | null;
-  read: boolean;
-  created_at: string;
+  message: string;
+  type: string;
+  isRead: boolean;
+  createdAt: string;
+  link?: string;
 };
 
 interface Props {
@@ -26,46 +27,40 @@ export const NotificationBell = ({ audience, variant = "default" }: Props) => {
   const [items, setItems] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    let active = true;
-
-    const load = async () => {
-      const { data } = await supabase
-        .from("notifications")
-        .select("id, title, body, link, read, created_at")
-        .eq("audience", audience)
-        .order("created_at", { ascending: false })
-        .limit(20);
-      if (active) setItems((data as Notification[]) ?? []);
-    };
-    load();
-
-    const channelId = `notifications:${audience}-${Date.now()}`;
-    const channel = supabase
-      .channel(channelId)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "notifications", filter: `audience=eq.${audience}` },
-        () => load()
-      )
-      .subscribe();
-
-    return () => {
-      active = false;
-      supabase.removeChannel(channel);
-    };
+  const load = useCallback(async () => {
+    try {
+      const data = audience === "admin" 
+        ? await apiService.notifications.getAdmin()
+        : await apiService.notifications.getMine();
+      setItems(data || []);
+    } catch (err) {
+      console.error("Failed to load notifications", err);
+    }
   }, [audience]);
 
-  const unread = items.filter((n) => !n.read).length;
+  useEffect(() => {
+    load();
+    // Simple polling for real-time feel if needed, but for now just load on mount
+  }, [audience, load]);
+
+  const unread = items.filter((n) => !n.isRead).length;
 
   const markAllRead = async () => {
-    const ids = items.filter((n) => !n.read).map((n) => n.id);
-    if (!ids.length) return;
-    await supabase.from("notifications").update({ read: true }).in("id", ids);
+    try {
+      await apiService.notifications.markAllAsRead();
+      load();
+    } catch (err) {
+      console.error("Failed to mark all read", err);
+    }
   };
 
   const markRead = async (id: string) => {
-    await supabase.from("notifications").update({ read: true }).eq("id", id);
+    try {
+      await apiService.notifications.markAsRead(id);
+      load();
+    } catch (err) {
+      console.error("Failed to mark read", err);
+    }
   };
 
   const triggerClass =
@@ -102,16 +97,16 @@ export const NotificationBell = ({ audience, variant = "default" }: Props) => {
               {items.map((n) => {
                 const inner = (
                   <div
-                    className={`p-3 hover:bg-muted/50 transition-colors ${!n.read ? "bg-primary-soft/40" : ""}`}
-                    onClick={() => !n.read && markRead(n.id)}
+                    className={`p-3 hover:bg-muted/50 transition-colors ${!n.isRead ? "bg-primary-soft/40" : ""}`}
+                    onClick={() => !n.isRead && markRead(n.id)}
                   >
                     <div className="flex items-start justify-between gap-2 mb-1">
                       <p className="font-medium text-sm leading-tight">{n.title}</p>
-                      {!n.read && <Badge variant="secondary" className="bg-primary text-primary-foreground text-[10px] h-4 px-1.5">new</Badge>}
+                      {!n.isRead && <Badge variant="secondary" className="bg-primary text-primary-foreground text-[10px] h-4 px-1.5">new</Badge>}
                     </div>
-                    <p className="text-xs text-muted-foreground line-clamp-2">{n.body}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{n.message}</p>
                     <p className="text-[10px] text-muted-foreground mt-1">
-                      {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
+                      {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
                     </p>
                   </div>
                 );
@@ -128,6 +123,15 @@ export const NotificationBell = ({ audience, variant = "default" }: Props) => {
             </ul>
           )}
         </ScrollArea>
+        <div className="p-2 border-t text-center bg-slate-50/50">
+          <Link 
+            to={audience === "admin" ? "/admin/notifications" : "/notifications"} 
+            onClick={() => setOpen(false)}
+            className="text-xs font-bold text-primary hover:text-primary/80 transition-colors block py-1"
+          >
+            {audience === "admin" ? "View all activity feed →" : "View all notifications →"}
+          </Link>
+        </div>
       </PopoverContent>
     </Popover>
   );

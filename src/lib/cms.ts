@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { apiService } from "./api";
 import { CLINIC } from "./clinic";
 
 export type HeroContent = {
@@ -6,6 +6,7 @@ export type HeroContent = {
   subheading: string;
   cta1: string;
   cta2: string;
+  backgroundImage?: string;
 };
 
 export type TeamMember = {
@@ -55,18 +56,13 @@ export const getCMSContent = async <T = unknown>(section: string): Promise<T | n
     console.warn("CMS Cache read error", e);
   }
 
-  // Fetch from Supabase
+  // Fetch from Backend
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase as any)
-      .from("cms_content")
-      .select("content_json")
-      .eq("section_key", section)
-      .maybeSingle();
-
-    if (error) throw error;
+    const data = await apiService.cms.getSection(section);
+    
     if (data) {
-      const content = data.content_json;
+      const record = data as Record<string, unknown>;
+      const content = (record.contentJson || data) as T;
       // Save to cache
       localStorage.setItem(`${CACHE_KEY}_${section}`, JSON.stringify({
         data: content,
@@ -91,7 +87,7 @@ export const getClinicContact = async (): Promise<ClinicContact> => {
     phone1: CLINIC.phones[0],
     phone2: CLINIC.phones[1] || "",
     address: CLINIC.address,
-    mapQuery: "Kasapreko PLC Abuakwa Factory",
+    mapQuery: "Kan Royal Filling Station Abuakwa",
     tagline: CLINIC.tagline
   };
 };

@@ -20,6 +20,12 @@ export default {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        brand: {
+          dominant: "#003b5c",
+          accent: "#6a8a9d",
+          additional: "#aebac4",
+          neutral: "#f4f6f8",
+        },
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
@@ -60,6 +66,10 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+      },
+      backgroundImage: {
+        'hero-gradient': 'linear-gradient(to bottom, rgba(0, 59, 92, 0.95), rgba(0, 59, 92, 0.75))',
+        'soft-gradient': 'linear-gradient(to bottom right, rgba(106, 138, 157, 0.1), rgba(0, 59, 92, 0.05))',
       },
       borderRadius: {
         lg: "var(--radius)",

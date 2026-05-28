@@ -6,56 +6,54 @@
 
 @layer base {
   :root {
-    /* NOVA Eye Care — Medical Blue palette */
+    /* NOVA Eye Care — Corporate Brand palette */
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 201 100% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 201 100% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 201 100% 10%;
 
-    /* Premium Clinic Blue #0066CC */
-    --primary: 210 100% 40%;
-    --primary-foreground: 210 40% 98%;
-    --primary-glow: 210 100% 55%;
-    --primary-soft: 210 100% 97%;
+    /* Dominant Navy: #003b5c */
+    --primary: 201 100% 18%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 201 80% 35%;
+    --primary-soft: 201 35% 95%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Accent Slate-Grey: #6a8a9d */
+    --secondary: 202 23% 52%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Additional Lighter Grey-Blue: #aebac4 */
+    --muted: 207 18% 72%;
+    --muted-foreground: 201 100% 18%;
 
-    --accent: 210 100% 95%;
-    --accent-foreground: 210 100% 30%;
+    --accent: 202 23% 52%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 210 100% 40%;
+    /* Supporting Neutral borders and ring */
+    --border: 207 18% 85%;
+    --input: 207 18% 85%;
+    --ring: 201 100% 18%;
 
-    --radius: 1rem;
+    --radius: 0.75rem;
 
-    /* Brand gradients & shadows */
-    --gradient-hero: linear-gradient(135deg, hsl(210 100% 35%) 0%, hsl(210 100% 45%) 60%, hsl(200 100% 50%) 100%);
-    --gradient-soft: linear-gradient(180deg, hsl(210 100% 98%) 0%, hsl(0 0% 100%) 100%);
-    --shadow-card: 0 4px 20px -4px hsl(210 100% 40% / 0.10);
-    --shadow-elegant: 0 20px 50px -20px hsl(210 100% 40% / 0.25);
-    --shadow-glow: 0 0 40px hsl(210 100% 50% / 0.35);
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 222.2 47.4% 11.2%;
-    --sidebar-primary: 210 100% 40%;
-    --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 210 100% 97%;
-    --sidebar-accent-foreground: 210 100% 35%;
-    --sidebar-border: 214.3 31.8% 91.4%;
-    --sidebar-ring: 210 100% 40%;
+    /* Standard shadows */
+    --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 201 100% 18%;
+    --sidebar-primary: 201 100% 18%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 201 35% 95%;
+    --sidebar-accent-foreground: 201 100% 18%;
+    --sidebar-border: 207 18% 85%;
+    --sidebar-ring: 201 100% 18%;
   }
 
   .dark {
@@ -96,17 +94,25 @@
     @apply bg-background text-foreground;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
+    font-size: 16px; /* Increased base font size */
   }
   h1, h2, h3, h4 { font-family: 'Inter', sans-serif; letter-spacing: -0.02em; }
 }
 
+@layer components {
+  .admin-header {
+    @apply h-20 sticky top-0 z-30 border-b border-border bg-white/80 backdrop-blur-md flex items-center justify-between px-8 shadow-sm;
+  }
+  .admin-sidebar {
+    @apply w-72 border-r border-border bg-sidebar-background transition-all duration-300;
+  }
+  .admin-nav-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl text-[15px] font-semibold transition-all duration-200;
+  }
+}
+
 @layer utilities {
-  .bg-hero-gradient { background: var(--gradient-hero); }
-  .bg-soft-gradient { background: var(--gradient-soft); }
   .shadow-card { box-shadow: var(--shadow-card); }
-  .shadow-elegant { box-shadow: var(--shadow-elegant); }
-  .shadow-glow { box-shadow: var(--shadow-glow); }
-  .transition-smooth { transition: var(--transition-smooth); }
 }
 
 /* Chat typing dots */

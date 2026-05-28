@@ -10,7 +10,7 @@ import { Phone, Mail, Clock, MapPin, Send, CheckCircle2, MessageSquare } from "l
 import { toast } from "sonner";
 import { PageHero } from "@/components/PageHero";
 import { motion, AnimatePresence } from "framer-motion";
-import heroContact from "@/assets/hero-contact.jpg";
+import heroContact from "@/assets/no.jpeg";
 import { getClinicContact, ClinicContact, getCMSContent } from "@/lib/cms";
 
 const Contact = () => {
@@ -167,7 +167,7 @@ const Contact = () => {
             <Card className="overflow-hidden border-border/60 rounded-3xl shadow-elegant h-[400px] relative z-0">
               <iframe
                 title="NOVA Eye Care Location"
-                src={`https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3962.48422471!2d-1.72472!3d6.69472!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNsKwNDEnNDEuMCJOIDHCsDQzJzI5LjAiVw!5e0!3m2!1sen!2sgh!4v1700000000000&q=${encodeURIComponent(clinic?.mapQuery || "Kasapreko PLC Abuakwa Factory")}`}
+                src={`https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3962.48422471!2d-1.72472!3d6.69472!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNsKwNDEnNDEuMCJOIDHCsDQzJzI5LjAiVw!5e0!3m2!1sen!2sgh!4v1700000000000&q=${encodeURIComponent(clinic?.mapQuery || "Kan Royal Filling Station Abuakwa")}`}
                 width="100%"
                 height="100%"
                 style={{ border: 0, filter: "grayscale(0.2) contrast(1.1) brightness(0.95)" }}
@@ -181,7 +181,7 @@ const Contact = () => {
                   </div>
                   <div>
                     <div className="text-xs font-bold text-muted-foreground uppercase tracking-tight">Visit Us</div>
-                    <div className="text-sm font-bold text-foreground line-clamp-1">{clinic?.mapQuery || "Opposite Kasapreko, Abuakwa"}</div>
+                    <div className="text-sm font-bold text-foreground line-clamp-1">{clinic?.mapQuery || "Kan Royal Filling Station, Abuakwa"}</div>
                   </div>
                 </div>
                 <Button size="sm" variant="outline" className="rounded-lg h-9 pointer-events-auto shadow-sm" onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clinic?.mapQuery || clinic?.address || CLINIC.address)}`, '_blank')}>

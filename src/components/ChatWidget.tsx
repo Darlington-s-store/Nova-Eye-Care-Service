@@ -70,8 +70,14 @@ export const ChatWidget = () => {
       });
 
       if (resp.status === 429) { setError("Too many requests. Please try again in a moment."); setLoading(false); return; }
-      if (resp.status === 402) { setError("AI service unavailable right now. Please call 0544172089."); setLoading(false); return; }
-      if (!resp.ok || !resp.body) throw new Error("Chat failed");
+      if (resp.status === 402) { setError("AI service unavailable right now. Please call +233544172089."); setLoading(false); return; }
+      
+      if (!resp.ok) {
+        const errorData = await resp.json().catch(() => ({}));
+        throw new Error(errorData.error || `Chat failed (Status: ${resp.status})`);
+      }
+      
+      if (!resp.body) throw new Error("No response body from chat service");
 
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
@@ -102,7 +108,8 @@ export const ChatWidget = () => {
       }
     } catch (e) {
       console.error(e);
-      setError("Connection issue. Please try again or call 0544172089.");
+      const msg = e instanceof Error ? e.message : "Connection issue.";
+      setError(`${msg} Please try again or call +233544172089.`);
     } finally {
       setLoading(false);
     }

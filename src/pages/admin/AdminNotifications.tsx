@@ -3,7 +3,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { apiService } from "@/lib/api";
 import { Loader2, Bell, Check } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
@@ -11,10 +11,10 @@ import { formatDistanceToNow } from "date-fns";
 type N = {
   id: string;
   title: string;
-  body: string;
-  link: string | null;
-  read: boolean;
-  created_at: string;
+  message: string;
+  link?: string | null;
+  isRead: boolean;
+  createdAt: string;
 };
 
 const AdminNotifications = () => {
@@ -22,21 +22,27 @@ const AdminNotifications = () => {
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
-    const { data } = await supabase.from("notifications").select("*").eq("audience", "admin").order("created_at", { ascending: false }).limit(100);
-    setItems((data as N[]) ?? []);
-    setLoading(false);
+    try {
+      const data = await apiService.notifications.getAdmin();
+      setItems(data || []);
+    } catch (err) {
+      console.error("Failed to load notifications", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     load();
-    const ch = supabase.channel(`admin-notifs-${crypto.randomUUID()}`).on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: "audience=eq.admin" }, load).subscribe();
-    return () => { supabase.removeChannel(ch); };
   }, []);
 
   const markAllRead = async () => {
-    const ids = items.filter((n) => !n.read).map((n) => n.id);
-    if (!ids.length) return;
-    await supabase.from("notifications").update({ read: true }).in("id", ids);
+    try {
+      await apiService.notifications.markAllAsRead();
+      load();
+    } catch (err) {
+      console.error("Failed to mark all read", err);
+    }
   };
 
   return (
@@ -52,16 +58,16 @@ const AdminNotifications = () => {
         <div className="space-y-2">
           {items.map((n) => {
             const inner = (
-              <Card className={`p-4 hover:bg-muted/30 transition-smooth ${!n.read ? "border-primary/40 bg-muted/50" : ""}`}>
+              <Card className={`p-4 hover:bg-muted/30 transition-smooth ${!n.isRead ? "border-primary/40 bg-muted/50" : ""}`}>
                 <div className="flex justify-between items-start gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <p className="font-semibold">{n.title}</p>
-                      {!n.read && <Badge className="bg-primary text-primary-foreground text-[10px]">new</Badge>}
+                      {!n.isRead && <Badge className="bg-primary text-primary-foreground text-[10px]">new</Badge>}
                     </div>
-                    <p className="text-sm text-muted-foreground">{n.body}</p>
+                    <p className="text-sm text-muted-foreground">{n.message}</p>
                   </div>
-                  <p className="text-xs text-muted-foreground shrink-0">{formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}</p>
+                  <p className="text-xs text-muted-foreground shrink-0">{formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}</p>
                 </div>
               </Card>
             );

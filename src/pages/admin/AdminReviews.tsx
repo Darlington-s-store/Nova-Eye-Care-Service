@@ -3,20 +3,9 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
-import { notifyUser } from "@/lib/notify";
+import { apiService, Review } from "@/lib/api";
 import { toast } from "sonner";
 import { Loader2, Star, Check, X, Trash2 } from "lucide-react";
-
-type Review = {
-  id: string;
-  user_id: string | null;
-  author_name: string;
-  rating: number;
-  content: string;
-  approved: boolean;
-  created_at: string;
-};
 
 const AdminReviews = () => {
   const [items, setItems] = useState<Review[]>([]);
@@ -24,38 +13,47 @@ const AdminReviews = () => {
 
   const load = async () => {
     setLoading(true);
-    const { data } = await supabase.from("reviews").select("*").order("created_at", { ascending: false });
-    setItems((data as Review[]) ?? []);
-    setLoading(false);
+    try {
+      const data = await apiService.reviews.getAll();
+      setItems(data || []);
+    } catch (err) {
+      toast.error("Failed to load reviews");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { load(); }, []);
 
   const approve = async (r: Review) => {
-    const { error } = await supabase.from("reviews").update({ approved: true }).eq("id", r.id);
-    if (error) { toast.error(error.message); return; }
-    if (r.user_id) {
-      await notifyUser(r.user_id, {
-        title: "Your review is live!",
-        body: "Thanks for sharing your experience. Your review now appears on the homepage.",
-        link: "/reviews",
-      });
+    try {
+      await apiService.reviews.approve(r.id);
+      toast.success("Review approved");
+      load();
+    } catch (err) {
+      toast.error("Failed to approve review");
     }
-    toast.success("Review approved");
-    load();
   };
 
   const unapprove = async (r: Review) => {
-    await supabase.from("reviews").update({ approved: false }).eq("id", r.id);
-    toast.success("Review hidden");
-    load();
+    try {
+      await apiService.reviews.unapprove(r.id);
+      toast.success("Review hidden");
+      load();
+    } catch (err) {
+      toast.error("Failed to hide review");
+    }
   };
 
   const remove = async (id: string) => {
     if (!confirm("Delete this review?")) return;
-    await supabase.from("reviews").delete().eq("id", id);
-    toast.success("Deleted");
-    load();
+    try {
+      await apiService.reviews.delete(id);
+      toast.success("Deleted");
+      load();
+    } catch (err) {
+      toast.error("Failed to delete review");
+    }
   };
 
   const pending = items.filter((r) => !r.approved);
@@ -100,7 +98,7 @@ const ReviewCard = ({ r, approved, onApprove, onUnapprove, onRemove }: {
     <div className="flex flex-wrap justify-between gap-4 items-start">
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 mb-1">
-          <p className="font-semibold">{r.author_name}</p>
+          <p className="font-semibold">{r.authorName}</p>
           <div className="flex">
             {[1, 2, 3, 4, 5].map((i) => (
               <Star key={i} className={`h-3.5 w-3.5 ${i <= r.rating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/30"}`} />
@@ -109,7 +107,7 @@ const ReviewCard = ({ r, approved, onApprove, onUnapprove, onRemove }: {
           {approved && <Badge variant="secondary" className="bg-green-100 text-green-900">Published</Badge>}
         </div>
         <p className="text-sm text-foreground/85 mb-1">{r.content}</p>
-        <p className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString("en-GB")}</p>
+        <p className="text-xs text-muted-foreground">{new Date(r.createdAt).toLocaleString("en-GB")}</p>
       </div>
       <div className="flex gap-2 shrink-0">
         {!approved && onApprove && <Button size="sm" onClick={() => onApprove(r)}><Check className="h-4 w-4" /> Approve</Button>}

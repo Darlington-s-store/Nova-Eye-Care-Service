@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
+import { apiService } from "@/lib/api";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2, Save, User as UserIcon, Mail, Phone, ArrowLeft, Globe } from "lucide-react";
@@ -12,42 +12,52 @@ import { Link } from "react-router-dom";
 
 const Profile = () => {
   const { user } = useAuth();
-  const [form, setForm] = useState({ full_name: "", phone: "", email: "", nationality: "" });
+  const [form, setForm] = useState({ fullName: "", phone: "", email: "", nationality: "" });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
-    (async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: profile } = await (supabase.from("profiles") as any)
-        .select("full_name, phone, email, nationality")
-        .eq("id", user.id)
-        .single();
-      if (profile) setForm({
-        full_name: profile.full_name || "",
-        phone: profile.phone || "",
-        email: user.email || "",
-        nationality: (profile as Record<string, string>).nationality || "",
-      });
-      setLoading(false);
-    })();
-  }, [user]);
+    const fetchProfile = async () => {
+      try {
+        const profile = await apiService.profiles.getMe();
+        if (profile) {
+          setForm({
+            fullName: profile.fullName || "",
+            phone: profile.phone || "",
+            email: profile.email || "",
+            nationality: profile.nationality || "",
+          });
+        }
+      } catch (err) {
+        console.error("Failed to fetch profile:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
 
   const onSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
-    if (form.full_name.trim().length < 2) { toast.error("Please enter your full name"); return; }
+    if (form.fullName.trim().length < 2) { 
+      toast.error("Please enter your full name"); 
+      return; 
+    }
+    
     setSaving(true);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase.from("profiles") as any).update({
-      full_name: form.full_name.trim(),
-      phone: form.phone.trim(),
-      nationality: form.nationality.trim(),
-    }).eq("id", user.id);
-    setSaving(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Profile updated");
+    try {
+      await apiService.profiles.updateMe({
+        fullName: form.fullName.trim(),
+        phone: form.phone.trim(),
+        nationality: form.nationality.trim(),
+      });
+      toast.success("Profile updated");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update profile");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -69,11 +79,11 @@ const Profile = () => {
           ) : (
             <form onSubmit={onSave} className="space-y-5">
               <div>
-                <Label htmlFor="full_name">Full Name</Label>
+                <Label htmlFor="fullName">Full Name</Label>
                 <div className="relative mt-1.5">
                   <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input id="full_name" value={form.full_name}
-                    onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+                  <Input id="fullName" value={form.fullName}
+                    onChange={(e) => setForm({ ...form, fullName: e.target.value })}
                     className="pl-9 h-11" />
                 </div>
               </div>

@@ -3,7 +3,7 @@ import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { supabase } from "@/integrations/supabase/client";
+import { apiService } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { 
@@ -22,75 +22,54 @@ import {
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { PageHero } from "@/components/PageHero";
-import heroAuth from "@/assets/hero-auth.jpg";
+import heroServices from "@/assets/nova serv.jpeg";
 
 export default function MedicalHistoryPage() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [history, setHistory] = useState({
-    ocular_history: "",
-    systemic_conditions: "",
-    current_medications: "",
-    family_eye_history: "",
+    ocularHistory: "",
+    systemicConditions: "",
+    currentMedications: "",
+    familyEyeHistory: "",
     allergies: ""
   });
 
   const fetchHistory = useCallback(async () => {
-    if (!user) return;
-    const { data, error } = await (supabase as unknown as { 
-      from: (t: string) => { 
-        select: (s: string) => { 
-          eq: (k: string, v: string) => { 
-            maybeSingle: () => Promise<{data: Record<string, unknown> | null, error: unknown}> 
-          } 
-        } 
-      } 
-    }).from("patient_medical_history")
-      .select("*")
-      .eq("patient_id", user.id)
-      .maybeSingle();
-
-    if (error) {
+    try {
+      const data = await apiService.medicalHistory.get();
+      if (data) {
+        setHistory({
+          ocularHistory: data.ocularHistory || "",
+          systemicConditions: data.systemicConditions || "",
+          currentMedications: data.currentMedications || "",
+          familyEyeHistory: data.familyEyeHistory || "",
+          allergies: data.allergies || "",
+        });
+      }
+    } catch (err) {
+      console.error("Failed to fetch medical history:", err);
       toast.error("Could not load medical history");
-    } else if (data) {
-      const d = data as Record<string, string | null>;
-      setHistory({
-        ocular_history: d.ocular_history || "",
-        systemic_conditions: d.systemic_conditions || "",
-        current_medications: d.current_medications || "",
-        family_eye_history: d.family_eye_history || "",
-        allergies: d.allergies || "",
-      });
+    } finally {
+      setFetching(false);
     }
-    setFetching(false);
-  }, [user]);
+  }, []);
 
   useEffect(() => {
-    if (user) fetchHistory();
-  }, [user, fetchHistory]);
+    fetchHistory();
+  }, [fetchHistory]);
 
   const handleSave = async () => {
-    if (!user) return;
     setLoading(true);
-    const { error } = await (supabase as unknown as { 
-      from: (t: string) => { 
-        upsert: (d: Record<string, unknown>, o: { onConflict: string }) => Promise<{error: unknown}> 
-      } 
-    }).from("patient_medical_history").upsert({
-      patient_id: user.id,
-      ...history,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'patient_id' });
-
-    if (error) {
-      toast.error((error as { message?: string }).message || "Could not save medical history");
-      setLoading(false);
-      return;
-    } else {
+    try {
+      await apiService.medicalHistory.update(history);
       toast.success("Medical history updated successfully");
+    } catch (error) {
+      toast.error((error as { response?: { data?: { message?: string } } }).response?.data?.message || "Could not save medical history");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const containerVariants = {
@@ -125,7 +104,7 @@ export default function MedicalHistoryPage() {
   return (
     <Layout>
       <PageHero
-        image={heroAuth}
+        image={heroServices}
         eyebrow="Clinical Profile"
         title="Medical History"
         subtitle="Help our specialists provide precise care by keeping your health information up to date."
@@ -138,7 +117,7 @@ export default function MedicalHistoryPage() {
           className="mb-8"
         >
           <Button asChild variant="ghost" className="rounded-xl hover:bg-primary-soft hover:text-primary transition-all">
-            <Link to="/dashboard" className="gap-2 font-bold"><ChevronLeft className="h-4 w-4" /> Back to Dashboard</Link>
+            <Link to="/dashboard" className="gap-2 font-bold"><ChevronLeft className="h-4 w-4" /> Back to Patient Portal</Link>
           </Button>
         </motion.div>
 
@@ -159,8 +138,8 @@ export default function MedicalHistoryPage() {
                     icon={History} 
                     title="Ocular History" 
                     description="Previous eye surgeries, trauma, or diagnosed conditions."
-                    value={history.ocular_history}
-                    onChange={(v) => setHistory({...history, ocular_history: v})}
+                    value={history.ocularHistory}
+                    onChange={(v) => setHistory({...history, ocularHistory: v})}
                     placeholder="e.g. Previous laser surgery in 2018, history of glaucoma in right eye..."
                     variants={itemVariants}
                   />
@@ -169,8 +148,8 @@ export default function MedicalHistoryPage() {
                     icon={Stethoscope} 
                     title="Systemic Conditions" 
                     description="Chronic health issues (diabetes, hypertension, heart disease)."
-                    value={history.systemic_conditions}
-                    onChange={(v) => setHistory({...history, systemic_conditions: v})}
+                    value={history.systemicConditions}
+                    onChange={(v) => setHistory({...history, systemicConditions: v})}
                     placeholder="e.g. Type 2 Diabetes for 5 years, Hypertension well-managed..."
                     variants={itemVariants}
                   />
@@ -179,8 +158,8 @@ export default function MedicalHistoryPage() {
                     icon={Pill} 
                     title="Current Medications" 
                     description="Eye drops or systemic prescriptions you are taking."
-                    value={history.current_medications}
-                    onChange={(v) => setHistory({...history, current_medications: v})}
+                    value={history.currentMedications}
+                    onChange={(v) => setHistory({...history, currentMedications: v})}
                     placeholder="e.g. Metformin 500mg, Timolol eye drops (Daily)..."
                     variants={itemVariants}
                   />
@@ -199,8 +178,8 @@ export default function MedicalHistoryPage() {
                     icon={Users2} 
                     title="Family Eye History" 
                     description="Known vision problems in your immediate family."
-                    value={history.family_eye_history}
-                    onChange={(v) => setHistory({...history, family_eye_history: v})}
+                    value={history.familyEyeHistory}
+                    onChange={(v) => setHistory({...history, familyEyeHistory: v})}
                     placeholder="e.g. Father has macular degeneration, Sister has early onset cataracts..."
                     variants={itemVariants}
                   />

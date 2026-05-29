@@ -41,6 +41,18 @@ export const Navbar = () => {
 
   useEffect(() => { setOpen(false); }, [location.pathname]);
 
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
   const handleLogout = async () => {
     try {
       apiService.auth.logout();
@@ -183,23 +195,24 @@ export const Navbar = () => {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="lg:hidden border-t border-border bg-background/95 backdrop-blur-xl overflow-hidden"
+            className="lg:hidden border-t border-border bg-background/95 backdrop-blur-xl overflow-y-auto max-h-[calc(100vh-4.5rem)] shadow-lg"
           >
             <motion.div 
               initial="hidden"
               animate="show"
               variants={{
-                show: { transition: { staggerChildren: 0.1 } }
+                show: { transition: { staggerChildren: 0.05 } }
               }}
-              className="container py-6 flex flex-col gap-2"
+              className="container py-6 flex flex-col gap-1.5"
             >
               {links.map((l) => (
                 <motion.div key={l.to} variants={{ hidden: { x: -20, opacity: 0 }, show: { x: 0, opacity: 1 } }}>
                   <NavLink
                     to={l.to}
                     end={l.to === "/"}
+                    onClick={() => setOpen(false)}
                     className={({ isActive }) =>
-                      `px-4 py-3.5 text-base font-bold rounded-xl transition-all ${
+                      `block w-full px-4 py-3 text-base font-bold rounded-xl transition-all duration-300 ${
                         isActive ? "text-primary bg-primary-soft shadow-inner" : "text-foreground/80 hover:bg-primary-soft"
                       }`
                     }
@@ -208,7 +221,7 @@ export const Navbar = () => {
                   </NavLink>
                 </motion.div>
               ))}
-              <motion.div variants={{ hidden: { y: 20, opacity: 0 }, show: { y: 0, opacity: 1 } }} className="flex flex-col gap-3 pt-4">
+              <motion.div variants={{ hidden: { y: 20, opacity: 0 }, show: { y: 0, opacity: 1 } }} className="flex flex-col gap-3 pt-4 border-t border-border/40 mt-2">
                 {session ? (
                   <>
                     {isAdmin && (
@@ -231,7 +244,7 @@ export const Navbar = () => {
                         My Profile
                       </Link>
                     </Button>
-                    <div className="px-4 py-2 border-y border-border/40 bg-muted/20 -mx-1 my-1">
+                    <div className="px-4 py-2.5 border-y border-border/40 bg-muted/20 rounded-xl my-1">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Alerts</span>
                         <NotificationBell audience="user" />

@@ -167,11 +167,12 @@ const Contact = () => {
             <Card className="overflow-hidden border-border/60 rounded-3xl shadow-elegant h-[400px] relative z-0">
               <iframe
                 title="NOVA Eye Care Location"
-                src={`https://maps.google.com/maps?q=${encodeURIComponent(clinic?.address || CLINIC.address)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                src={`https://maps.google.com/maps?q=${encodeURIComponent(clinic?.mapQuery || "AH-1192-7988")}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
                 width="100%"
                 height="100%"
                 style={{ border: 0, filter: "grayscale(0.2) contrast(1.1) brightness(0.95)" }}
                 loading="lazy"
+                allowFullScreen
                 referrerPolicy="no-referrer-when-downgrade"
               />
               <div className="absolute bottom-4 left-4 right-4 bg-background/85 backdrop-blur-lg p-4 rounded-2xl border border-border/50 shadow-xl flex items-center justify-between pointer-events-auto md:translate-y-20 md:group-hover:translate-y-0 translate-y-0 transition-all duration-500 ease-out z-10">

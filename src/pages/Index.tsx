@@ -207,11 +207,12 @@ const Home = () => {
           <div className="h-[400px] rounded-xl overflow-hidden border border-slate-200 shadow-sm">
             <iframe
               title="Location"
-              src={`https://maps.google.com/maps?q=${encodeURIComponent(clinic?.address || CLINIC.address)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+              src={`https://maps.google.com/maps?q=${encodeURIComponent(clinic?.mapQuery || "AH-1192-7988")}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
               width="100%"
               height="100%"
               style={{ border: 0 }}
               loading="lazy"
+              allowFullScreen
             />
           </div>
         </div>

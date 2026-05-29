@@ -11,11 +11,22 @@ const getKnowledge = async (req, res) => {
 };
 
 const addKnowledge = async (req, res) => {
-  const { category, question, answer, keywords } = req.body;
+  const { id, category, question, answer, active } = req.body;
   try {
+    if (id) {
+      // Upsert: update if ID exists
+      const result = await db.query(
+        'UPDATE chatbot_knowledge SET category = $1, question = $2, answer = $3, active = $4, updated_at = CURRENT_TIMESTAMP WHERE id = $5 RETURNING *',
+        [category, question, answer, active ?? true, id]
+      );
+      if (result.rows.length > 0) {
+        return res.json(result.rows[0]);
+      }
+    }
+    // Otherwise, insert new row
     const result = await db.query(
-      'INSERT INTO chatbot_knowledge (category, question, answer, keywords) VALUES ($1, $2, $3, $4) RETURNING *',
-      [category, question, answer, keywords]
+      'INSERT INTO chatbot_knowledge (category, question, answer, active) VALUES ($1, $2, $3, $4) RETURNING *',
+      [category, question, answer, active ?? true]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -26,11 +37,26 @@ const addKnowledge = async (req, res) => {
 
 const updateKnowledge = async (req, res) => {
   const { id } = req.params;
-  const { category, question, answer, keywords } = req.body;
+  const { category, question, answer, active } = req.body;
   try {
     const result = await db.query(
-      'UPDATE chatbot_knowledge SET category = $1, question = $2, answer = $3, keywords = $4, updated_at = CURRENT_TIMESTAMP WHERE id = $5 RETURNING *',
-      [category, question, answer, keywords, id]
+      'UPDATE chatbot_knowledge SET category = $1, question = $2, answer = $3, active = $4, updated_at = CURRENT_TIMESTAMP WHERE id = $5 RETURNING *',
+      [category, question, answer, active ?? true, id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ message: 'Knowledge base entry not found' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server error');
+  }
+};
+
+const toggleKnowledge = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await db.query(
+      'UPDATE chatbot_knowledge SET active = NOT active, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *',
+      [id]
     );
     if (result.rows.length === 0) return res.status(404).json({ message: 'Knowledge base entry not found' });
     res.json(result.rows[0]);
@@ -52,4 +78,4 @@ const deleteKnowledge = async (req, res) => {
   }
 };
 
-module.exports = { getKnowledge, addKnowledge, updateKnowledge, deleteKnowledge };
+module.exports = { getKnowledge, addKnowledge, updateKnowledge, toggleKnowledge, deleteKnowledge };

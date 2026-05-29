@@ -167,24 +167,24 @@ const Contact = () => {
             <Card className="overflow-hidden border-border/60 rounded-3xl shadow-elegant h-[400px] relative z-0">
               <iframe
                 title="NOVA Eye Care Location"
-                src={`https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3962.48422471!2d-1.72472!3d6.69472!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNsKwNDEnNDEuMCJOIDHCsDQzJzI5LjAiVw!5e0!3m2!1sen!2sgh!4v1700000000000&q=${encodeURIComponent(clinic?.mapQuery || "Kan Royal Filling Station Abuakwa")}`}
+                src={`https://maps.google.com/maps?q=${encodeURIComponent(clinic?.address || CLINIC.address)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
                 width="100%"
                 height="100%"
                 style={{ border: 0, filter: "grayscale(0.2) contrast(1.1) brightness(0.95)" }}
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
               />
-              <div className="absolute bottom-4 left-4 right-4 bg-white/90 backdrop-blur-md p-4 rounded-2xl border border-white/20 shadow-xl flex items-center justify-between pointer-events-none group-hover:translate-y-0 translate-y-20 transition-transform duration-500">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center text-white">
-                    <MapPin className="h-5 w-5" />
+              <div className="absolute bottom-4 left-4 right-4 bg-background/85 backdrop-blur-lg p-4 rounded-2xl border border-border/50 shadow-xl flex items-center justify-between pointer-events-auto md:translate-y-20 md:group-hover:translate-y-0 translate-y-0 transition-all duration-500 ease-out z-10">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-sm shrink-0">
+                    <MapPin className="h-5 w-5 animate-bounce" style={{ animationDuration: '3s' }} />
                   </div>
-                  <div>
-                    <div className="text-xs font-bold text-muted-foreground uppercase tracking-tight">Visit Us</div>
+                  <div className="min-w-0">
+                    <div className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-widest">Visit Us</div>
                     <div className="text-sm font-bold text-foreground line-clamp-1">{clinic?.mapQuery || "Kan Royal Filling Station, Abuakwa"}</div>
                   </div>
                 </div>
-                <Button size="sm" variant="outline" className="rounded-lg h-9 pointer-events-auto shadow-sm" onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clinic?.mapQuery || clinic?.address || CLINIC.address)}`, '_blank')}>
+                <Button size="default" variant="outline" className="rounded-xl h-11 px-5 pointer-events-auto shadow-sm font-bold border-primary/20 hover:bg-primary hover:text-primary-foreground transition-all duration-300 shrink-0" onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clinic?.mapQuery || clinic?.address || CLINIC.address)}`, '_blank')}>
                   Get Directions
                 </Button>
               </div>

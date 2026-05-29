@@ -1,11 +1,15 @@
-const { Pool } = require('pg');
+const { Pool, neonConfig } = require('@neondatabase/serverless');
+const ws = require('ws');
 require('dotenv').config();
+
+// Configure Neon to use WebSockets in Node.js (bypasses port 5432 blocking/firewalls)
+neonConfig.webSocketConstructor = ws;
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false // Required for Neon and many hosted Postgres providers
-  }
+  connectionTimeoutMillis: 30000, // 30s connection timeout (Neon cold-starts can be slow)
+  idleTimeoutMillis: 30000,       // 30s idle timeout
+  max: 10                          // max pool size
 });
 
 pool.on('connect', () => {
@@ -14,10 +18,10 @@ pool.on('connect', () => {
 
 pool.on('error', (err) => {
   console.error('Unexpected error on idle client', err);
-  process.exit(-1);
 });
 
 module.exports = {
   query: (text, params) => pool.query(text, params),
   pool
 };
+

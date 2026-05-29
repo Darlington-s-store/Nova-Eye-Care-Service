@@ -54,6 +54,7 @@ const initializeDatabase = async () => {
       CREATE TABLE IF NOT EXISTS profiles (
         id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
         full_name TEXT,
+        email TEXT,
         phone TEXT,
         nationality TEXT,
         gender TEXT,

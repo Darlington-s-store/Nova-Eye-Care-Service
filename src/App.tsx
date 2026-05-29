@@ -45,6 +45,17 @@ const MaintenanceManager = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
 
   useEffect(() => {
+    // Safety timeout: render the app after 5s even if the settings request hangs
+    const timeout = setTimeout(() => {
+      setMaintenance(prev => {
+        if (prev === null) {
+          console.warn("Settings check timed out — rendering app normally");
+          return false;
+        }
+        return prev;
+      });
+    }, 5000);
+
     const check = async () => {
       try {
         const data = await apiService.settings.get();
@@ -61,6 +72,8 @@ const MaintenanceManager = ({ children }: { children: React.ReactNode }) => {
       }
     };
     check();
+
+    return () => clearTimeout(timeout);
   }, []);
 
   if (maintenance === null) return null;

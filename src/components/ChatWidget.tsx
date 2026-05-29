@@ -7,8 +7,7 @@ import { apiService } from "@/lib/api";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
-const PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+const CHAT_URL = `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/chatbot/chat`;
 
 const INITIAL_GREETING: Msg = {
   role: "assistant",
@@ -80,7 +79,6 @@ export const ChatWidget = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${PUBLISHABLE_KEY}`,
         },
         body: JSON.stringify({ messages: apiMessages }),
       });

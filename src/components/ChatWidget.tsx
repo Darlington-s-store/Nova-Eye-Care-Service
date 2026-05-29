@@ -3,6 +3,7 @@ import { MessageCircle, X, Send, CalendarPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { apiService } from "@/lib/api";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -24,6 +25,20 @@ export const ChatWidget = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { pathname } = window.location;
+  const [enabled, setEnabled] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkSettings = async () => {
+      try {
+        const settings = await apiService.settings.get();
+        setEnabled(settings ? settings.chatbotEnabled !== false : true);
+      } catch (err) {
+        console.error("Failed to check if chatbot is enabled:", err);
+        setEnabled(true);
+      }
+    };
+    checkSettings();
+  }, []);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -35,6 +50,7 @@ export const ChatWidget = () => {
   }, [messages, loading]);
 
   if (pathname.startsWith("/admin")) return null;
+  if (enabled === false) return null;
 
   const send = async (text: string) => {
     const trimmed = text.trim();

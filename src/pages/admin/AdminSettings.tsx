@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { apiService } from "@/lib/api";
 import { toast } from "sonner";
-import { Shield, Lock, Mail, User, Loader2, Save, Clock, ShieldAlert } from "lucide-react";
+import { Shield, Lock, Mail, User, Loader2, Save, Clock, ShieldAlert, MessageSquare } from "lucide-react";
 
 const AdminSettings = () => {
   const [loading, setLoading] = useState(false);
@@ -24,7 +24,8 @@ const AdminSettings = () => {
     announcementTitle: "",
     announcementBody: "",
     showAnnouncement: false,
-    maintenanceMode: false
+    maintenanceMode: false,
+    chatbotEnabled: true
   });
 
   const fetchData = useCallback(async () => {
@@ -218,6 +219,32 @@ const AdminSettings = () => {
                       onChange={(e) => setClinic({ ...clinic, announcementBody: e.target.value })}
                       placeholder="Tell your patients something important..."
                     />
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-6 mt-6 border-t">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label className="font-bold flex items-center gap-2 text-base">
+                      <MessageSquare className="h-5 w-5 text-primary" />
+                      Live Chatbot Assistant
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Enable or disable the floating AI assistant widget on the public website pages.
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input 
+                      type="checkbox" 
+                      id="chatbot_enabled"
+                      className="h-5 w-5 accent-primary rounded cursor-pointer" 
+                      checked={clinic.chatbotEnabled}
+                      onChange={(e) => setClinic({ ...clinic, chatbotEnabled: e.target.checked })}
+                    />
+                    <Label htmlFor="chatbot_enabled" className="font-bold cursor-pointer">
+                      {clinic.chatbotEnabled ? "ENABLED" : "DISABLED"}
+                    </Label>
                   </div>
                 </div>
               </div>

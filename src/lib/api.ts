@@ -213,6 +213,7 @@ export interface ClinicSettings {
   announcementBody?: string;
   showAnnouncement?: boolean;
   maintenanceMode?: boolean;
+  chatbotEnabled?: boolean;
   [key: string]: unknown;
 }
 

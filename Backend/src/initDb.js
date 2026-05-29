@@ -33,6 +33,9 @@ const initializeDatabase = async () => {
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='clinic_settings' AND column_name='maintenance_mode') THEN
           ALTER TABLE clinic_settings ADD COLUMN maintenance_mode BOOLEAN DEFAULT FALSE;
         END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='clinic_settings' AND column_name='chatbot_enabled') THEN
+          ALTER TABLE clinic_settings ADD COLUMN chatbot_enabled BOOLEAN DEFAULT TRUE;
+        END IF;
       END $$;
     `);
 

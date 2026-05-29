@@ -15,7 +15,8 @@ const getSettings = async (req, res) => {
         maintenance_mode: false,
         show_announcement: false,
         announcement_title: '',
-        announcement_body: ''
+        announcement_body: '',
+        chatbot_enabled: true
       });
     }
     res.json(result.rows[0]);
@@ -26,7 +27,8 @@ const getSettings = async (req, res) => {
       id: null,
       clinic_name: 'Nova Eye Care',
       maintenance_mode: false,
-      show_announcement: false
+      show_announcement: false,
+      chatbot_enabled: true
     });
   }
 };
@@ -43,8 +45,8 @@ const updateSettings = async (req, res) => {
       const result = await db.query(
         `INSERT INTO clinic_settings (clinic_name, contact_phone, address, opening_hours,
          social_facebook, social_instagram, social_twitter,
-         announcement_title, announcement_body, show_announcement, maintenance_mode)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+         announcement_title, announcement_body, show_announcement, maintenance_mode, chatbot_enabled)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
          RETURNING *`,
         [
           req.body.clinic_name || req.body.clinicName || 'Nova Eye Care',
@@ -57,7 +59,8 @@ const updateSettings = async (req, res) => {
           req.body.announcement_title || req.body.announcementTitle || '',
           req.body.announcement_body || req.body.announcementBody || '',
           req.body.show_announcement || req.body.showAnnouncement || false,
-          req.body.maintenance_mode || req.body.maintenanceMode || false
+          req.body.maintenance_mode || req.body.maintenanceMode || false,
+          req.body.chatbot_enabled !== undefined ? req.body.chatbot_enabled : (req.body.chatbotEnabled !== undefined ? req.body.chatbotEnabled : true)
         ]
       );
       return res.json(result.rows[0]);
@@ -77,8 +80,9 @@ const updateSettings = async (req, res) => {
         announcement_body = COALESCE($9, announcement_body),
         show_announcement = COALESCE($10, show_announcement),
         maintenance_mode = COALESCE($11, maintenance_mode),
+        chatbot_enabled = COALESCE($12, chatbot_enabled),
         updated_at = CURRENT_TIMESTAMP
-       WHERE id = $12
+       WHERE id = $13
        RETURNING *`,
       [
         req.body.clinic_name || req.body.clinicName,
@@ -92,6 +96,7 @@ const updateSettings = async (req, res) => {
         req.body.announcement_body || req.body.announcementBody,
         req.body.show_announcement !== undefined ? req.body.show_announcement : req.body.showAnnouncement,
         req.body.maintenance_mode !== undefined ? req.body.maintenance_mode : req.body.maintenanceMode,
+        req.body.chatbot_enabled !== undefined ? req.body.chatbot_enabled : req.body.chatbotEnabled,
         existing.rows[0].id
       ]
     );

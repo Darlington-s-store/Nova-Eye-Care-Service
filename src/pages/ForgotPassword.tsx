@@ -34,8 +34,9 @@ const ForgotPassword = () => {
         sessionStorage.setItem("reset_token", res.resetOtpToken);
       }
       setView("verify");
-    } catch (err: any) {
-      const message = err.response?.data?.message || err.message || String(err);
+    } catch (err) {
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
+      const message = error.response?.data?.message || error.message || String(err);
       toast.error(message);
     } finally {
       setLoading(false);
@@ -59,8 +60,9 @@ const ForgotPassword = () => {
       
       sessionStorage.setItem("reset_otp", otp);
       navigate("/reset-password");
-    } catch (err: any) {
-      const message = err.response?.data?.message || err.message || String(err);
+    } catch (err) {
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
+      const message = error.response?.data?.message || error.message || String(err);
       toast.error(message);
     } finally {
       setLoading(false);

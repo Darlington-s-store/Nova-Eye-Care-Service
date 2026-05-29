@@ -282,7 +282,7 @@ export const apiService = {
       const { data } = await api.post('/auth/verify-reset-otp', payload);
       return data;
     },
-    resetPassword: async (payload: Record<string, any>): Promise<{
+    resetPassword: async (payload: Record<string, unknown>): Promise<{
       message: string;
       success: boolean;
     }> => {

@@ -53,8 +53,9 @@ const ResetPassword = () => {
       sessionStorage.removeItem("reset_token");
       sessionStorage.removeItem("reset_otp");
       navigate("/auth");
-    } catch (err: any) {
-      const message = err.response?.data?.message || err.message || String(err);
+    } catch (err) {
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
+      const message = error.response?.data?.message || error.message || String(err);
       toast.error(message);
     } finally {
       setLoading(false);

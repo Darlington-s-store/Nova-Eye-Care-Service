@@ -55,6 +55,60 @@ const getAdminStats = async (req, res) => {
       console.error('Failed to fetch status stats:', err.message);
     }
 
+    // 1. Monthly Booking Trends
+    try {
+      const trendsRes = await db.query(`
+        SELECT TO_CHAR(appointment_date, 'YYYY-MM') as period, COUNT(*)::int as count 
+        FROM appointments 
+        GROUP BY period 
+        ORDER BY period ASC 
+        LIMIT 6
+      `);
+      stats.bookingTrends = trendsRes.rows;
+    } catch (err) {
+      console.error('Failed to fetch booking trends:', err.message);
+    }
+
+    // 2. Service Breakdown
+    try {
+      const servicesRes = await db.query(`
+        SELECT service, COUNT(*)::int as count 
+        FROM appointments 
+        GROUP BY service 
+        ORDER BY count DESC
+      `);
+      stats.serviceStats = servicesRes.rows;
+    } catch (err) {
+      console.error('Failed to fetch service stats:', err.message);
+    }
+
+    // 3. Monthly Revenue
+    try {
+      const revenueRes = await db.query(`
+        SELECT TO_CHAR(created_at, 'YYYY-MM') as period, SUM(amount)::float as revenue 
+        FROM invoices 
+        WHERE status = 'paid' 
+        GROUP BY period 
+        ORDER BY period ASC 
+        LIMIT 6
+      `);
+      stats.revenueTrends = revenueRes.rows;
+    } catch (err) {
+      console.error('Failed to fetch revenue trends:', err.message);
+    }
+
+    // 4. Patient Demographics (Gender)
+    try {
+      const genderRes = await db.query(`
+        SELECT COALESCE(gender, 'Unspecified') as label, COUNT(*)::int as count 
+        FROM profiles 
+        GROUP BY label
+      `);
+      stats.genderStats = genderRes.rows;
+    } catch (err) {
+      console.error('Failed to fetch gender stats:', err.message);
+    }
+
     res.json(stats);
   } catch (err) {
     console.error('Dashboard Stats Error:', err);

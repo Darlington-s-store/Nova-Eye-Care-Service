@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { apiService } from "@/lib/api";
 import {
   LayoutDashboard, CalendarDays, Users, Star, MessageSquare, BookOpen,
-  Home as HomeIcon, Settings, Briefcase, Eye, FileText, Settings2, ChevronLeft, User, LogOut
+  Home as HomeIcon, Settings, Briefcase, Eye, FileText, Settings2, ChevronLeft, User, LogOut,
+  BarChart2
 } from "lucide-react";
 import logo from "@/assets/logo.jpeg";
 import { NotificationBell } from "@/components/NotificationBell";
@@ -23,6 +24,7 @@ import {
 
 const allItems = [
   { to: "/admin", label: "Overview", icon: LayoutDashboard, end: true },
+  { to: "/admin/analytics", label: "Analytics", icon: BarChart2 },
   { to: "/admin/appointments", label: "Appointments", icon: CalendarDays },
   { to: "/admin/reviews", label: "Reviews", icon: Star },
   { to: "/admin/users", label: "Users", icon: Users },
@@ -41,15 +43,15 @@ const AdminSidebarInner = () => {
   const location = useLocation();
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-border bg-white">
-      <SidebarContent className="bg-white">
-        <div className={`px-6 py-6 border-b border-border ${collapsed ? "px-2" : ""}`}>
+    <Sidebar collapsible="icon" className="border-r border-slate-800 bg-slate-900 text-slate-100">
+      <SidebarContent className="bg-slate-900">
+        <div className={`px-6 py-6 border-b border-slate-800 ${collapsed ? "px-2" : ""}`}>
           <Link to="/admin" className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg overflow-hidden shrink-0 border border-border">
+            <div className="h-10 w-10 rounded-lg overflow-hidden shrink-0 border border-slate-800">
               <img src={logo} alt="NOVA Logo" className="h-full w-full object-contain" />
             </div>
             {!collapsed && (
-              <span className="text-xl font-bold tracking-tight text-foreground">NOVA Admin</span>
+              <span className="text-xl font-bold tracking-tight text-white">NOVA Admin</span>
             )}
           </Link>
         </div>
@@ -60,17 +62,17 @@ const AdminSidebarInner = () => {
                 const isActive = it.end ? location.pathname === it.to : location.pathname.startsWith(it.to);
                 return (
                   <SidebarMenuItem key={it.to}>
-                    <SidebarMenuButton asChild className="h-12 rounded-lg">
+                    <SidebarMenuButton asChild className="h-12 rounded-lg hover:bg-slate-800/60 hover:text-white active:bg-slate-800/60 active:text-white">
                       <NavLink
                         to={it.to}
                         end={it.end}
                         className={`flex items-center gap-3 px-4 w-full transition-colors ${
                           isActive 
                             ? "bg-primary text-white" 
-                            : "text-muted-foreground hover:bg-muted"
+                            : "text-slate-400 hover:text-white hover:bg-slate-800/60"
                         }`}
                       >
-                        <it.icon className={`h-5 w-5 shrink-0 ${isActive ? "text-white" : "text-primary"}`} />
+                        <it.icon className={`h-5 w-5 shrink-0 transition-colors ${isActive ? "text-white" : "text-slate-400 group-hover:text-white"}`} />
                         {!collapsed && <span className="font-semibold text-[15px]">{it.label}</span>}
                       </NavLink>
                     </SidebarMenuButton>

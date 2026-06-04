@@ -173,3 +173,90 @@
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
+
+/* Premium Print Layout Stylesheet */
+@media print {
+  /* Hide sidebars, headers, filters panel, and action buttons */
+  header,
+  aside,
+  footer,
+  nav,
+  button,
+  select,
+  input,
+  .print-hidden,
+  .sidebar-trigger,
+  [role="combobox"],
+  .no-print {
+    display: none !important;
+  }
+
+  /* Reset main layouts to fill the page */
+  body, html {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 11pt !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Remove scrollbars and borders around the viewport */
+  .min-h-screen, main {
+    min-height: auto !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Ensure grids stack appropriately on paper */
+  .grid {
+    display: grid !important;
+    gap: 1rem !important;
+  }
+
+  .grid-cols-5 {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  }
+
+  .md:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  /* Prevent split of charts across page borders */
+  .card, .p-6, .p-5 {
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: none !important;
+    background-color: #ffffff !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  /* Headings size scaling */
+  h1 {
+    font-size: 22pt !important;
+    margin-bottom: 4px !important;
+    color: #0f172a !important;
+  }
+
+  h3 {
+    font-size: 12pt !important;
+    color: #0f172a !important;
+  }
+
+  /* Chart height reduction for physical pages */
+  .h-72 {
+    height: 220px !important;
+  }
+
+  /* Ensure canvas charts remain visible and cleanly styled */
+  canvas {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+}
+

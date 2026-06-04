@@ -150,7 +150,7 @@ const ReviewsPage = () => {
                   <div className="bg-muted/30 p-6 rounded-2xl text-center border border-dashed border-border">
                     <p className="text-sm text-muted-foreground mb-5">Sign in to share your experience with NOVA Eye Care.</p>
                     <Button asChild variant="hero" className="w-full rounded-xl py-6 font-bold shadow-lg shadow-primary/20">
-                      <Link to="/auth">Sign in to Review</Link>
+                      <Link to="/login">Sign in to Review</Link>
                     </Button>
                   </div>
                 </motion.div>

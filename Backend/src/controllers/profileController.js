@@ -5,7 +5,7 @@ const getMyProfile = async (req, res) => {
   try {
     const result = await db.query(
       `SELECT u.id, u.email, ur.role, p.full_name as "fullName", p.phone, p.nationality, p.gender, 
-              p.date_of_birth as "dateOfBirth", p.address, p.blood_group as "bloodGroup", 
+              p.date_of_birth as "dateOfBirth", p.address, p.blood_group as "bloodGroup", p.region, 
               p.medical_history as "medicalHistory", p.emergency_contact_name as "emergencyContactName", 
               p.emergency_contact_phone as "emergencyContactPhone", p.registration_completed as "registrationCompleted"
        FROM users u
@@ -33,6 +33,7 @@ const updateMyProfile = async (req, res) => {
   const date_of_birth = req.body.date_of_birth || req.body.dateOfBirth;
   const address = req.body.address;
   const blood_group = req.body.blood_group || req.body.bloodGroup;
+  const region = req.body.region;
   const emergency_contact_name = req.body.emergency_contact_name || req.body.emergencyContactName;
   const emergency_contact_phone = req.body.emergency_contact_phone || req.body.emergencyContactPhone;
   const registration_completed = req.body.registration_completed !== undefined ? req.body.registration_completed : req.body.registrationCompleted;
@@ -47,14 +48,15 @@ const updateMyProfile = async (req, res) => {
         date_of_birth = COALESCE($5, date_of_birth),
         address = COALESCE($6, address),
         blood_group = COALESCE($7, blood_group),
-        emergency_contact_name = COALESCE($8, emergency_contact_name),
-        emergency_contact_phone = COALESCE($9, emergency_contact_phone),
-        registration_completed = COALESCE($10, registration_completed),
-        medical_history = COALESCE($11, medical_history),
+        region = COALESCE($8, region),
+        emergency_contact_name = COALESCE($9, emergency_contact_name),
+        emergency_contact_phone = COALESCE($10, emergency_contact_phone),
+        registration_completed = COALESCE($11, registration_completed),
+        medical_history = COALESCE($12, medical_history),
         updated_at = CURRENT_TIMESTAMP
-       WHERE id = $12
+       WHERE id = $13
        RETURNING *`,
-      [full_name, phone, nationality, gender, date_of_birth, address, blood_group,
+      [full_name, phone, nationality, gender, date_of_birth, address, blood_group, region,
        emergency_contact_name, emergency_contact_phone, registration_completed, medical_history, req.user.id]
     );
     if (result.rows.length === 0) {
@@ -113,6 +115,7 @@ const updateProfileByAdmin = async (req, res) => {
   const date_of_birth = req.body.date_of_birth || req.body.dateOfBirth;
   const address = req.body.address;
   const blood_group = req.body.blood_group || req.body.bloodGroup;
+  const region = req.body.region;
   const emergency_contact_name = req.body.emergency_contact_name || req.body.emergencyContactName;
   const emergency_contact_phone = req.body.emergency_contact_phone || req.body.emergencyContactPhone;
   const registration_completed = req.body.registration_completed !== undefined ? req.body.registration_completed : req.body.registrationCompleted;
@@ -129,14 +132,15 @@ const updateProfileByAdmin = async (req, res) => {
         date_of_birth = COALESCE($5, date_of_birth),
         address = COALESCE($6, address),
         blood_group = COALESCE($7, blood_group),
-        emergency_contact_name = COALESCE($8, emergency_contact_name),
-        emergency_contact_phone = COALESCE($9, emergency_contact_phone),
-        registration_completed = COALESCE($10, registration_completed),
-        medical_history = COALESCE($11, medical_history),
+        region = COALESCE($8, region),
+        emergency_contact_name = COALESCE($9, emergency_contact_name),
+        emergency_contact_phone = COALESCE($10, emergency_contact_phone),
+        registration_completed = COALESCE($11, registration_completed),
+        medical_history = COALESCE($12, medical_history),
         updated_at = CURRENT_TIMESTAMP
-       WHERE id = $12
+       WHERE id = $13
        RETURNING *`,
-      [full_name, phone, nationality, gender, date_of_birth, address, blood_group,
+      [full_name, phone, nationality, gender, date_of_birth, address, blood_group, region,
        emergency_contact_name, emergency_contact_phone, registration_completed, medical_history, req.params.id]
     );
     if (result.rows.length === 0) {

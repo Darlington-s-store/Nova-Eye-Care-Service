@@ -161,7 +161,7 @@ export const Navbar = () => {
             </DropdownMenu>
           ) : (
             <Button asChild variant="ghost" className="font-bold hover:bg-primary-soft text-foreground/80 rounded-xl px-4">
-              <Link to="/auth">Sign in</Link>
+              <Link to="/login">Sign in</Link>
             </Button>
           )}
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -261,7 +261,7 @@ export const Navbar = () => {
                   </>
                 ) : (
                   <Button asChild variant="outline" className="w-full rounded-xl h-12 font-bold" onClick={() => setOpen(false)}>
-                    <Link to="/auth">Sign in</Link>
+                    <Link to="/login">Sign in</Link>
                   </Button>
                 )}
                 <Button asChild className="w-full rounded-xl h-12 font-bold shadow-lg shadow-primary/20 bg-primary text-white hover:bg-primary/90" onClick={() => setOpen(false)}>

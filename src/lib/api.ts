@@ -4,7 +4,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 10000, // 10s timeout — prevents UI from hanging when DB is slow
+  timeout: 30000, // 30s timeout — allows headroom for Neon database cold starts and external APIs
   headers: {
     'Content-Type': 'application/json',
   },
@@ -68,6 +68,7 @@ export interface Profile {
   dateOfBirth?: string;
   address?: string;
   bloodGroup?: string;
+  region?: string;
   medicalHistory?: string;
   emergencyContactName?: string;
   emergencyContactPhone?: string;
@@ -98,6 +99,11 @@ export interface AdminStats {
     appointmentTime: string;
     status: string;
   }[];
+  statusStats?: { status: string; count: number }[];
+  bookingTrends?: { period: string; count: number }[];
+  serviceStats?: { service: string; count: number }[];
+  revenueTrends?: { period: string; revenue: number }[];
+  genderStats?: { label: string; count: number }[];
 }
 
 export interface Review {
@@ -118,6 +124,8 @@ export interface Appointment {
   service: string;
   appointmentDate: string;
   appointmentTime: string;
+  appointmentType?: "in_person" | "virtual";
+  doctorName?: string | null;
   notes: string | null;
   status: "pending" | "confirmed" | "cancelled" | "completed";
   userId: string | null;
@@ -255,8 +263,9 @@ export const apiService = {
     sendOtp: async (payload: {
       email: string;
       phone?: string;
-      captchaToken: string;
-      captchaAnswer: string;
+      captchaToken?: string;
+      captchaAnswer?: string;
+      channel?: 'email' | 'sms';
     }): Promise<{
       message: string;
       otpToken: string;

@@ -1,6 +1,6 @@
 const { Pool, neonConfig } = require('@neondatabase/serverless');
 const ws = require('ws');
-require('dotenv').config();
+require('dotenv').config({ override: true });
 
 // Configure Neon to use WebSockets in Node.js (bypasses port 5432 blocking/firewalls)
 neonConfig.webSocketConstructor = ws;

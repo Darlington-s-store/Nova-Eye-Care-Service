@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, useLocation, Navigate } from "react-router-dom";
+// Updated routes for separate premium Login & Signup screens
 import { useEffect, useState } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -15,7 +16,8 @@ import Contact from "./pages/Contact.tsx";
 import Dvla from "./pages/Dvla.tsx";
 import About from "./pages/About.tsx";
 import Reviews from "./pages/Reviews.tsx";
-import Auth from "./pages/Auth.tsx";
+import Login from "@/pages/Login";
+import Signup from "@/pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 import VerifyOtp from "./pages/VerifyOtp.tsx";
@@ -23,6 +25,7 @@ import Dashboard from "./pages/Dashboard.tsx";
 import Profile from "./pages/Profile.tsx";
 import AdminLogin from "./pages/admin/AdminLogin.tsx";
 import AdminOverview from "./pages/admin/AdminOverview.tsx";
+import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminAppointments from "./pages/admin/AdminAppointments.tsx";
 import AdminReviews from "./pages/admin/AdminReviews.tsx";
 import AdminUsers from "./pages/admin/AdminUsers.tsx";
@@ -79,7 +82,7 @@ const MaintenanceManager = ({ children }: { children: React.ReactNode }) => {
   if (maintenance === null) return null;
   
   const isAdminPath = location.pathname.startsWith("/admin");
-  const isAuthPath = ["/auth", "/forgot-password", "/reset-password"].includes(location.pathname);
+  const isAuthPath = ["/login", "/signup", "/forgot-password", "/reset-password"].includes(location.pathname);
   
   // Using a stable fragment container prevents DOM nodes from being "orphaned" 
   // during the abrupt switch to Maintenance mode, fixing the removeChild error.
@@ -107,7 +110,8 @@ const App = () => (
               <Route path="/about" element={<About />} />
               <Route path="/reviews" element={<Reviews />} />
 
-              <Route path="/auth" element={<Auth />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/verify-otp" element={<VerifyOtp />} />
@@ -120,6 +124,7 @@ const App = () => (
 
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminOverview /></ProtectedRoute>} />
+              <Route path="/admin/analytics" element={<ProtectedRoute requireAdmin><AdminAnalytics /></ProtectedRoute>} />
               <Route path="/admin/appointments" element={<ProtectedRoute requireAdmin><AdminAppointments /></ProtectedRoute>} />
               <Route path="/admin/reviews" element={<ProtectedRoute requireAdmin><AdminReviews /></ProtectedRoute>} />
               <Route path="/admin/users" element={<ProtectedRoute requireAdmin><AdminUsers /></ProtectedRoute>} />

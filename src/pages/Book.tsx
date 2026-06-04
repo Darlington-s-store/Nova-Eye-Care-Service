@@ -9,10 +9,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SERVICES, TIME_SLOTS_WEEKDAY, TIME_SLOTS_SATURDAY, CLINIC } from "@/lib/clinic";
 import { apiService } from "@/lib/api";
-import { CheckCircle2, CalendarCheck, Loader2, Clock, Phone, Mail, Sparkles, ShieldCheck, ArrowRight, ArrowLeft } from "lucide-react";
+import { CheckCircle2, CalendarCheck, Loader2, Clock, Phone, Mail, Sparkles, ShieldCheck, ArrowRight, ArrowLeft, MapPin, Video, User, FileText } from "lucide-react";
 import { z } from "zod";
 import { PageHero } from "@/components/PageHero";
 import heroBook from "@/assets/ioi.jpeg";
+import { getCMSContent, TeamMember } from "@/lib/cms";
+import { getGoogleCalendarUrl } from "@/lib/calendar";
 
 const schema = z.object({
   full_name: z.string().trim().min(2, "Please enter your full name").max(100),
@@ -21,12 +23,24 @@ const schema = z.object({
   service: z.string().min(1, "Please select a service"),
   appointment_date: z.string().min(1, "Please select a date"),
   appointment_time: z.string().min(1, "Please select a time"),
+  appointment_type: z.enum(["in_person", "virtual"]),
+  doctor_name: z.string().optional(),
   notes: z.string().max(1000).optional(),
 });
 
-const STEPS = ["Service", "Schedule", "Your details"] as const;
+const STEPS = ["Service", "Schedule", "Your details", "Review"] as const;
 
 
+
+const ReviewItem = ({ label, value, icon: Icon }: { label: string; value: string; icon: React.ElementType }) => (
+  <div className="flex gap-3 text-sm border-b border-border/30 pb-2 last:border-0 last:pb-0">
+    <Icon className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+    <div>
+      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">{label}</span>
+      <span className="font-semibold text-foreground">{value}</span>
+    </div>
+  </div>
+);
 
 const Book = () => {
   const [searchParams] = useSearchParams();
@@ -37,6 +51,8 @@ const Book = () => {
     full_name: "", phone: "", email: "",
     service: "",
     appointment_date: "", appointment_time: "",
+    appointment_type: "in_person" as "in_person" | "virtual",
+    doctor_name: "",
     notes: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -46,6 +62,8 @@ const Book = () => {
 
   const [services, setServices] = useState<{name: string, slug: string, short: string}[]>([]);
   const [loadingServices, setLoadingServices] = useState(true);
+  const [doctors, setDoctors] = useState<TeamMember[]>([]);
+  const [loadingDoctors, setLoadingDoctors] = useState(true);
 
   const update = useCallback((k: keyof typeof form, v: string) => {
     setForm((f) => ({ ...f, [k]: v }));
@@ -80,6 +98,22 @@ const Book = () => {
   }, [loadingServices, presetSlug, services, update]);
 
   useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const data = await getCMSContent<{ members: TeamMember[] }>("team");
+        if (data?.members) {
+          setDoctors(data.members);
+        }
+      } catch (err) {
+        console.error("Failed to fetch doctors:", err);
+      } finally {
+        setLoadingDoctors(false);
+      }
+    };
+    fetchDoctors();
+  }, []);
+
+  useEffect(() => {
     const loadProfile = async () => {
       try {
         const p = await apiService.profiles.getMe();
@@ -112,11 +146,33 @@ const Book = () => {
     return true;
   };
 
-  const next = () => setStep((s) => Math.min(s + 1, STEPS.length - 1));
+  const next = () => {
+    if (step === 2) {
+      const detailsSchema = z.object({
+        full_name: schema.shape.full_name,
+        phone: schema.shape.phone,
+        email: schema.shape.email,
+        notes: schema.shape.notes,
+      });
+      const parsed = detailsSchema.safeParse(form);
+      if (!parsed.success) {
+        const fieldErrors: Record<string, string> = {};
+        parsed.error.issues.forEach((i) => { fieldErrors[i.path[0] as string] = i.message; });
+        setErrors(fieldErrors);
+        return;
+      }
+      setErrors({});
+    }
+    setStep((s) => Math.min(s + 1, STEPS.length - 1));
+  };
   const prev = () => setStep((s) => Math.max(s - 1, 0));
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (step < STEPS.length - 1) {
+      next();
+      return;
+    }
     if (isSunday) {
       setErrors({ appointment_date: "We are closed on Sundays. Please pick another day." });
       return;
@@ -138,11 +194,13 @@ const Book = () => {
         service: parsed.data.service,
         appointmentDate: parsed.data.appointment_date,
         appointmentTime: parsed.data.appointment_time,
+        appointmentType: parsed.data.appointment_type,
+        doctorName: parsed.data.doctor_name || null,
         notes: parsed.data.notes ?? null,
       });
       
       setSuccess(form);
-      setForm({ full_name: "", phone: "", email: "", service: "", appointment_date: "", appointment_time: "", notes: "" });
+      setForm({ full_name: "", phone: "", email: "", service: "", appointment_date: "", appointment_time: "", appointment_type: "in_person", doctor_name: "", notes: "" });
       setStep(0);
     } catch (err) {
       setErrors({ form: err.response?.data?.message || "Failed to book appointment" });
@@ -165,17 +223,39 @@ const Book = () => {
                 Thank you, <strong className="text-foreground font-bold">{success.full_name}</strong>.
               </p>
               <p className="text-muted-foreground text-lg mb-10 leading-relaxed">
-                Your request for <strong className="text-foreground font-bold">{success.service}</strong> on{" "}
+                Your request for a <strong className="text-foreground font-bold">{success.appointment_type === "virtual" ? "Virtual (Online)" : "In-Person (Clinic)"}</strong> appointment
+                {success.doctor_name && <> with <strong className="text-foreground font-bold">{success.doctor_name}</strong></>}{" "}
+                for <strong className="text-foreground font-bold">{success.service}</strong> on{" "}
                 <strong className="text-foreground font-bold">{new Date(success.appointment_date).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</strong>{" "}
                 at <strong className="text-foreground font-bold">{success.appointment_time}</strong> has been received.
                 We will call <strong className="text-foreground font-bold">{success.phone}</strong> to confirm.
               </p>
               <div className="flex flex-wrap gap-4 justify-center">
+                <Button 
+                  asChild
+                  variant="outline" 
+                  size="lg" 
+                  className="rounded-xl px-8 border-indigo-200 text-indigo-700 hover:bg-indigo-50/50"
+                >
+                  <a 
+                    href={getGoogleCalendarUrl({
+                      title: `Eye Exam: ${success.service} - Nova Eye Care`,
+                      description: `Consultation Type: ${success.appointment_type === 'virtual' ? 'Virtual (Online)' : 'In-Person (Clinic Visit)'}\nDoctor: ${success.doctor_name || 'Assigned Optometrist'}\nNotes: ${success.notes || 'None'}\n\nNova Eye Care Clinic\nAbuakwa, Kumasi, Ghana\nPhones: +233 544 172 089 / +233 246 613 184`,
+                      location: success.appointment_type === 'virtual' ? 'Online (Zoom/Google Meet link will be sent)' : 'Nova Eye Care Clinic, Abuakwa, Kumasi, Ghana',
+                      startDateStr: success.appointment_date,
+                      startTimeStr: success.appointment_time
+                    })}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Add to Google Calendar
+                  </a>
+                </Button>
                 <Button onClick={() => setSuccess(null)} variant="outline" size="lg" className="rounded-xl px-8">Book another</Button>
                 {userId ? (
                   <Button asChild variant="hero" size="lg" className="rounded-xl px-8"><Link to="/dashboard">Go to dashboard</Link></Button>
                 ) : (
-                  <Button asChild variant="hero" size="lg" className="rounded-xl px-8"><Link to="/auth">Create an account</Link></Button>
+                  <Button asChild variant="hero" size="lg" className="rounded-xl px-8"><Link to="/signup">Create an account</Link></Button>
                 )}
               </div>
             </Card>
@@ -302,6 +382,56 @@ const Book = () => {
                           <h2 className="font-bold text-2xl mb-2 tracking-tight">Pick a date and time</h2>
                           <p className="text-muted-foreground text-base">We're open Monday through Saturday for your convenience.</p>
                         </div>
+                        <div className="space-y-3">
+                          <Label className="text-sm font-bold">Appointment Type</Label>
+                          <div className="grid gap-4 grid-cols-2">
+                            <button
+                              type="button"
+                              onClick={() => update("appointment_type", "in_person")}
+                              className={`p-5 rounded-2xl border-2 text-left transition-all duration-300 flex flex-col gap-2 relative ${
+                                form.appointment_type === "in_person"
+                                  ? "border-primary bg-primary-soft/40 shadow-sm"
+                                  : "border-border hover:border-primary/40 hover:bg-muted/30"
+                              }`}
+                            >
+                              <div className="flex justify-between items-center w-full">
+                                <span className={`h-8 w-8 rounded-lg flex items-center justify-center ${
+                                  form.appointment_type === "in_person" ? "bg-primary text-white" : "bg-muted text-muted-foreground"
+                                }`}>
+                                  <MapPin className="h-4 w-4" />
+                                </span>
+                                {form.appointment_type === "in_person" && <CheckCircle2 className="h-4 w-4 text-primary" />}
+                              </div>
+                              <div>
+                                <p className="font-bold text-sm">In-Person</p>
+                                <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">Visit our clinic in Abuakwa for a physical consultation.</p>
+                              </div>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => update("appointment_type", "virtual")}
+                              className={`p-5 rounded-2xl border-2 text-left transition-all duration-300 flex flex-col gap-2 relative ${
+                                form.appointment_type === "virtual"
+                                  ? "border-primary bg-primary-soft/40 shadow-sm"
+                                  : "border-border hover:border-primary/40 hover:bg-muted/30"
+                              }`}
+                            >
+                              <div className="flex justify-between items-center w-full">
+                                <span className={`h-8 w-8 rounded-lg flex items-center justify-center ${
+                                  form.appointment_type === "virtual" ? "bg-primary text-white" : "bg-muted text-muted-foreground"
+                                }`}>
+                                  <Video className="h-4 w-4" />
+                                </span>
+                                {form.appointment_type === "virtual" && <CheckCircle2 className="h-4 w-4 text-primary" />}
+                              </div>
+                              <div>
+                                <p className="font-bold text-sm">Virtual (Online)</p>
+                                <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">Consult with our doctors online via Zoom or Google Meet.</p>
+                              </div>
+                            </button>
+                          </div>
+                        </div>
                         <div className="grid gap-6 sm:grid-cols-2">
                           <div className="space-y-2">
                             <Label htmlFor="date" className="text-sm font-bold">Preferred date</Label>
@@ -322,14 +452,86 @@ const Book = () => {
                             </Select>
                           </div>
                         </div>
+
+                        {/* Doctor Selection */}
+                        <div className="space-y-4 pt-4 border-t border-border/40">
+                          <div>
+                            <Label className="text-sm font-semibold">Select a Doctor (Optional)</Label>
+                            <p className="text-xs text-muted-foreground mt-0.5">Choose your preferred doctor for your {form.appointment_type === 'virtual' ? 'Virtual' : 'In-Person'} consultation.</p>
+                          </div>
+                          
+                          {loadingDoctors ? (
+                            <div className="py-6 flex justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+                          ) : (
+                            <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
+                              {/* Any Doctor Option */}
+                              <button
+                                type="button"
+                                onClick={() => update("doctor_name", "")}
+                                className={`p-4 rounded-2xl border-2 text-left transition-all duration-300 flex flex-col items-center justify-center text-center gap-3 relative ${
+                                  form.doctor_name === ""
+                                    ? "border-primary bg-primary-soft/40 shadow-sm"
+                                    : "border-border hover:border-primary/40 hover:bg-muted/30"
+                                }`}
+                              >
+                                <div className={`h-10 w-10 rounded-full flex items-center justify-center border ${
+                                  form.doctor_name === "" ? "bg-primary text-white border-primary" : "bg-muted text-muted-foreground border-slate-200"
+                                }`}>
+                                  <User className="h-5 w-5" />
+                                </div>
+                                <div>
+                                  <p className="font-bold text-xs">Any Doctor</p>
+                                  <p className="text-[9px] text-muted-foreground leading-tight mt-0.5">Assign first available specialist.</p>
+                                </div>
+                                {form.doctor_name === "" && <CheckCircle2 className="h-4 w-4 text-primary absolute top-3 right-3" />}
+                              </button>
+
+                              {doctors.map((doc) => {
+                                const isSelected = form.doctor_name === doc.name;
+                                return (
+                                  <button
+                                    type="button"
+                                    key={doc.name}
+                                    onClick={() => update("doctor_name", doc.name)}
+                                    className={`p-4 rounded-2xl border-2 text-left transition-all duration-300 flex flex-col gap-2 relative ${
+                                      isSelected
+                                        ? "border-primary bg-primary-soft/40 shadow-sm"
+                                        : "border-border hover:border-primary/40 hover:bg-muted/30"
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      {doc.photo ? (
+                                        <img src={doc.photo} alt={doc.name} className="h-9 w-9 rounded-full object-cover border border-border" />
+                                      ) : (
+                                        <div className={`h-9 w-9 rounded-full flex items-center justify-center border ${
+                                          isSelected ? "bg-primary text-white border-primary" : "bg-muted text-muted-foreground border-slate-200"
+                                        }`}>
+                                          <User className="h-4 w-4" />
+                                        </div>
+                                      )}
+                                      <div className="min-w-0">
+                                        <p className="font-bold text-xs truncate">{doc.name}</p>
+                                        <p className="text-[9px] text-primary font-semibold truncate">{doc.title.split(' & ')[0]}</p>
+                                      </div>
+                                    </div>
+                                    <p className="text-[9px] text-muted-foreground leading-snug line-clamp-2 italic mt-1">"{doc.bio}"</p>
+                                    {isSelected && <CheckCircle2 className="h-4 w-4 text-primary absolute top-3 right-3" />}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+
                         {form.appointment_date && form.appointment_time && (
                           <div className="rounded-2xl bg-primary-soft p-6 flex items-center gap-4 text-primary shadow-sm">
                             <div className="h-12 w-12 rounded-xl bg-white/50 flex items-center justify-center text-primary shadow-inner">
                               <CalendarCheck className="h-6 w-6" />
                             </div>
                             <p className="text-base">
-                              Booking <strong>{form.service}</strong> on <br />
+                              Booking <strong>{form.service}</strong> ({form.appointment_type === "virtual" ? "Virtual" : "In-Person"}) on <br />
                               <span className="font-bold">{new Date(form.appointment_date).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}</span> at <span className="font-bold">{form.appointment_time}</span>
+                              {form.doctor_name && <> with <span className="font-bold">{form.doctor_name}</span></>}
                             </p>
                           </div>
                         )}
@@ -366,6 +568,40 @@ const Book = () => {
                         {errors.form && <p className="text-sm font-semibold text-destructive text-center bg-destructive/5 py-3 rounded-lg">{errors.form}</p>}
                       </div>
                     )}
+
+                    {step === 3 && (
+                      <div className="space-y-8 animate-in fade-in duration-300">
+                        <div>
+                          <h2 className="font-bold text-2xl mb-2 tracking-tight">Review your booking</h2>
+                          <p className="text-muted-foreground">Please double-check your appointment details before submitting.</p>
+                        </div>
+                        
+                        <div className="grid gap-6 md:grid-cols-2">
+                          <Card className="p-6 rounded-2xl border border-border/60 bg-muted/10 space-y-4">
+                            <h3 className="font-bold text-sm text-primary uppercase tracking-wider">Appointment Info</h3>
+                            <div className="space-y-3">
+                              <ReviewItem label="Service" value={form.service} icon={Sparkles} />
+                              <ReviewItem label="Date" value={form.appointment_date ? new Date(form.appointment_date).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" }) : ""} icon={CalendarCheck} />
+                              <ReviewItem label="Time Slot" value={form.appointment_time} icon={Clock} />
+                              <ReviewItem label="Consultation Type" value={form.appointment_type === "virtual" ? "Virtual (Online Consultation)" : "In-Person (Clinic Visit)"} icon={form.appointment_type === "virtual" ? Video : MapPin} />
+                              <ReviewItem label="Assigned Doctor" value={form.doctor_name || "Any Available Doctor"} icon={User} />
+                            </div>
+                          </Card>
+
+                          <Card className="p-6 rounded-2xl border border-border/60 bg-muted/10 space-y-4">
+                            <h3 className="font-bold text-sm text-primary uppercase tracking-wider">Your Details</h3>
+                            <div className="space-y-3">
+                              <ReviewItem label="Full Name" value={form.full_name} icon={User} />
+                              <ReviewItem label="Phone Number" value={form.phone} icon={Phone} />
+                              <ReviewItem label="Email Address" value={form.email} icon={Mail} />
+                              {form.notes && <ReviewItem label="Notes for clinic" value={form.notes} icon={FileText} />}
+                            </div>
+                          </Card>
+                        </div>
+
+                        {errors.form && <p className="text-sm font-semibold text-destructive text-center bg-destructive/5 py-3 rounded-lg">{errors.form}</p>}
+                      </div>
+                    )}
   
                     <div className="flex gap-4 pt-6">
                       {step > 0 && (
@@ -386,7 +622,7 @@ const Book = () => {
   
                     {!userId && step === STEPS.length - 1 && (
                       <p className="text-center text-sm text-muted-foreground pt-2">
-                        Want to track and reschedule? <Link to="/auth" className="text-primary font-bold hover:underline">Create an account</Link>.
+                        Want to track and reschedule? <Link to="/signup" className="text-primary font-bold hover:underline">Create an account</Link>.
                       </p>
                     )}
                   </form>

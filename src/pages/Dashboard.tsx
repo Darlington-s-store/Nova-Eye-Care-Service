@@ -16,15 +16,17 @@ import {
   Screening,
   Prescription,
   Invoice,
-  MedicalHistory
+  MedicalHistory,
+  ClinicSettings
 } from "@/lib/api";
 import { TIME_SLOTS_WEEKDAY, TIME_SLOTS_SATURDAY } from "@/lib/clinic";
+import { getGoogleCalendarUrl } from "@/lib/calendar";
 import { toast } from "sonner";
 import {
   CalendarPlus, CalendarX, Calendar, Clock, FileText, Loader2,
   User, Star, RefreshCw, ShieldCheck, ArrowRight, History, Eye,
   CheckCircle2, ChevronRight, LayoutDashboard, CreditCard, ClipboardList,
-  LogOut, Settings, Bell, Menu, X
+  LogOut, Settings, Bell, Menu, X, Megaphone
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -52,19 +54,22 @@ const Dashboard = () => {
   const [rNew, setRNew] = useState({ date: "", time: "" });
   const [rSaving, setRSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "profile" | "appointments" | "records" | "billing">("overview");
+  const [clinicSettings, setClinicSettings] = useState<ClinicSettings | null>(null);
+  const [announcementDismissed, setAnnouncementDismissed] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [appts, prof, screens, pres, inv, medHist] = await Promise.all([
+        const [appts, prof, screens, pres, inv, medHist, settingsData] = await Promise.all([
           apiService.appointments.getAll(),
           apiService.profiles.getMe(),
           apiService.medical.getScreenings(),
           apiService.prescriptions.mine(),
           apiService.invoices.mine(),
-          apiService.medical.getHistory()
+          apiService.medical.getHistory(),
+          apiService.settings.get().catch(() => null)
         ]);
         
         setAppointments(appts || []);
@@ -73,6 +78,7 @@ const Dashboard = () => {
         setPrescriptions(pres || []);
         setInvoices(inv || []);
         setMedicalHistory((medHist as MedicalHistory) || null);
+        setClinicSettings(settingsData || null);
       } catch (err) {
         console.error("Failed to fetch dashboard data:", err);
         toast.error("Could not load dashboard information.");
@@ -83,6 +89,24 @@ const Dashboard = () => {
 
     fetchData();
   }, [user]);
+
+  useEffect(() => {
+    if (clinicSettings?.announcementBody) {
+      const dismissedBody = localStorage.getItem("nova_dismissed_announcement_body");
+      if (dismissedBody === clinicSettings.announcementBody) {
+        setAnnouncementDismissed(true);
+      } else {
+        setAnnouncementDismissed(false);
+      }
+    }
+  }, [clinicSettings]);
+
+  const handleDismissAnnouncement = () => {
+    if (clinicSettings?.announcementBody) {
+      localStorage.setItem("nova_dismissed_announcement_body", clinicSettings.announcementBody);
+    }
+    setAnnouncementDismissed(true);
+  };
 
   const cancelAppointment = async (a: Appointment) => {
     if (!confirm("Cancel this appointment?")) return;
@@ -230,9 +254,43 @@ const Dashboard = () => {
           {/* Tab Content */}
           <div className="space-y-8">
             {activeTab === "overview" && (
-              <div className="grid gap-8 lg:grid-cols-2">
-                <div className="space-y-8">
-                  <SectionTitle title="Next Appointment" />
+              <div className="space-y-8 animate-in fade-in duration-500">
+                {clinicSettings && clinicSettings.showAnnouncement && clinicSettings.announcementBody && !announcementDismissed && (
+                  <Card className="relative overflow-hidden border-none bg-gradient-to-r from-indigo-600 via-primary to-indigo-700 text-white p-6 rounded-2xl shadow-xl shadow-indigo-100 flex flex-col md:flex-row items-center justify-between gap-6 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-200/50 group">
+                    {/* Decorative ambient light */}
+                    <div className="absolute -right-10 -bottom-10 h-40 w-40 bg-white/10 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-500 pointer-events-none" />
+                    <div className="absolute -left-10 -top-10 h-32 w-32 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none" />
+                    
+                    <div className="flex items-start gap-4 z-10">
+                      <div className="p-3 bg-white/15 rounded-xl border border-white/20 text-white shrink-0 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-inner">
+                        <Megaphone className="h-6 w-6 animate-pulse" />
+                      </div>
+                      <div className="space-y-1">
+                        <Badge className="bg-white/20 hover:bg-white/20 text-white border-none px-2.5 py-0.5 text-[9px] uppercase tracking-wider font-extrabold shadow-sm">
+                          Clinic Announcement
+                        </Badge>
+                        <h3 className="text-lg font-bold tracking-tight">
+                          {clinicSettings.announcementTitle || "Important Notice"}
+                        </h3>
+                        <p className="text-white/90 text-sm leading-relaxed max-w-2xl font-medium">
+                          {clinicSettings.announcementBody}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <button 
+                      onClick={handleDismissAnnouncement}
+                      className="absolute top-4 right-4 p-1.5 hover:bg-white/15 text-white/80 hover:text-white rounded-full transition-colors z-10"
+                      aria-label="Dismiss announcement"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </Card>
+                )}
+
+                <div className="grid gap-8 lg:grid-cols-2">
+                  <div className="space-y-8">
+                    <SectionTitle title="Next Appointment" />
                   {upcoming.length > 0 ? (
                     <AppointmentCard a={upcoming[0]} onCancel={cancelAppointment} onReschedule={(x) => { setReschedule(x); setRNew({ date: x.appointmentDate, time: x.appointmentTime }); }} canManage />
                   ) : (
@@ -258,7 +316,8 @@ const Dashboard = () => {
                   )}
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
             {activeTab === "profile" && (
               <div className="grid gap-8 lg:grid-cols-2 animate-in fade-in duration-500">
@@ -493,10 +552,25 @@ const AppointmentCard = ({ a, onCancel, onReschedule, canManage }: {
           {a.status === 'confirmed' ? <CheckCircle2 className="h-6 w-6" /> : <Clock className="h-6 w-6" />}
         </div>
         <div>
-          <h3 className="font-bold text-slate-900 mb-1">{a.service}</h3>
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="font-bold text-slate-900">{a.service}</h3>
+            {a.appointmentType && (
+              <Badge className={cn("rounded-md text-[7px] font-bold uppercase tracking-wider px-1.5 py-0.5 border shrink-0", 
+                a.appointmentType === 'virtual' 
+                  ? "bg-indigo-50 text-indigo-700 border-indigo-100" 
+                  : "bg-teal-50 text-teal-700 border-teal-100")} 
+                variant="outline"
+              >
+                {a.appointmentType === 'virtual' ? 'Virtual' : 'In-Person'}
+              </Badge>
+            )}
+          </div>
           <div className="flex flex-wrap gap-x-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
             <span className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5 text-primary" /> {new Date(a.appointmentDate).toLocaleDateString("en-GB")}</span>
             <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 text-primary" /> {a.appointmentTime}</span>
+            {a.doctorName && (
+              <span className="flex items-center gap-1.5"><User className="h-3.5 w-3.5 text-primary" /> {a.doctorName}</span>
+            )}
           </div>
         </div>
       </div>
@@ -507,6 +581,22 @@ const AppointmentCard = ({ a, onCancel, onReschedule, canManage }: {
     
     {canManage && a.status !== "cancelled" && a.status !== "completed" && (
       <div className="flex gap-2 pt-3 border-t border-slate-50 mt-3">
+        <Button asChild size="sm" variant="outline" className="flex-1 rounded-lg font-bold text-[10px] h-9 border-slate-100 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50/50">
+          <a
+            href={getGoogleCalendarUrl({
+              title: `Eye Exam: ${a.service} - Nova Eye Care`,
+              description: `Consultation Type: ${a.appointmentType === 'virtual' ? 'Virtual (Online)' : 'In-Person (Clinic Visit)'}\nDoctor: ${a.doctorName || 'Assigned Optometrist'}\nNotes: ${a.notes || 'None'}\n\nNova Eye Care Clinic\nAbuakwa, Kumasi, Ghana\nPhones: +233 544 172 089 / +233 246 613 184`,
+              location: a.appointmentType === 'virtual' ? 'Online (Zoom/Google Meet link will be sent)' : 'Nova Eye Care Clinic, Abuakwa, Kumasi, Ghana',
+              startDateStr: a.appointmentDate,
+              startTimeStr: a.appointmentTime
+            })}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center w-full h-full"
+          >
+            <CalendarPlus className="h-3.5 w-3.5 mr-1.5 text-indigo-500" /> CALENDAR
+          </a>
+        </Button>
         <Button size="sm" variant="outline" onClick={() => onReschedule(a)} className="flex-1 rounded-lg font-bold text-[10px] h-9 border-slate-100 text-slate-600 hover:text-primary hover:bg-primary-soft">
           <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> RESCHEDULE
         </Button>

@@ -47,7 +47,7 @@ export const Hero = ({ hero }: HeroProps) => {
   }, [bgImages]);
 
   return (
-    <section className="relative bg-slate-950 text-white min-h-[45vh] sm:min-h-[45vh] md:min-h-[50vh] lg:min-h-[55vh] flex items-center justify-center py-10 sm:py-16 md:py-20 lg:py-24 overflow-hidden">
+    <section className="relative bg-slate-950 text-white min-h-[65vh] sm:min-h-[70vh] md:min-h-[75vh] lg:min-h-[85vh] flex items-center justify-center py-12 sm:py-20 md:py-28 lg:py-32 overflow-hidden">
       {/* Fading Background Slideshow */}
       {bgImages.map((image, index) => (
         <div

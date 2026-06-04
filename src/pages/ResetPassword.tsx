@@ -52,7 +52,7 @@ const ResetPassword = () => {
       toast.success("Password reset successfully! You can now sign in.");
       sessionStorage.removeItem("reset_token");
       sessionStorage.removeItem("reset_otp");
-      navigate("/auth");
+      navigate("/login");
     } catch (err) {
       const error = err as { response?: { data?: { message?: string } }; message?: string };
       const message = error.response?.data?.message || error.message || String(err);

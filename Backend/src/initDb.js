@@ -46,7 +46,41 @@ const initializeDatabase = async () => {
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='appointments' AND column_name='status') THEN
           ALTER TABLE appointments ADD COLUMN status TEXT DEFAULT 'pending';
         END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='appointments' AND column_name='appointment_type') THEN
+          ALTER TABLE appointments ADD COLUMN appointment_type TEXT DEFAULT 'in_person';
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='appointments' AND column_name='doctor_name') THEN
+          ALTER TABLE appointments ADD COLUMN doctor_name TEXT;
+        END IF;
       END $$;
+    `);
+
+    // Seed default team section in cms_content if not exists
+    await db.query(`
+      INSERT INTO cms_content (section_key, content_json)
+      VALUES ('team', '{
+        "members": [
+          {
+            "name": "Dr. Sarah Owusu",
+            "title": "Lead Optometrist & Vision Specialist",
+            "bio": "Dr. Sarah Owusu has over 12 years of clinical optometry experience, specializing in pediatric eye care and advanced vision therapy.",
+            "photo": ""
+          },
+          {
+            "name": "Dr. Emmanuel Boateng",
+            "title": "Senior Optometrist & Low Vision Expert",
+            "bio": "Dr. Emmanuel Boateng is an expert in ocular disease diagnostics and low vision rehabilitation, dedicated to restoring functional sight.",
+            "photo": ""
+          },
+          {
+            "name": "Dr. Linda Mensah",
+            "title": "Optometrist & Contact Lens Specialist",
+            "bio": "Dr. Linda Mensah focuses on custom contact lens fittings, corneal diseases, and dry eye therapy using advanced clinical procedures.",
+            "photo": ""
+          }
+        ]
+      }')
+      ON CONFLICT (section_key) DO NOTHING;
     `);
 
     // Ensure profiles table exists
@@ -61,6 +95,7 @@ const initializeDatabase = async () => {
         date_of_birth DATE,
         address TEXT,
         blood_group TEXT,
+        region TEXT,
         medical_history TEXT,
         emergency_contact_name TEXT,
         emergency_contact_phone TEXT,
@@ -68,6 +103,11 @@ const initializeDatabase = async () => {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
+    `);
+
+    // Alter table to add region if profiles already exists
+    await db.query(`
+      ALTER TABLE profiles ADD COLUMN IF NOT EXISTS region TEXT;
     `);
 
     // Ensure sms_logs table exists

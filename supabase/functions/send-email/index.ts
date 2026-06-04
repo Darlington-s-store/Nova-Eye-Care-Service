@@ -1,6 +1,13 @@
 // Dormant Resend scaffolding. Activates when RESEND_API_KEY is configured.
 // Used for: signup welcome, login alerts, OTP verification (future).
+// @ts-expect-error - Deno standard library import
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+declare const Deno: {
+  env: {
+    get(key: string): string | undefined;
+  };
+};
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,7 +20,7 @@ type Payload = {
   html: string;
 };
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {

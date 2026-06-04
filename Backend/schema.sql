@@ -12,8 +12,17 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS profiles (
     id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     full_name TEXT,
-    phone TEXT,
     email TEXT,
+    phone TEXT,
+    nationality TEXT,
+    gender TEXT,
+    date_of_birth DATE,
+    address TEXT,
+    blood_group TEXT,
+    region TEXT,
+    emergency_contact_name TEXT,
+    emergency_contact_phone TEXT,
+    registration_completed BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -68,6 +77,8 @@ CREATE TABLE IF NOT EXISTS appointments (
     appointment_time TEXT NOT NULL,
     notes TEXT,
     status appointment_status NOT NULL DEFAULT 'pending',
+    appointment_type TEXT DEFAULT 'in_person',
+    doctor_name TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

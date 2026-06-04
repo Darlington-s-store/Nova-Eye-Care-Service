@@ -75,7 +75,7 @@ export const automation = {
       to: email,
       patientName: name,
       subject: "Welcome to Nova Eye Care Portal",
-      body: `Hello ${name},\n\nYour account has been successfully created. You can now manage your appointments and view your eye health history online.\n\nLogin here: ${window.location.origin}/auth`
+      body: `Hello ${name},\n\nYour account has been successfully created. You can now manage your appointments and view your eye health history online.\n\nLogin here: ${window.location.origin}/login`
     });
   }
 };

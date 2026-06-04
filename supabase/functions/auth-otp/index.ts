@@ -3,7 +3,11 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 // @ts-expect-error - Supabase client import for Deno
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
-declare const Deno: any;
+declare const Deno: {
+  env: {
+    get(key: string): string | undefined;
+  };
+};
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,9 +21,7 @@ serve(async (req: Request) => {
 
   try {
     const supabase = createClient(
-      // @ts-expect-error - Deno environment variable access
       Deno.env.get("SUPABASE_URL")!,
-      // @ts-expect-error - Deno environment variable access
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
@@ -109,8 +111,8 @@ serve(async (req: Request) => {
           } else {
             smsErrorMsg = `Status: ${smsResp.status}`;
           }
-        } catch (err: any) {
-          smsErrorMsg = err.message || String(err);
+        } catch (err: unknown) {
+          smsErrorMsg = err instanceof Error ? err.message : String(err);
           console.error("SMS sending error:", err);
         }
       } else {
@@ -164,8 +166,8 @@ serve(async (req: Request) => {
               emailErrorMsg = `Status: ${r.status}, Body: ${errBody}`;
               console.error("Resend API error:", emailErrorMsg);
             }
-          } catch (err: any) {
-            emailErrorMsg = err.message || String(err);
+          } catch (err: unknown) {
+            emailErrorMsg = err instanceof Error ? err.message : String(err);
             console.error("Email sending error:", err);
           }
         } else {

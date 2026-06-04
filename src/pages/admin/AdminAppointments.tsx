@@ -10,12 +10,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { apiService, Profile, MedicalHistory } from "@/lib/api";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { 
   Loader2, Search, CheckCircle2, X, Clock, Phone, Mail, Calendar, 
   Plus, Edit, Trash2, FileText, UserCheck, Check, AlertCircle, Eye, Activity,
-  ArrowLeft, Printer
+  ArrowLeft, Printer, User
 } from "lucide-react";
+import { getCMSContent, TeamMember } from "@/lib/cms";
+import { getGoogleCalendarUrl } from "@/lib/calendar";
 
 type Appt = {
   id: string;
@@ -27,6 +30,8 @@ type Appt = {
   appointmentTime: string;
   notes: string | null;
   status: "pending" | "confirmed" | "cancelled" | "completed";
+  appointmentType?: "in_person" | "virtual";
+  doctorName?: string | null;
   userId: string | null;
   createdAt: string;
 };
@@ -73,7 +78,9 @@ const initialAddFormState = {
   appointmentDate: "",
   appointmentTime: "",
   notes: "",
-  status: "confirmed" as Appt["status"]
+  status: "confirmed" as Appt["status"],
+  appointmentType: "in_person" as "in_person" | "virtual",
+  doctorName: ""
 };
 
 const AdminAppointments = () => {
@@ -95,6 +102,7 @@ const AdminAppointments = () => {
   const [editingAppt, setEditingAppt] = useState<Appt | null>(null);
   const [editForm, setEditForm] = useState<Partial<Appt>>({});
   const [updatingAppt, setUpdatingAppt] = useState(false);
+  const [doctors, setDoctors] = useState<string[]>([]);
 
   // View Details Modal state
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
@@ -121,6 +129,17 @@ const AdminAppointments = () => {
 
   useEffect(() => {
     load();
+    const fetchDoctors = async () => {
+      try {
+        const data = await getCMSContent<{ members: TeamMember[] }>("team");
+        if (data?.members) {
+          setDoctors(data.members.map(m => m.name));
+        }
+      } catch (err) {
+        console.error("Failed to load doctors:", err);
+      }
+    };
+    fetchDoctors();
   }, []);
 
   const updateStatus = async (a: Appt, status: Appt["status"]) => {
@@ -145,7 +164,8 @@ const AdminAppointments = () => {
     try {
       const payload = {
         ...addForm,
-        userId: addForm.userId === "guest" ? null : addForm.userId
+        userId: addForm.userId === "guest" ? null : addForm.userId,
+        doctorName: addForm.doctorName || null
       };
       await apiService.appointments.create(payload);
       toast.success("Appointment created successfully!");
@@ -170,7 +190,9 @@ const AdminAppointments = () => {
       appointmentDate: appt.appointmentDate.split("T")[0],
       appointmentTime: appt.appointmentTime,
       notes: appt.notes || "",
-      status: appt.status
+      status: appt.status,
+      appointmentType: appt.appointmentType || "in_person",
+      doctorName: appt.doctorName || ""
     });
     setIsEditDialogOpen(true);
   };
@@ -297,13 +319,35 @@ const AdminAppointments = () => {
             >
               <ArrowLeft className="h-4 w-4" /> Back to Appointments
             </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => window.print()} 
-              className="gap-2 rounded-xl h-10 border-border/60 hover:bg-slate-50"
-            >
-              <Printer className="h-4 w-4 text-primary" /> Print Record
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                asChild
+                variant="outline" 
+                className="gap-2 rounded-xl h-10 border-border/60 hover:bg-slate-50 cursor-pointer"
+              >
+                <a
+                  href={getGoogleCalendarUrl({
+                    title: `Nova Eye Care: ${viewAppt.fullName} - ${viewAppt.service}`,
+                    description: `Patient: ${viewAppt.fullName}\nPhone: ${viewAppt.phone}\nEmail: ${viewAppt.email}\nConsultation Type: ${viewAppt.appointmentType === 'virtual' ? 'Virtual (Online)' : 'In-Person (Clinic Visit)'}\nDoctor: ${viewAppt.doctorName || 'Assigned Optometrist'}\nNotes: ${viewAppt.notes || 'None'}\n\nNova Eye Care Clinic\nAbuakwa, Kumasi, Ghana\nPhones: +233 544 172 089 / +233 246 613 184`,
+                    location: viewAppt.appointmentType === 'virtual' ? 'Online (Zoom/Google Meet link will be sent)' : 'Nova Eye Care Clinic, Abuakwa, Kumasi, Ghana',
+                    startDateStr: viewAppt.appointmentDate,
+                    startTimeStr: viewAppt.appointmentTime
+                  })}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2"
+                >
+                  <Calendar className="h-4 w-4 text-indigo-500" /> Sync to Google Calendar
+                </a>
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => window.print()} 
+                className="gap-2 rounded-xl h-10 border-border/60 hover:bg-slate-50"
+              >
+                <Printer className="h-4 w-4 text-primary" /> Print Record
+              </Button>
+            </div>
           </div>
 
           {/* Main 2-Column Clinical Layout */}
@@ -476,9 +520,23 @@ const AdminAppointments = () => {
                   <Calendar className="h-4 w-4" /> Booking Summary
                 </h3>
                 <div className="space-y-4">
-                  <div>
-                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Service Requested</span>
-                    <p className="font-bold text-base text-foreground mt-0.5">{viewAppt.service}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Service Requested</span>
+                      <p className="font-bold text-base text-foreground mt-0.5">{viewAppt.service}</p>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Consultation Type</span>
+                      <div className="mt-1">
+                        <Badge className={cn("text-[10px] font-bold rounded-md px-2 py-0.5 border capitalize", 
+                          viewAppt.appointmentType === "virtual" 
+                            ? "bg-indigo-50 text-indigo-700 border-indigo-150" 
+                            : "bg-teal-50 text-teal-700 border-teal-150"
+                        )} variant="outline">
+                          {viewAppt.appointmentType === "virtual" ? "Virtual (Online)" : "In-Person (Clinic)"}
+                        </Badge>
+                      </div>
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -491,6 +549,10 @@ const AdminAppointments = () => {
                       <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Time Slot</span>
                       <p className="font-semibold text-sm text-foreground mt-0.5">{viewAppt.appointmentTime}</p>
                     </div>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Assigned Doctor</span>
+                    <p className="font-semibold text-sm text-foreground mt-0.5">{viewAppt.doctorName || "Any Available Doctor"}</p>
                   </div>
                   <div>
                     <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Reference ID</span>
@@ -613,11 +675,6 @@ const AdminAppointments = () => {
             </SelectContent>
           </Select>
         </div>
-
-        <Button onClick={() => setIsAddDialogOpen(true)} className="gap-2 h-11 px-5 rounded-xl shadow-lg shadow-primary/10 w-full md:w-auto">
-          <Plus className="h-5 w-5" />
-          Create Appointment
-        </Button>
       </div>
 
       {loading ? (
@@ -639,12 +696,22 @@ const AdminAppointments = () => {
                     <Badge variant="secondary" className={`${statusStyles[a.status]} capitalize px-2 py-0.5 text-xs font-semibold rounded-full border`}>
                       {a.status}
                     </Badge>
+                    {a.appointmentType && (
+                      <Badge className={cn("text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 border rounded-full", 
+                        a.appointmentType === "virtual" 
+                          ? "bg-indigo-50 text-indigo-700 border-indigo-200" 
+                          : "bg-teal-50 text-teal-700 border-teal-200"
+                      )} variant="outline">
+                        {a.appointmentType === "virtual" ? "Virtual" : "In-Person"}
+                      </Badge>
+                    )}
                   </div>
                   <p className="text-sm font-medium text-foreground/80">{a.service}</p>
                   
                   <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted-foreground mt-3">
                     <span className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> {new Date(a.appointmentDate).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}</span>
                     <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> {a.appointmentTime}</span>
+                    <span className="flex items-center gap-1.5"><User className="h-3.5 w-3.5 text-primary" /> {a.doctorName || "Any Doctor"}</span>
                     <a href={`tel:${a.phone}`} className="flex items-center gap-1.5 hover:text-primary transition-colors"><Phone className="h-3.5 w-3.5" /> {a.phone}</a>
                     <a href={`mailto:${a.email}`} className="flex items-center gap-1.5 hover:text-primary transition-colors"><Mail className="h-3.5 w-3.5" /> {a.email}</a>
                   </div>
@@ -751,17 +818,48 @@ const AdminAppointments = () => {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="add-service">Service *</Label>
-              <Select 
-                value={addForm.service} 
-                onValueChange={(val) => setAddForm(p => ({ ...p, service: val }))}
-              >
-                <SelectTrigger id="add-service"><SelectValue placeholder="Select eye service" /></SelectTrigger>
-                <SelectContent>
-                  {servicesList.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="add-service">Service *</Label>
+                <Select 
+                  value={addForm.service} 
+                  onValueChange={(val) => setAddForm(p => ({ ...p, service: val }))}
+                >
+                  <SelectTrigger id="add-service"><SelectValue placeholder="Select eye service" /></SelectTrigger>
+                  <SelectContent>
+                    {servicesList.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="add-type">Appointment Type *</Label>
+                <Select 
+                  value={addForm.appointmentType} 
+                  onValueChange={(val: "in_person" | "virtual") => setAddForm(p => ({ ...p, appointmentType: val }))}
+                >
+                  <SelectTrigger id="add-type"><SelectValue placeholder="Select type" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="in_person">In-Person</SelectItem>
+                    <SelectItem value="virtual">Virtual</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="add-doctor">Assigned Doctor (Optional)</Label>
+                <Select 
+                  value={addForm.doctorName || "any"} 
+                  onValueChange={(val) => setAddForm(p => ({ ...p, doctorName: val === "any" ? "" : val }))}
+                >
+                  <SelectTrigger id="add-doctor"><SelectValue placeholder="Select doctor" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="any">Any Available Doctor</SelectItem>
+                    {doctors.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -877,17 +975,45 @@ const AdminAppointments = () => {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="edit-service">Service</Label>
-              <Select 
-                value={editForm.service || ""} 
-                onValueChange={(val) => setEditForm(p => ({ ...p, service: val }))}
-              >
-                <SelectTrigger id="edit-service"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {servicesList.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-service">Service</Label>
+                <Input 
+                  id="edit-service"
+                  disabled
+                  value={editForm.service || ""}
+                  className="bg-slate-50 text-muted-foreground border-slate-200"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-type">Appointment Type</Label>
+                <Select 
+                  value={editForm.appointmentType || "in_person"} 
+                  onValueChange={(val: "in_person" | "virtual") => setEditForm(p => ({ ...p, appointmentType: val }))}
+                >
+                  <SelectTrigger id="edit-type"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="in_person">In-Person</SelectItem>
+                    <SelectItem value="virtual">Virtual</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-doctor">Assigned Doctor (Optional)</Label>
+                <Select 
+                  value={editForm.doctorName || "any"} 
+                  onValueChange={(val) => setEditForm(p => ({ ...p, doctorName: val === "any" ? "" : val }))}
+                >
+                  <SelectTrigger id="edit-doctor"><SelectValue placeholder="Select doctor" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="any">Any Available Doctor</SelectItem>
+                    {doctors.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

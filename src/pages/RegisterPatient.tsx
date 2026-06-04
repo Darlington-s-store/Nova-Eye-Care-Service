@@ -45,6 +45,7 @@ export default function RegisterPatient() {
     email: "",
     address: "",
     bloodGroup: "",
+    region: "",
     medicalHistory: "",
     emergencyContactName: "",
     emergencyContactPhone: "",
@@ -55,7 +56,7 @@ export default function RegisterPatient() {
       try {
         const user = await apiService.auth.getMe();
         if (!user) {
-          navigate("/auth");
+          navigate("/login");
           return;
         }
         
@@ -77,13 +78,14 @@ export default function RegisterPatient() {
             dateOfBirth: profile.dateOfBirth || "",
             address: profile.address || "",
             bloodGroup: profile.bloodGroup || "",
+            region: profile.region || "",
             medicalHistory: profile.medicalHistory || "",
             emergencyContactName: profile.emergencyContactName || "",
             emergencyContactPhone: profile.emergencyContactPhone || "",
           }));
         }
       } catch (err) {
-        navigate("/auth");
+        navigate("/login");
       } finally {
         setFetchingProfile(false);
       }
@@ -233,14 +235,58 @@ export default function RegisterPatient() {
                           </Select>
                         </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label className="text-sm font-bold ml-1">Nationality</Label>
-                        <Input 
-                          value={form.nationality}
-                          onChange={(e) => setForm({...form, nationality: e.target.value})}
-                          placeholder="e.g. Ghanaian"
-                          className="h-12 rounded-xl"
-                        />
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-sm font-bold ml-1">Nationality</Label>
+                          <Select 
+                            value={form.nationality} 
+                            onValueChange={(v) => setForm({...form, nationality: v})}
+                          >
+                            <SelectTrigger className="h-12 rounded-xl">
+                              <SelectValue placeholder="Select..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Ghanaian">Ghanaian</SelectItem>
+                              <SelectItem value="Nigerian">Nigerian</SelectItem>
+                              <SelectItem value="Kenyan">Kenyan</SelectItem>
+                              <SelectItem value="South African">South African</SelectItem>
+                              <SelectItem value="British">British</SelectItem>
+                              <SelectItem value="American">American</SelectItem>
+                              <SelectItem value="Canadian">Canadian</SelectItem>
+                              <SelectItem value="Other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-sm font-bold ml-1">Region</Label>
+                          <Select 
+                            value={form.region} 
+                            onValueChange={(v) => setForm({...form, region: v})}
+                          >
+                            <SelectTrigger className="h-12 rounded-xl">
+                              <SelectValue placeholder="Select..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Greater Accra">Greater Accra</SelectItem>
+                              <SelectItem value="Ashanti">Ashanti</SelectItem>
+                              <SelectItem value="Eastern">Eastern</SelectItem>
+                              <SelectItem value="Central">Central</SelectItem>
+                              <SelectItem value="Western">Western</SelectItem>
+                              <SelectItem value="Western North">Western North</SelectItem>
+                              <SelectItem value="Volta">Volta</SelectItem>
+                              <SelectItem value="Oti">Oti</SelectItem>
+                              <SelectItem value="Northern">Northern</SelectItem>
+                              <SelectItem value="Savannah">Savannah</SelectItem>
+                              <SelectItem value="North East">North East</SelectItem>
+                              <SelectItem value="Upper East">Upper East</SelectItem>
+                              <SelectItem value="Upper West">Upper West</SelectItem>
+                              <SelectItem value="Bono">Bono</SelectItem>
+                              <SelectItem value="Bono East">Bono East</SelectItem>
+                              <SelectItem value="Ahafo">Ahafo</SelectItem>
+                              <SelectItem value="Outside Ghana">Outside Ghana</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                     </div>
                   )}

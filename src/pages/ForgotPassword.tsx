@@ -101,7 +101,7 @@ const ForgotPassword = () => {
                 <Button type="submit" className="w-full h-12 rounded-lg font-bold bg-primary text-white" disabled={loading}>
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send Reset Code"}
                 </Button>
-                <Link to="/auth" className="flex items-center justify-center gap-2 text-sm font-bold text-slate-500 hover:text-primary transition-colors">
+                <Link to="/login" className="flex items-center justify-center gap-2 text-sm font-bold text-slate-500 hover:text-primary transition-colors">
                   <ArrowLeft className="h-4 w-4" /> Back to sign in
                 </Link>
               </form>

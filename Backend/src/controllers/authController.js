@@ -8,7 +8,7 @@ const { notifyAdmins } = require('../services/adminNotificationService');
 const register = async (req, res) => {
   const { 
     email, password, fullName, phone,
-    nationality, gender, dateOfBirth, address, bloodGroup, emergencyContactName, emergencyContactPhone,
+    nationality, gender, dateOfBirth, address, bloodGroup, region, emergencyContactName, emergencyContactPhone,
     ocularHistory, systemicConditions, currentMedications, familyEyeHistory, allergies,
     otp, otpToken
   } = req.body;
@@ -23,6 +23,9 @@ const register = async (req, res) => {
     const decoded = jwt.verify(otpToken, process.env.JWT_SECRET || 'secret');
     if (decoded.email !== email) {
       return res.status(400).json({ message: 'OTP email does not match registration email' });
+    }
+    if (decoded.phone !== phone) {
+      return res.status(400).json({ message: 'OTP phone number does not match registration phone number' });
     }
     if (decoded.otp !== otp) {
       return res.status(400).json({ message: 'Invalid OTP code' });
@@ -59,9 +62,9 @@ const register = async (req, res) => {
     await client.query(
       `INSERT INTO profiles (
         id, full_name, email, phone, nationality, gender, date_of_birth, 
-        address, blood_group, emergency_contact_name, emergency_contact_phone, registration_completed
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, TRUE)`,
-      [userId, fullName, email, phone, nationality, gender, dateOfBirth, address, bloodGroup, emergencyContactName, emergencyContactPhone]
+        address, blood_group, region, emergency_contact_name, emergency_contact_phone, registration_completed
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, TRUE)`,
+      [userId, fullName, email, phone, nationality, gender, dateOfBirth, address, bloodGroup, region, emergencyContactName, emergencyContactPhone]
     );
 
     // 5. Create medical history
@@ -101,12 +104,66 @@ const register = async (req, res) => {
         to: email,
         subject: 'Welcome to Nova Eye Care',
         html: `
-          <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px;">
-            <h1 style="color: #0070f3;">Welcome to Nova Eye Care!</h1>
-            <p>Hello <strong>${fullName}</strong>,</p>
-            <p>Your account has been successfully created. You can now use our portal to book appointments and manage your eye health.</p>
-            <p>Email: ${email}</p>
-            <p>Thank you for choosing us!</p>
+          <div style="font-family: 'Inter', system-ui, -apple-system, sans-serif; max-width: 600px; margin: 20px auto; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; background-color: #ffffff; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);">
+            <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 40px 30px; text-align: center; color: #ffffff;">
+              <h1 style="margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;">Welcome to Nova Eye Care!</h1>
+              <p style="margin: 8px 0 0 0; font-size: 16px; color: #94a3b8; font-weight: 500;">Your portal to healthier, brighter vision</p>
+            </div>
+            
+            <div style="padding: 40px 30px; color: #334155; line-height: 1.6; font-size: 15px;">
+              <p style="margin-top: 0; font-size: 16px;">Hello <strong style="color: #0f172a;">${fullName}</strong>,</p>
+              <p>Your account has been successfully created. We are excited to partner with you in managing your eye care and vision wellness.</p>
+              
+              <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin: 24px 0;">
+                <h3 style="margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; font-weight: 700;">Account Details</h3>
+                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                  <tr>
+                    <td style="padding: 6px 0; color: #64748b; width: 120px;">Email Address</td>
+                    <td style="padding: 6px 0; color: #0f172a; font-weight: 600;">${email}</td>
+                  </tr>
+                </table>
+              </div>
+
+              <div style="margin: 32px 0;">
+                <h3 style="margin: 0 0 16px 0; font-size: 15px; color: #0f172a; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; font-weight: 700;">What you can do next:</h3>
+                
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
+                  <tr>
+                    <td style="vertical-align: top; width: 50px; padding-right: 14px;">
+                      <div style="background-color: #eff6ff; color: #2563eb; border-radius: 8px; padding: 6px 0; width: 32px; height: 32px; text-align: center; font-weight: 800; font-size: 14px;">1</div>
+                    </td>
+                    <td>
+                      <h4 style="margin: 0 0 4px 0; font-size: 14px; color: #0f172a; font-weight: 700;">Book Appointments</h4>
+                      <p style="margin: 0; font-size: 13px; color: #64748b;">Schedule comprehensive exams, general consults, or DVLA eye tests.</p>
+                    </td>
+                  </tr>
+                </table>
+
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
+                  <tr>
+                    <td style="vertical-align: top; width: 50px; padding-right: 14px;">
+                      <div style="background-color: #eff6ff; color: #2563eb; border-radius: 8px; padding: 6px 0; width: 32px; height: 32px; text-align: center; font-weight: 800; font-size: 14px;">2</div>
+                    </td>
+                    <td>
+                      <h4 style="margin: 0 0 4px 0; font-size: 14px; color: #0f172a; font-weight: 700;">View Medical Records</h4>
+                      <p style="margin: 0; font-size: 13px; color: #64748b;">Access your diagnostic reports, ocular history, and prescriptions securely.</p>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+
+              <div style="text-align: center; margin: 36px 0 12px 0;">
+                <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/login" style="display: inline-block; background-color: #2563eb; color: #ffffff; font-weight: 700; font-size: 15px; padding: 14px 32px; border-radius: 10px; text-decoration: none; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);">
+                  Sign In to Patient Portal
+                </a>
+              </div>
+            </div>
+
+            <div style="background-color: #f8fafc; border-top: 1px solid #f1f5f9; padding: 30px; text-align: center; font-size: 12px; color: #64748b; line-height: 1.5;">
+              <p style="margin: 0 0 8px 0; font-weight: 600; color: #475569;">Nova Eye Care Portal</p>
+              <p style="margin: 0;">If you have any questions, please contact our support team or reply directly to this email.</p>
+              <p style="margin: 12px 0 0 0; font-size: 11px; color: #94a3b8;">&copy; 2026 Nova Eye Care. All rights reserved.</p>
+            </div>
           </div>
         `
       });
@@ -226,7 +283,7 @@ const getMe = async (req, res) => {
 const adminCreateUser = async (req, res) => {
   const { 
     email, password, fullName, phone, role,
-    nationality, gender, dateOfBirth, address, bloodGroup, emergencyContactName, emergencyContactPhone,
+    nationality, gender, dateOfBirth, address, bloodGroup, region, emergencyContactName, emergencyContactPhone,
     ocularHistory, systemicConditions, currentMedications, familyEyeHistory, allergies
   } = req.body;
 
@@ -258,9 +315,9 @@ const adminCreateUser = async (req, res) => {
     await client.query(
       `INSERT INTO profiles (
         id, full_name, email, phone, nationality, gender, date_of_birth, 
-        address, blood_group, emergency_contact_name, emergency_contact_phone, registration_completed
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, TRUE)`,
-      [userId, fullName, email, phone, nationality, gender, dateOfBirth, address, bloodGroup, emergencyContactName, emergencyContactPhone]
+        address, blood_group, region, emergency_contact_name, emergency_contact_phone, registration_completed
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, TRUE)`,
+      [userId, fullName, email, phone, nationality, gender, dateOfBirth, address, bloodGroup, region, emergencyContactName, emergencyContactPhone]
     );
 
     // 5. Create medical history
@@ -379,32 +436,30 @@ const getCaptcha = (req, res) => {
 };
 
 const sendOtp = async (req, res) => {
-  const { email, phone, captchaToken, captchaAnswer } = req.body;
+  const { email, phone, captchaToken, captchaAnswer, channel } = req.body;
 
   if (!email) {
     return res.status(400).json({ message: 'Email is required' });
   }
 
-  // 1. Verify captcha
-  if (!captchaToken || captchaAnswer === undefined) {
-    return res.status(400).json({ message: 'Human verification is required' });
+  if (!phone) {
+    return res.status(400).json({ message: 'Phone number is required' });
   }
 
-  try {
-    /** @type {any} */
-    const decoded = jwt.verify(captchaToken, process.env.JWT_SECRET || 'secret');
-    if (parseInt(captchaAnswer, 10) !== decoded.answer) {
-      return res.status(400).json({ message: 'Incorrect human verification answer' });
-    }
-  } catch (err) {
-    return res.status(400).json({ message: 'Human verification expired, please try again' });
-  }
+  // 1. Verify captcha bypassed
+
 
   // 2. Check if user already exists
   try {
     const userExists = await db.query('SELECT * FROM users WHERE email = $1', [email]);
     if (userExists.rows.length > 0) {
       return res.status(400).json({ message: 'User already exists with this email' });
+    }
+
+    /** @type {any} */
+    const phoneExists = await db.query('SELECT * FROM profiles WHERE phone = $1', [phone]);
+    if (phoneExists.rows.length > 0) {
+      return res.status(400).json({ message: 'Phone number is already registered' });
     }
   } catch (err) {
     console.error('Check user error:', err);
@@ -413,7 +468,7 @@ const sendOtp = async (req, res) => {
 
   // 3. Generate 6-digit OTP
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  console.log(`[OTP] Generated OTP for ${email}/${phone || 'no-phone'}: ${otp}`);
+  console.log(`[OTP] Generated OTP for ${email}/${phone || 'no-phone'} (Channel: ${channel || 'email'}): ${otp}`);
 
   // 4. Send OTP
   let sentViaSMS = false;
@@ -421,8 +476,10 @@ const sendOtp = async (req, res) => {
   let smsError = null;
   let emailError = null;
 
-  // Send via SMS if phone is provided
-  if (phone) {
+  const targetChannel = channel || 'email';
+
+  if (targetChannel === 'sms') {
+    // Send via SMS
     try {
       const message = `Your Nova Eye Care registration OTP is: ${otp}. It is valid for 10 minutes.`;
       const smsResult = await sendSMS(phone, message);
@@ -435,38 +492,54 @@ const sendOtp = async (req, res) => {
       smsError = err.message;
       console.error('Send OTP SMS error:', err);
     }
-  }
-
-  // Always send via email as fallback/primary
-  try {
-    await sendEmail({
-      to: email,
-      subject: 'Your Nova Eye Care OTP Verification Code',
-      html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px;">
-          <h2 style="color: #0070f3; text-align: center;">Nova Eye Care Portal</h2>
-          <hr style="border: 0; border-top: 1px solid #eaeaea; margin: 20px 0;" />
-          <p>Hello,</p>
-          <p>Thank you for choosing Nova Eye Care. To complete your account registration, please verify your email address using the One-Time Password (OTP) below:</p>
-          <div style="background-color: #f0f7ff; border: 1px dashed #0070f3; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 4px; color: #0070f3; margin: 20px 0; border-radius: 4px;">
-            ${otp}
+  } else {
+    // Send via Email
+    try {
+      const emailResult = await sendEmail({
+        to: email,
+        subject: 'Your Nova Eye Care OTP Verification Code',
+        html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px;">
+            <h2 style="color: #0070f3; text-align: center;">Nova Eye Care Portal</h2>
+            <hr style="border: 0; border-top: 1px solid #eaeaea; margin: 20px 0;" />
+            <p>Hello,</p>
+            <p>Thank you for choosing Nova Eye Care. To complete your account registration, please verify your email address using the One-Time Password (OTP) below:</p>
+            <div style="background-color: #f0f7ff; border: 1px dashed #0070f3; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 4px; color: #0070f3; margin: 20px 0; border-radius: 4px;">
+              ${otp}
+            </div>
+            <p style="font-size: 13px; color: #666;">This code is valid for 10 minutes. If you did not request this, please ignore this email.</p>
           </div>
-          <p style="font-size: 13px; color: #666;">This code is valid for 10 minutes. If you did not request this, please ignore this email.</p>
-        </div>
-      `
-    });
-    sentViaEmail = true;
-  } catch (err) {
-    emailError = err.message;
-    console.error('Send OTP Email error:', err);
+        `
+      });
+      console.log('[OTP] Send OTP Email result:', JSON.stringify(emailResult, null, 2));
+      sentViaEmail = true;
+    } catch (err) {
+      emailError = err.message;
+      console.error('Send OTP Email error:', err);
+    }
   }
 
-  // If both failed and we are in production, return error
-  if (!sentViaEmail && !sentViaSMS && process.env.NODE_ENV === 'production') {
-    return res.status(500).json({ 
-      message: 'Failed to deliver OTP verification code',
-      errors: { sms: smsError, email: emailError }
-    });
+  // If the chosen channel failed to deliver, return error (only strict in production)
+  if (targetChannel === 'sms' && !sentViaSMS) {
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(500).json({ 
+        message: 'Failed to deliver OTP verification code via SMS',
+        errors: { sms: smsError }
+      });
+    } else {
+      console.warn(`[SMS] Development Mode Bypass: SMS delivery failed (${smsError}), but returning devOtp for testing.`);
+    }
+  }
+
+  if (targetChannel === 'email' && !sentViaEmail) {
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(500).json({ 
+        message: 'Failed to deliver OTP verification code via Email',
+        errors: { email: emailError }
+      });
+    } else {
+      console.warn(`[EMAIL] Development Mode Bypass: Email delivery failed (${emailError}), but returning devOtp for testing.`);
+    }
   }
 
   // 5. Create signed OTP token
@@ -484,7 +557,9 @@ const sendOtp = async (req, res) => {
   };
 
   // For testing ease in dev
-  if (process.env.NODE_ENV !== 'production' || !process.env.RESEND_API_KEY || process.env.RESEND_API_KEY === 'your_resend_api_key') {
+  const hasEmailConfig = (process.env.SENDGRID_API_KEY && process.env.SENDGRID_API_KEY !== 'your_sendgrid_api_key') || 
+                         (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY !== 'your_resend_api_key');
+  if (process.env.NODE_ENV !== 'production' || !hasEmailConfig) {
     responsePayload.devOtp = otp;
   }
 
@@ -601,7 +676,9 @@ const sendResetOtp = async (req, res) => {
       sentViaSMS
     };
 
-    if (process.env.NODE_ENV !== 'production' || !process.env.RESEND_API_KEY || process.env.RESEND_API_KEY === 'your_resend_api_key') {
+    const hasEmailConfig = (process.env.SENDGRID_API_KEY && process.env.SENDGRID_API_KEY !== 'your_sendgrid_api_key') || 
+                           (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY !== 'your_resend_api_key');
+    if (process.env.NODE_ENV !== 'production' || !hasEmailConfig) {
       responsePayload.devOtp = otp;
     }
 

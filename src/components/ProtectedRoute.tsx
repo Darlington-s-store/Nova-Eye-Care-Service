@@ -20,7 +20,7 @@ export const ProtectedRoute = ({ children, requireAdmin }: ProtectedRouteProps) 
   }
 
   if (!session) {
-    const redirectTo = requireAdmin ? "/admin/login" : "/auth";
+    const redirectTo = requireAdmin ? "/admin/login" : "/login";
     return <Navigate to={redirectTo} state={{ from: location.pathname }} replace />;
   }
 

@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
-require('dotenv').config();
+require('dotenv').config({ override: true });
 /** @type {any} */
 const helmet = require('helmet');
 /** @type {any} */
@@ -77,7 +77,12 @@ app.use((req, res, next) => {
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 app.use('/api/auth/update-password', authLimiter);
-app.use('/api/appointments', bookingLimiter);
+app.use('/api/appointments', (req, res, next) => {
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
+    return bookingLimiter(req, res, next);
+  }
+  next();
+});
 app.use('/api/chatbot', chatbotLimiter);
 app.use('/api/', apiLimiter);
 
@@ -196,3 +201,4 @@ server.on('error', (err) => {
 });
 
 
+  

@@ -3,7 +3,7 @@ import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CLINIC } from "@/lib/clinic";
-import { getCMSContent, HeroContent, Announcements, getClinicContact, ClinicContact } from "@/lib/cms";
+import { getCMSContent, HeroContent, getClinicContact, ClinicContact } from "@/lib/cms";
 import { ApprovedReviews } from "@/components/ApprovedReviews";
 import { Hero } from "@/components/Hero";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,6 @@ const trustPoints = [
 
 const Home = () => {
   const [hero, setHero] = useState<HeroContent | null>(null);
-  const [announcement, setAnnouncement] = useState<Announcements | null>(null);
   const [hours, setHours] = useState<Record<string, string> | null>(null);
   const [clinic, setClinic] = useState<ClinicContact | null>(null);
   const [services, setServices] = useState<Service[]>([]);
@@ -36,11 +35,9 @@ const Home = () => {
   useEffect(() => {
     const fetchContent = async () => {
       const heroData = await getCMSContent<HeroContent>("hero");
-      const newsData = await getCMSContent<Announcements>("announcements");
       const hoursData = await getCMSContent<Record<string, string>>("hours");
       const clinicData = await getClinicContact();
       if (heroData) setHero(heroData);
-      if (newsData) setAnnouncement(newsData);
       if (hoursData) setHours(hoursData);
       setClinic(clinicData);
 
@@ -58,13 +55,6 @@ const Home = () => {
 
   return (
     <Layout>
-      {/* Announcement Banner */}
-      {announcement?.enabled && (
-        <div className="bg-primary text-white py-3 px-4 text-center text-sm font-bold border-b border-white/10">
-          <p>{announcement.message}</p>
-        </div>
-      )}
-
       <Hero hero={hero} />
 
       {/* Working hours bar */}

@@ -1,17 +1,21 @@
 import { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { apiService } from "@/lib/api";
 import { toast } from "sonner";
-import { Shield, Lock, Mail, User, Loader2, Save, Clock, ShieldAlert, MessageSquare } from "lucide-react";
+import { Shield, Lock, Mail, User, Loader2, Save, Clock, ShieldAlert, MessageSquare, Globe, Edit } from "lucide-react";
+import { ClinicContact } from "@/lib/cms";
 
 const AdminSettings = () => {
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState({ fullName: "", email: "" });
   const [passwords, setPasswords] = useState({ current: "", new: "", confirm: "" });
+  const [websiteInfo, setWebsiteInfo] = useState<ClinicContact | null>(null);
   const [clinic, setClinic] = useState({
     id: "",
     clinicName: "",
@@ -43,10 +47,25 @@ const AdminSettings = () => {
         setClinic(prev => ({
           ...prev,
           ...settings,
+          clinicName: settings.clinicName || "",
+          contactPhone: settings.contactPhone || "",
+          address: settings.address || "",
+          openingHours: settings.openingHours || "",
           socialFacebook: settings.socialFacebook || "",
           socialInstagram: settings.socialInstagram || "",
           socialTwitter: settings.socialTwitter || "",
+          announcementTitle: settings.announcementTitle || "",
+          announcementBody: settings.announcementBody || "",
+          showAnnouncement: !!settings.showAnnouncement,
+          maintenanceMode: !!settings.maintenanceMode,
+          chatbotEnabled: settings.chatbotEnabled !== undefined ? !!settings.chatbotEnabled : true
         }) as typeof clinic);
+      }
+
+      const cmsClinic = await apiService.cms.getSection("clinic");
+      if (cmsClinic) {
+        const content = (cmsClinic.contentJson || cmsClinic) as ClinicContact;
+        setWebsiteInfo(content);
       }
     } catch (err) {
       toast.error("Failed to load settings");
@@ -149,6 +168,17 @@ const AdminSettings = () => {
                     onChange={(e) => setClinic({ ...clinic, openingHours: e.target.value })}
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Clinic Address</Label>
+                <Textarea 
+                  placeholder="e.g. GE20 Dolores St, AH-1192-8485, Abuakwa"
+                  value={clinic.address} 
+                  onChange={(e) => setClinic({ ...clinic, address: e.target.value })}
+                  rows={2}
+                  className="rounded-xl border-slate-200"
+                />
               </div>
 
               <div className="space-y-4 pt-4 border-t">
@@ -376,6 +406,56 @@ const AdminSettings = () => {
             </form>
           </Card>
         </section>
+
+        {/* Public Website Contact Information */}
+        {websiteInfo && (
+          <section className="grid lg:grid-cols-3 gap-6 pt-8 border-t">
+            <div className="lg:col-span-1">
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <Globe className="h-5 w-5 text-primary" />
+                Public Website Info
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Contact and branding details currently displayed on the public landing page and footer.
+              </p>
+              <Button asChild variant="outline" size="sm" className="mt-4 font-bold border-primary/20 text-primary hover:bg-primary-soft">
+                <Link to="/admin/cms">
+                  <Edit className="h-4 w-4 mr-2" /> Edit Website Content
+                </Link>
+              </Button>
+            </div>
+            <Card className="lg:col-span-2 p-6 border shadow-sm bg-slate-50/50">
+              <div className="grid sm:grid-cols-2 gap-6">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Website Name</span>
+                  <p className="text-sm font-semibold text-slate-900">{websiteInfo.name || "Nova Eye Care"}</p>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tagline</span>
+                  <p className="text-sm font-semibold text-slate-900">{websiteInfo.tagline || "See Better, Live Brighter"}</p>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Public Email</span>
+                  <p className="text-sm font-semibold text-slate-900">{websiteInfo.email || "info@novaeyecare.com"}</p>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Public Phone Numbers</span>
+                  <p className="text-sm font-semibold text-slate-900">
+                    {websiteInfo.phone1} {websiteInfo.phone2 ? ` / ${websiteInfo.phone2}` : ""}
+                  </p>
+                </div>
+                <div className="sm:col-span-2 space-y-1 border-t pt-4">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Public Address</span>
+                  <p className="text-sm font-semibold text-slate-900 whitespace-pre-line">{websiteInfo.address}</p>
+                </div>
+                <div className="sm:col-span-2 space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Google Maps Landmark</span>
+                  <p className="text-sm font-semibold text-slate-900">{websiteInfo.mapQuery}</p>
+                </div>
+              </div>
+            </Card>
+          </section>
+        )}
       </div>
     </AdminLayout>
   );

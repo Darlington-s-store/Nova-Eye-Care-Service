@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { apiService } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Loader2, ArrowLeft, ShieldCheck, Mail, CalendarCheck, CheckCircle2, AlertCircle } from "lucide-react";
+import { Loader2, ArrowLeft, ShieldCheck, Mail, CalendarCheck, CheckCircle2, AlertCircle, Smartphone } from "lucide-react";
 import logo from "@/assets/logo.jpeg";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
@@ -17,16 +17,12 @@ const VerifyOtp = () => {
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [otp, setOtp] = useState("");
+  const verificationChannel = 'email';
   
   // Data retrieved from session storage
   const [signupData, setSignupData] = useState<Record<string, string> | null>(null);
   const [otpToken, setOtpToken] = useState("");
   const [devOtp, setDevOtp] = useState("");
-
-  // Captcha resend state
-  const [captcha, setCaptcha] = useState<{ question: string; captchaToken: string } | null>(null);
-  const [captchaAnswer, setCaptchaAnswer] = useState("");
-  const [showCaptchaForResend, setShowCaptchaForResend] = useState(false);
 
   // Timer state (10 minutes = 600 seconds)
   const [timeLeft, setTimeLeft] = useState(600);
@@ -37,10 +33,11 @@ const VerifyOtp = () => {
     const dataStr = sessionStorage.getItem("signup_data");
     const token = sessionStorage.getItem("signup_otp_token");
     const dev = sessionStorage.getItem("signup_dev_otp");
+    const channel = sessionStorage.getItem("signup_verification_channel") as 'email' | 'sms' || 'email';
 
     if (!dataStr || !token) {
       toast.error("Registration session expired. Please sign up again.");
-      navigate("/auth");
+      navigate("/signup");
       return;
     }
 
@@ -50,7 +47,7 @@ const VerifyOtp = () => {
       if (dev) setDevOtp(dev);
     } catch (e) {
       toast.error("Invalid registration session.");
-      navigate("/auth");
+      navigate("/signup");
     }
 
     // Start timer
@@ -75,33 +72,14 @@ const VerifyOtp = () => {
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const fetchCaptcha = async () => {
-    try {
-      const data = await apiService.auth.getCaptcha();
-      setCaptcha(data);
-      setCaptchaAnswer("");
-    } catch (err) {
-      toast.error("Failed to load human verification captcha");
-    }
-  };
-
-  const handleTriggerResend = async () => {
-    setShowCaptchaForResend(true);
-    await fetchCaptcha();
-  };
-
   const handleResendOtp = async () => {
     if (!signupData) return;
-    if (!captchaAnswer) {
-      return toast.error("Please answer the human verification question first");
-    }
     setResending(true);
     try {
       const res = await apiService.auth.sendOtp({
         email: signupData.email,
         phone: signupData.phone,
-        captchaToken: captcha?.captchaToken || "",
-        captchaAnswer: captchaAnswer
+        channel: verificationChannel
       });
       setOtpToken(res.otpToken);
       sessionStorage.setItem("signup_otp_token", res.otpToken);
@@ -115,7 +93,6 @@ const VerifyOtp = () => {
       }
       
       toast.success("A new verification code has been sent!");
-      setShowCaptchaForResend(false);
       setTimeLeft(600); // Reset timer
       
       // Restart timer
@@ -133,7 +110,6 @@ const VerifyOtp = () => {
       const error = err as { response?: { data?: { message?: string } } };
       const message = error.response?.data?.message || (err as Error).message || "Failed to resend OTP.";
       toast.error(message);
-      fetchCaptcha();
     } finally {
       setResending(false);
     }
@@ -176,7 +152,7 @@ const VerifyOtp = () => {
     if (signupData) {
       sessionStorage.setItem("signup_data", JSON.stringify(signupData));
     }
-    navigate("/auth");
+    navigate("/signup");
   };
 
   if (!signupData) return null;
@@ -234,13 +210,25 @@ const VerifyOtp = () => {
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <CheckCircle2 className="h-8 w-8 animate-pulse" />
               </div>
-              <h1 className="text-2xl font-bold tracking-tight mb-2">Check your inbox & phone</h1>
-              <p className="text-sm text-slate-500 font-medium px-4">
-                We've sent a 6-digit verification code to
-                <span className="block font-semibold text-slate-700 mt-1">
-                  {signupData.email} {signupData.phone ? `& ${signupData.phone}` : ""}
-                </span>
+              <h1 className="text-2xl font-bold tracking-tight mb-2">
+                Check Your Inbox
+              </h1>
+              <p className="text-sm text-slate-500 font-medium px-4 mb-4">
+                We've sent a 6-digit verification code to your chosen contact method.
               </p>
+              
+              <div className="space-y-2.5 max-w-sm mx-auto">
+                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100 text-left animate-in fade-in duration-300">
+                  <div className="h-8 w-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
+                    <Mail className="h-4 w-4" />
+                  </div>
+                  <div className="overflow-hidden flex-1">
+                    <p className="text-[10px] uppercase font-bold text-slate-400 leading-none">Email Address</p>
+                    <p className="text-xs font-semibold text-slate-700 truncate mt-0.5">{signupData.email}</p>
+                  </div>
+                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">Dispatched</span>
+                </div>
+              </div>
             </div>
 
             {devOtp && (
@@ -292,64 +280,19 @@ const VerifyOtp = () => {
                 <span>Code expires in: <span className="font-mono text-primary font-extrabold">{formatTime(timeLeft)}</span></span>
               </div>
 
-              {showCaptchaForResend ? (
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4 animate-in fade-in zoom-in-95 duration-200">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase text-slate-500">Human Verification</span>
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={fetchCaptcha} 
-                      className="text-xs font-semibold text-primary hover:text-primary-hover h-8 px-2"
-                    >
-                      Refresh
-                    </Button>
-                  </div>
-                  <div className="flex items-center justify-between bg-white p-3 rounded-lg border border-slate-100 text-sm font-semibold text-slate-700">
-                    {captcha ? captcha.question : "Loading verification..."}
-                  </div>
-                  <div className="flex gap-2">
-                    <Input 
-                      type="number" 
-                      placeholder="Answer" 
-                      value={captchaAnswer} 
-                      onChange={(e) => setCaptchaAnswer(e.target.value)} 
-                      className="h-11 rounded-lg w-1/3"
-                    />
-                    <Button 
-                      type="button" 
-                      onClick={handleResendOtp} 
-                      disabled={resending || !captchaAnswer || !captcha} 
-                      className="h-11 rounded-lg font-bold bg-primary text-white flex-1"
-                    >
-                      {resending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verify & Resend OTP"}
-                    </Button>
-                  </div>
-                  <Button 
+              <div className="text-center py-1">
+                <p className="text-sm text-slate-500 font-medium">
+                  Didn't get the code?{" "}
+                  <button 
                     type="button" 
-                    variant="ghost" 
-                    onClick={() => setShowCaptchaForResend(false)}
-                    className="w-full text-xs text-slate-400 hover:text-slate-600 font-bold"
+                    onClick={handleResendOtp} 
+                    disabled={timeLeft > 540 || resending}
+                    className={`font-bold hover:underline ${timeLeft > 540 || resending ? "text-slate-300 cursor-not-allowed" : "text-primary"}`}
                   >
-                    Cancel
-                  </Button>
-                </div>
-              ) : (
-                <div className="text-center py-1">
-                  <p className="text-sm text-slate-500 font-medium">
-                    Didn't get the code?{" "}
-                    <button 
-                      type="button" 
-                      onClick={handleTriggerResend} 
-                      disabled={timeLeft > 540} // Allow resending after 1 minute has elapsed (9 minutes left)
-                      className={`font-bold hover:underline ${timeLeft > 540 ? "text-slate-300 cursor-not-allowed" : "text-primary"}`}
-                    >
-                      {timeLeft > 540 ? `Resend in ${formatTime(timeLeft - 540)}` : "Resend Code"}
-                    </button>
-                  </p>
-                </div>
-              )}
+                    {resending ? "Resending..." : timeLeft > 540 ? `Resend in ${formatTime(timeLeft - 540)}` : "Resend Code"}
+                  </button>
+                </p>
+              </div>
 
               <div className="flex flex-col gap-3 pt-2">
                 <Button 

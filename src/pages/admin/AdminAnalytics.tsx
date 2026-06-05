@@ -184,7 +184,7 @@ const AdminAnalytics = () => {
     });
 
     // Appointments Table Section
-    const nextY = (doc as any).lastAutoTable.finalY + 12;
+    const nextY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 12;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
     doc.setTextColor(0, 59, 92);
@@ -209,7 +209,7 @@ const AdminAnalytics = () => {
     });
 
     // Add page numbers
-    const pageCount = (doc as any).internal.getNumberOfPages();
+    const pageCount = (doc as unknown as { internal: { getNumberOfPages: () => number } }).internal.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
       doc.setFont("helvetica", "normal");

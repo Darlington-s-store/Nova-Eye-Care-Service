@@ -239,7 +239,7 @@ const AdminOverview = () => {
         ...commonOptions.scales.y,
         ticks: {
           ...commonOptions.scales.y.ticks,
-          callback: (value: any) => `GH₵${value}`
+          callback: (value: string | number) => `GH₵${value}`
         }
       }
     },
@@ -253,7 +253,7 @@ const AdminOverview = () => {
         cornerRadius: 8,
         displayColors: false,
         callbacks: {
-          label: (context: any) => `GH₵ ${context.raw}`
+          label: (context: { raw: unknown }) => `GH₵ ${context.raw}`
         }
       }
     }

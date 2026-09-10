@@ -9,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TIME_SLOTS_WEEKDAY, TIME_SLOTS_SATURDAY, CLINIC } from "@/lib/clinic";
 import { apiService } from "@/lib/api";
-import { CheckCircle2, CalendarCheck, Loader2, Clock, Phone, Mail, Sparkles, ShieldCheck, ArrowRight, ArrowLeft, MapPin, Video, User, FileText } from "lucide-react";
+import { CheckCircle2, CalendarCheck, Loader2, Clock, Phone, Mail, Sparkles, ShieldCheck, ArrowRight, ArrowLeft, MapPin, Video, User, FileText, Smartphone } from "lucide-react";
+import { toast } from "sonner";
 import { z } from "zod";
 import { PageHero } from "@/components/PageHero";
 import heroBook from "@/assets/ioi.jpeg";
@@ -200,6 +201,7 @@ const Book = () => {
       });
       
       setSuccess(form);
+      toast.success("Appointment booked! An alert has been sent to your SMS and email.");
       setForm({ full_name: "", phone: "", email: "", service: "", appointment_date: "", appointment_time: "", appointment_type: "in_person", doctor_name: "", notes: "" });
       setStep(0);
     } catch (err) {
@@ -218,18 +220,39 @@ const Book = () => {
               <div className="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-full bg-primary-soft text-primary shadow-sm ring-8 ring-primary-soft/50">
                 <CheckCircle2 className="h-10 w-10" />
               </div>
-              <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">Appointment requested!</h1>
+              <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">Appointment Booked!</h1>
               <p className="text-muted-foreground text-lg mb-2 leading-relaxed">
                 Thank you, <strong className="text-foreground font-bold">{success.full_name}</strong>.
               </p>
-              <p className="text-muted-foreground text-lg mb-10 leading-relaxed">
+              <p className="text-muted-foreground text-base mb-6 leading-relaxed">
                 Your request for a <strong className="text-foreground font-bold">{success.appointment_type === "virtual" ? "Virtual (Online)" : "In-Person (Clinic)"}</strong> appointment
                 {success.doctor_name && <> with <strong className="text-foreground font-bold">{success.doctor_name}</strong></>}{" "}
                 for <strong className="text-foreground font-bold">{success.service}</strong> on{" "}
                 <strong className="text-foreground font-bold">{new Date(success.appointment_date).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</strong>{" "}
-                at <strong className="text-foreground font-bold">{success.appointment_time}</strong> has been received.
-                We will call <strong className="text-foreground font-bold">{success.phone}</strong> to confirm.
+                at <strong className="text-foreground font-bold">{success.appointment_time}</strong> has been confirmed.
               </p>
+
+              {/* SMS & Email Alert Notification Badges */}
+              <div className="grid sm:grid-cols-2 gap-3 max-w-lg mx-auto mb-8 text-left">
+                <div className="flex items-center gap-3 p-3.5 bg-emerald-50 rounded-2xl border border-emerald-100">
+                  <div className="h-9 w-9 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                    <Smartphone className="h-4 w-4" />
+                  </div>
+                  <div className="overflow-hidden">
+                    <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">SMS Alert Dispatched</p>
+                    <p className="text-xs font-semibold text-emerald-950 truncate mt-0.5">{success.phone}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3.5 bg-blue-50 rounded-2xl border border-blue-100">
+                  <div className="h-9 w-9 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                    <Mail className="h-4 w-4" />
+                  </div>
+                  <div className="overflow-hidden">
+                    <p className="text-[10px] font-bold text-blue-800 uppercase tracking-wider">Email Details Sent</p>
+                    <p className="text-xs font-semibold text-blue-950 truncate mt-0.5">{success.email}</p>
+                  </div>
+                </div>
+              </div>
               <div className="flex flex-wrap gap-4 justify-center">
                 <Button 
                   asChild

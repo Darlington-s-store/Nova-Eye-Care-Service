@@ -90,7 +90,7 @@ const Signup = () => {
       sessionStorage.setItem("signup_data", JSON.stringify(signup));
       sessionStorage.setItem("signup_otp_token", res.otpToken);
 
-      toast.success("Verification code sent to your email and phone!");
+      toast.success("Verification code sent to your phone via SMS!");
       navigate("/verify-otp");
     } catch (err) {
       const error = err as { response?: { data?: { message?: string } } };
@@ -482,15 +482,15 @@ const Signup = () => {
 
               <div className="space-y-3 pt-4 border-t border-slate-100">
                 <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                  Verification Method <span className="text-red-500">*</span>
+                  SMS Verification <span className="text-red-500">*</span>
                 </Label>
                 <div className="flex items-center gap-4 p-4 rounded-2xl border border-primary bg-primary/[0.03] ring-2 ring-primary/20 shadow-sm shadow-primary/5">
                   <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 bg-primary text-white">
-                    <Mail className="h-5 w-5" />
+                    <Smartphone className="h-5 w-5" />
                   </div>
                   <div className="overflow-hidden flex-1">
-                    <p className="text-sm font-bold text-slate-900 leading-tight">Send via Email</p>
-                    <p className="text-xs font-semibold text-slate-400 truncate mt-0.5">{signup.email}</p>
+                    <p className="text-sm font-bold text-slate-900 leading-tight">Receive OTP via SMS</p>
+                    <p className="text-xs font-semibold text-slate-500 truncate mt-0.5">{signup.phone || "Your registered phone number"}</p>
                   </div>
                 </div>
               </div>
@@ -504,7 +504,7 @@ const Signup = () => {
                   disabled={sendingOtp} 
                   className="w-2/3 h-12 rounded-xl font-bold bg-primary text-white hover:bg-primary/95 flex items-center justify-center gap-2"
                 >
-                  {sendingOtp ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send Verification Code"}
+                  {sendingOtp ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send SMS Verification Code"}
                 </Button>
               </div>
             </form>

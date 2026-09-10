@@ -77,7 +77,7 @@ const VerifyOtp = () => {
       setOtpToken(res.otpToken);
       sessionStorage.setItem("signup_otp_token", res.otpToken);
       
-      toast.success("A new verification code has been sent!");
+      toast.success("A new verification code has been sent via SMS!");
       setTimeLeft(600); // Reset timer
       
       // Restart timer
@@ -115,6 +115,7 @@ const VerifyOtp = () => {
         otpToken: otpToken
       });
       await refresh();
+      sessionStorage.setItem("nova_just_registered", "true");
       toast.success("Account created successfully! Welcome to NOVA Eye Care.");
       
       // Clean up session storage
@@ -195,32 +196,20 @@ const VerifyOtp = () => {
                 <CheckCircle2 className="h-8 w-8 animate-pulse" />
               </div>
               <h1 className="text-2xl font-bold tracking-tight mb-2">
-                Check Your Phone & Email
+                Check Your Phone for SMS
               </h1>
               <p className="text-sm text-slate-500 font-medium px-4 mb-4">
-                We've sent a 6-digit verification code to both your email and phone number.
+                We've sent a 6-digit verification code via SMS to your phone number.
               </p>
               
               <div className="space-y-2.5 max-w-sm mx-auto">
-                {signupData?.email && (
-                  <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100 text-left animate-in fade-in duration-300">
-                    <div className="h-8 w-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
-                      <Mail className="h-4 w-4" />
-                    </div>
-                    <div className="overflow-hidden flex-1">
-                      <p className="text-[10px] uppercase font-bold text-slate-400 leading-none">Email Address</p>
-                      <p className="text-xs font-semibold text-slate-700 truncate mt-0.5">{signupData.email}</p>
-                    </div>
-                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">Dispatched</span>
-                  </div>
-                )}
                 {signupData?.phone && (
                   <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100 text-left animate-in fade-in duration-300">
                     <div className="h-8 w-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0">
                       <Smartphone className="h-4 w-4" />
                     </div>
                     <div className="overflow-hidden flex-1">
-                      <p className="text-[10px] uppercase font-bold text-slate-400 leading-none">SMS / Phone</p>
+                      <p className="text-[10px] uppercase font-bold text-slate-400 leading-none">SMS Delivery</p>
                       <p className="text-xs font-semibold text-slate-700 truncate mt-0.5">{signupData.phone}</p>
                     </div>
                     <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">Dispatched</span>

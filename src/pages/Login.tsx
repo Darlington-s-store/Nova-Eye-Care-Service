@@ -90,6 +90,7 @@ const Login = () => {
         password: signin.password
       });
       await refresh();
+      sessionStorage.setItem("nova_just_logged_in", "true");
       toast.success("Welcome back!");
       window.location.href = "/dashboard";
     } catch (err) {

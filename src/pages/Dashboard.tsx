@@ -56,6 +56,25 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState<"overview" | "profile" | "appointments" | "records" | "billing">("overview");
   const [clinicSettings, setClinicSettings] = useState<ClinicSettings | null>(null);
   const [announcementDismissed, setAnnouncementDismissed] = useState(false);
+  const [welcomeAlert, setWelcomeAlert] = useState<{ title: string; message: string } | null>(null);
+
+  useEffect(() => {
+    const justRegistered = sessionStorage.getItem("nova_just_registered");
+    const justLoggedIn = sessionStorage.getItem("nova_just_logged_in");
+    if (justRegistered) {
+      setWelcomeAlert({
+        title: "Account Created & Verified Successfully!",
+        message: "Welcome to NOVA Eye Care. Your account has been verified via SMS and you are now securely logged in."
+      });
+      sessionStorage.removeItem("nova_just_registered");
+    } else if (justLoggedIn) {
+      setWelcomeAlert({
+        title: "Welcome Back!",
+        message: "You have successfully logged in to your NOVA Eye Care portal."
+      });
+      sessionStorage.removeItem("nova_just_logged_in");
+    }
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -219,6 +238,27 @@ const Dashboard = () => {
               </Button>
             </div>
           </div>
+
+          {welcomeAlert && (
+            <Card className="mb-6 p-5 bg-emerald-50 border-emerald-200 rounded-2xl flex items-center justify-between gap-4 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="flex items-center gap-4">
+                <div className="h-11 w-11 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 shrink-0">
+                  <CheckCircle2 className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-emerald-900 text-base">{welcomeAlert.title}</h3>
+                  <p className="text-sm text-emerald-700 mt-0.5">{welcomeAlert.message}</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setWelcomeAlert(null)}
+                className="text-emerald-500 hover:text-emerald-700 p-1.5 rounded-lg hover:bg-emerald-100/50 transition-colors"
+                aria-label="Dismiss alert"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </Card>
+          )}
 
           {profile && !profile.registrationCompleted && (
             <Card className="mb-10 p-6 bg-amber-50 border-amber-200 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">

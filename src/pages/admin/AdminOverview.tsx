@@ -61,40 +61,35 @@ const AdminOverview = () => {
       value: stats?.summary.totalAppointments, 
       icon: CalendarDays, 
       link: "/admin/appointments",
-      borderColor: "border-l-indigo-500 hover:border-l-indigo-600",
-      iconBg: "bg-indigo-50 text-indigo-600 border-indigo-100"
+      accent: "text-primary bg-primary/10 border-primary/20"
     },
     { 
       label: "Pending requests", 
       value: stats?.summary.pendingAppointments, 
       icon: Clock, 
       link: "/admin/appointments?status=pending",
-      borderColor: "border-l-amber-500 hover:border-l-amber-600",
-      iconBg: "bg-amber-50 text-amber-600 border-amber-100"
+      accent: "text-amber-600 bg-amber-500/10 border-amber-500/20"
     },
     { 
       label: "Today's bookings", 
       value: stats?.summary.todayAppointments, 
       icon: CalendarDays, 
       link: "/admin/appointments",
-      borderColor: "border-l-emerald-500 hover:border-l-emerald-600",
-      iconBg: "bg-emerald-50 text-emerald-600 border-emerald-100"
+      accent: "text-emerald-600 bg-emerald-500/10 border-emerald-500/20"
     },
     { 
       label: "Reviews to approve", 
       value: stats?.summary.pendingReviews, 
       icon: Star, 
       link: "/admin/reviews",
-      borderColor: "border-l-violet-500 hover:border-l-violet-600",
-      iconBg: "bg-violet-50 text-violet-600 border-violet-100"
+      accent: "text-indigo-600 bg-indigo-500/10 border-indigo-500/20"
     },
     { 
       label: "Registered users", 
       value: stats?.summary.totalUsers, 
       icon: Users, 
       link: "/admin/users",
-      borderColor: "border-l-sky-500 hover:border-l-sky-600",
-      iconBg: "bg-sky-50 text-sky-600 border-sky-100"
+      accent: "text-slate-700 bg-slate-100 border-slate-200"
     },
   ];
 
@@ -347,18 +342,16 @@ const AdminOverview = () => {
           {/* 1. Cards Section */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             {cards.map((c) => (
-              <Link key={c.label} to={c.link}>
-                <Card className={cn(
-                  "p-5 border-y border-r border-l-4 hover:shadow-md transition-all h-full bg-white relative overflow-hidden",
-                  c.borderColor
-                )}>
+              <Link key={c.label} to={c.link} className="group">
+                <Card className="p-5 border border-border/70 hover:border-primary/40 transition-all h-full bg-white rounded-xl shadow-sm hover:shadow-md">
                   <div className="flex items-center justify-between mb-3">
-                    <span className={cn("flex h-9 w-9 items-center justify-center rounded-lg border", c.iconBg)}>
+                    <span className={cn("flex h-9 w-9 items-center justify-center rounded-lg border", c.accent)}>
                       <c.icon className="h-4 w-4" />
                     </span>
+                    <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                   </div>
-                  <p className="text-2xl font-black text-slate-800">{c.value}</p>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-1.5">{c.label}</p>
+                  <p className="text-2xl font-black text-slate-900">{c.value ?? 0}</p>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-1">{c.label}</p>
                 </Card>
               </Link>
             ))}

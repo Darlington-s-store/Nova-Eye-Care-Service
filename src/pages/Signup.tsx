@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import heroGeneral from "@/assets/hero.jpeg";
 
 const Signup = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, refresh } = useAuth();
   const [showPw, setShowPw] = useState(false);
   const [signUpStep, setSignUpStep] = useState(1);
   const [signup, setSignup] = useState({ 
@@ -24,6 +24,58 @@ const Signup = () => {
 
   const [sendingOtp, setSendingOtp] = useState(false);
   const verificationChannel = 'email';
+
+  const handleGoogleLoginResponse = useCallback(async (response: { credential?: string }) => {
+    const token = response.credential;
+    if (!token) return;
+    setSendingOtp(true);
+    try {
+      await apiService.auth.loginWithGoogle(token);
+      await refresh();
+      toast.success("Welcome back!");
+      window.location.href = "/dashboard";
+    } catch (err) {
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
+      const message = error.response?.data?.message || error.message || "Google Authentication failed.";
+      toast.error(message);
+    } finally {
+      setSendingOtp(false);
+    }
+  }, [refresh]);
+
+  useEffect(() => {
+    let mounted = true;
+    const initGoogle = () => {
+      if (!mounted) return;
+      if (signUpStep !== 1) return; // Only render when on Step 1
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const google = (window as any).google;
+      if (typeof google !== 'undefined') {
+        try {
+          google.accounts.id.initialize({
+            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '758066224355-dummygoogleclientid.apps.googleusercontent.com',
+            callback: handleGoogleLoginResponse
+          });
+          const btnElem = document.getElementById("google-signup-btn");
+          if (btnElem) {
+            google.accounts.id.renderButton(
+              btnElem,
+              { theme: "outline", size: "large", width: 368 }
+            );
+          }
+        } catch (e) {
+          console.error("Google script initialization error:", e);
+        }
+      } else {
+        setTimeout(initGoogle, 100);
+      }
+    };
+    
+    initGoogle();
+    return () => {
+      mounted = false;
+    };
+  }, [refresh, signUpStep, handleGoogleLoginResponse]);
 
   const handleSendOtp = async () => {
     setSendingOtp(true);
@@ -213,6 +265,19 @@ const Signup = () => {
               >
                 Continue to Personal Profile
               </Button>
+
+              <div className="relative my-4 text-center">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-slate-200" />
+                </div>
+                <span className="relative bg-white px-4 text-xs font-bold uppercase text-slate-400">
+                  Or Connect With
+                </span>
+              </div>
+
+              <div className="flex justify-center mb-2">
+                <div id="google-signup-btn" className="w-full min-h-[44px] flex justify-center" />
+              </div>
             </div>
           )}
 

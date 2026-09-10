@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,57 @@ const Login = () => {
       navigate("/dashboard", { replace: true });
     }
   }, [user, navigate]);
+
+  const handleGoogleLoginResponse = useCallback(async (response: { credential?: string }) => {
+    const token = response.credential;
+    if (!token) return;
+    setLoading(true);
+    try {
+      await apiService.auth.loginWithGoogle(token);
+      await refresh();
+      toast.success("Welcome back!");
+      window.location.href = "/dashboard";
+    } catch (err) {
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
+      const message = error.response?.data?.message || error.message || "Google Authentication failed.";
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  }, [refresh]);
+
+  useEffect(() => {
+    let mounted = true;
+    const initGoogle = () => {
+      if (!mounted) return;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const google = (window as any).google;
+      if (typeof google !== 'undefined') {
+        try {
+          google.accounts.id.initialize({
+            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '758066224355-dummygoogleclientid.apps.googleusercontent.com',
+            callback: handleGoogleLoginResponse
+          });
+          const btnElem = document.getElementById("google-signin-btn");
+          if (btnElem) {
+            google.accounts.id.renderButton(
+              btnElem,
+              { theme: "outline", size: "large", width: 368 }
+            );
+          }
+        } catch (e) {
+          console.error("Google script initialization error:", e);
+        }
+      } else {
+        setTimeout(initGoogle, 100);
+      }
+    };
+    
+    initGoogle();
+    return () => {
+      mounted = false;
+    };
+  }, [refresh, handleGoogleLoginResponse]);
 
   const onSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,6 +190,19 @@ const Login = () => {
               )}
             </Button>
           </form>
+
+          <div className="relative my-6 text-center">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-slate-200" />
+            </div>
+            <span className="relative bg-white px-4 text-xs font-bold uppercase text-slate-400">
+              Or Connect With
+            </span>
+          </div>
+
+          <div className="flex justify-center mb-4">
+            <div id="google-signin-btn" className="w-full min-h-[44px] flex justify-center" />
+          </div>
 
           <div className="relative my-8 text-center">
             <div className="absolute inset-0 flex items-center">

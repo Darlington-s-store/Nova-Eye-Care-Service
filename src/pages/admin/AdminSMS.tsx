@@ -175,7 +175,7 @@ export default function AdminSMS() {
                     className="rounded-2xl border-border/60 p-6 text-lg leading-relaxed focus-visible:ring-primary/20"
                   />
                   <p className="text-[11px] text-muted-foreground italic mt-2">
-                    * Standard rates apply via Arkesel. Messages over 160 characters will be split into multiple SMS units.
+                    * Standard rates apply via SMSOnlineGH. Messages over 160 characters will be split into multiple SMS units.
                   </p>
                 </div>
 

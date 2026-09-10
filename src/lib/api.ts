@@ -239,6 +239,11 @@ export const apiService = {
       if (data.token) localStorage.setItem('nova_auth_token', data.token);
       return data;
     },
+    loginWithGoogle: async (idToken: string): Promise<AuthResponse> => {
+      const { data } = await api.post('/auth/google', { idToken });
+      if (data.token) localStorage.setItem('nova_auth_token', data.token);
+      return data;
+    },
     logout: () => {
       localStorage.removeItem('nova_auth_token');
     },

@@ -125,7 +125,7 @@ export const Navbar = () => {
                   <ChevronDown className="h-3 w-3 opacity-50" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 p-2 rounded-xl shadow-elegant border-border/40 backdrop-blur bg-card/95">
+              <DropdownMenuContent align="end" className="w-56 p-2 rounded-xl shadow-md border-border/40 backdrop-blur bg-card/95">
                 <DropdownMenuLabel className="px-2 py-1.5 text-xs text-muted-foreground font-normal">
                   Manage Account
                 </DropdownMenuLabel>
@@ -164,13 +164,13 @@ export const Navbar = () => {
               <Link to="/login">Sign in</Link>
             </Button>
           )}
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button asChild className="rounded-xl px-7 font-bold shadow-lg shadow-primary/20 bg-primary text-white hover:bg-primary/90"><Link to="/book">Book Now</Link></Button>
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <Button asChild className="rounded-xl px-7 font-bold shadow-sm bg-primary text-white hover:bg-primary/90"><Link to="/book">Book Now</Link></Button>
           </motion.div>
         </div>
 
         <button
-          className="lg:hidden p-3 rounded-xl hover:bg-primary-soft transition-colors border border-border/40 bg-background/50 shadow-sm"
+          className="lg:hidden p-3 rounded-xl hover:bg-primary-soft transition-colors border border-border/60 bg-background/50"
           onClick={() => setOpen((o) => !o)}
           aria-label="Toggle menu"
         >
@@ -264,7 +264,7 @@ export const Navbar = () => {
                     <Link to="/login">Sign in</Link>
                   </Button>
                 )}
-                <Button asChild className="w-full rounded-xl h-12 font-bold shadow-lg shadow-primary/20 bg-primary text-white hover:bg-primary/90" onClick={() => setOpen(false)}>
+                <Button asChild className="w-full rounded-xl h-12 font-bold shadow-sm bg-primary text-white hover:bg-primary/90" onClick={() => setOpen(false)}>
                   <Link to="/book">Book Now</Link>
                 </Button>
               </motion.div>

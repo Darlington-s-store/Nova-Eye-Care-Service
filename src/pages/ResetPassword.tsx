@@ -67,7 +67,7 @@ const ResetPassword = () => {
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
           <Link to="/" className="inline-flex items-center gap-2 font-bold text-xl text-primary">
-            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-white overflow-hidden shadow-sm border">
+            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-white overflow-hidden border border-border/60">
                <img src={logo} alt="NOVA Eye Care Logo" className="h-full w-full object-contain p-0.5" />
             </span>
             NOVA Eye Care
@@ -78,7 +78,7 @@ const ResetPassword = () => {
           </p>
         </div>
 
-        <Card className="p-8 shadow-elegant border bg-white">
+        <Card className="p-8 shadow-card border bg-white">
           <form onSubmit={onSubmit} className="space-y-6">
             <div className="space-y-4">
               <div className="space-y-2">

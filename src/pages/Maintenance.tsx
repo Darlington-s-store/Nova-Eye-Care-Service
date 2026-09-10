@@ -7,7 +7,7 @@ const Maintenance = () => {
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-soft-gradient p-6">
       <div className="max-w-md w-full text-center space-y-8 animate-fade-in">
         <div className="flex justify-center">
-          <div className="h-20 w-20 rounded-2xl bg-white shadow-elegant p-1 border border-border/10 overflow-hidden">
+          <div className="h-20 w-20 rounded-2xl bg-white border border-border/60 p-1 overflow-hidden shadow-sm">
             <img src={logo} alt="NOVA Logo" className="h-full w-full object-contain" />
           </div>
         </div>

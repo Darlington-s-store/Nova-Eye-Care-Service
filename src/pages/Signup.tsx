@@ -165,7 +165,7 @@ const Signup = () => {
           </div>
 
           <div className="text-center mb-6">
-            <Link to="/" className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-slate-50 border border-slate-100 p-1 shadow-sm mb-4 transition-transform hover:scale-105 duration-300">
+            <Link to="/" className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-slate-50 border border-slate-200 p-1 mb-4 transition-transform hover:scale-105 duration-300">
               <img src={logo} alt="NOVA Eye Care" className="h-full w-full object-contain rounded-lg" />
             </Link>
             <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Create your account</h1>
@@ -256,7 +256,7 @@ const Signup = () => {
                   }
                   setSignUpStep(2);
                 }} 
-                className="w-full h-12 rounded-xl font-bold bg-primary text-white hover:bg-primary/95 shadow-md shadow-primary/10 transition-all hover:scale-[1.01]"
+                className="w-full h-12 rounded-xl font-bold bg-primary text-white hover:bg-primary/95 shadow-sm transition-all hover:scale-[1.01]"
               >
                 Continue to Personal Profile
               </Button>
@@ -484,7 +484,7 @@ const Signup = () => {
                 <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
                   SMS Verification <span className="text-red-500">*</span>
                 </Label>
-                <div className="flex items-center gap-4 p-4 rounded-2xl border border-primary bg-primary/[0.03] ring-2 ring-primary/20 shadow-sm shadow-primary/5">
+                <div className="flex items-center gap-4 p-4 rounded-2xl border border-primary/30 bg-primary/[0.03]">
                   <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 bg-primary text-white">
                     <Smartphone className="h-5 w-5" />
                   </div>

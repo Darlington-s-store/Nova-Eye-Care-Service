@@ -130,7 +130,7 @@ export default function MedicalHistoryPage() {
               animate="show"
               className="space-y-8"
             >
-              <Card className="p-8 md:p-10 rounded-[2.5rem] shadow-elegant border-border/40 bg-white/80 backdrop-blur-sm relative overflow-hidden">
+              <Card className="p-8 md:p-10 rounded-[2.5rem] shadow-card border-border/40 bg-white/80 backdrop-blur-sm relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-bl-full -mr-32 -mt-32 pointer-events-none" />
                 
                 <div className="space-y-12 relative z-10">
@@ -191,7 +191,7 @@ export default function MedicalHistoryPage() {
                   onClick={handleSave} 
                   disabled={loading} 
                   size="hero" 
-                  className="rounded-2xl px-12 font-bold gap-3 shadow-lg shadow-primary/20"
+                  className="rounded-2xl px-12 font-bold gap-3 shadow-sm"
                 >
                   {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />} Save Health Profile
                 </Button>
@@ -206,7 +206,7 @@ export default function MedicalHistoryPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
             >
-              <Card className="p-8 bg-primary text-primary-foreground rounded-[2rem] shadow-elegant border-none relative overflow-hidden group">
+              <Card className="p-8 bg-primary text-primary-foreground rounded-[2rem] shadow-card border-none relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-700" />
                 <h3 className="font-bold text-2xl mb-6 flex items-center gap-3">
                   <div className="h-10 w-10 rounded-xl bg-white/20 flex items-center justify-center">
@@ -255,7 +255,7 @@ function Section({ icon: Icon, title, description, value, onChange, placeholder,
   return (
     <motion.div variants={variants} className="space-y-5 group">
       <div className="flex items-center gap-4">
-        <div className="h-12 w-12 bg-primary-soft text-primary rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 duration-500 shadow-sm">
+        <div className="h-12 w-12 bg-primary-soft text-primary rounded-2xl flex items-center justify-center transition-transform group-hover:scale-105 duration-300 border border-border/40">
           <Icon className="h-6 w-6" />
         </div>
         <div>
@@ -265,7 +265,7 @@ function Section({ icon: Icon, title, description, value, onChange, placeholder,
       </div>
       <Textarea 
         placeholder={placeholder}
-        className="rounded-[1.5rem] border-border/60 bg-white/50 focus:bg-white focus:ring-primary/20 min-h-[120px] text-base p-5 transition-all shadow-inner"
+        className="rounded-[1.5rem] border-border/60 bg-white/50 focus:bg-white focus:ring-primary/20 min-h-[120px] text-base p-5 transition-all"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />

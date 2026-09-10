@@ -200,7 +200,7 @@ const Dashboard = () => {
                 className={cn(
                   "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all",
                   activeTab === item.id 
-                    ? "bg-primary text-white shadow-md shadow-primary/20" 
+                    ? "bg-primary text-white" 
                     : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                 )}
               >
@@ -233,7 +233,7 @@ const Dashboard = () => {
               <p className="text-slate-500 mt-1">Manage your ocular health journey with NOVA.</p>
             </div>
             <div className="flex gap-3">
-              <Button asChild className="rounded-xl font-bold bg-primary hover:bg-primary/90 text-white px-6 h-12 shadow-lg shadow-primary/10">
+              <Button asChild className="rounded-xl font-bold bg-primary hover:bg-primary/90 text-white px-6 h-12 shadow-sm">
                 <Link to="/book"><CalendarPlus className="h-5 w-5 mr-2" /> Book Appointment</Link>
               </Button>
             </div>
@@ -282,17 +282,13 @@ const Dashboard = () => {
             {activeTab === "overview" && (
               <div className="space-y-8 animate-in fade-in duration-500">
                 {clinicSettings && clinicSettings.showAnnouncement && clinicSettings.announcementBody && !announcementDismissed && (
-                  <Card className="relative overflow-hidden border-none bg-gradient-to-r from-indigo-600 via-primary to-indigo-700 text-white p-6 rounded-2xl shadow-xl shadow-indigo-100 flex flex-col md:flex-row items-center justify-between gap-6 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-200/50 group">
-                    {/* Decorative ambient light */}
-                    <div className="absolute -right-10 -bottom-10 h-40 w-40 bg-white/10 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-500 pointer-events-none" />
-                    <div className="absolute -left-10 -top-10 h-32 w-32 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none" />
-                    
+                  <Card className="relative overflow-hidden border border-indigo-500/30 bg-gradient-to-r from-indigo-700 via-primary to-indigo-800 text-white p-6 rounded-2xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 group">
                     <div className="flex items-start gap-4 z-10">
-                      <div className="p-3 bg-white/15 rounded-xl border border-white/20 text-white shrink-0 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-inner">
-                        <Megaphone className="h-6 w-6 animate-pulse" />
+                      <div className="p-3 bg-white/10 rounded-xl border border-white/20 text-white shrink-0 group-hover:scale-105 transition-transform duration-200">
+                        <Megaphone className="h-6 w-6" />
                       </div>
                       <div className="space-y-1">
-                        <Badge className="bg-white/20 hover:bg-white/20 text-white border-none px-2.5 py-0.5 text-[9px] uppercase tracking-wider font-extrabold shadow-sm">
+                        <Badge className="bg-white/15 text-white border-none px-2.5 py-0.5 text-[9px] uppercase tracking-wider font-extrabold">
                           Clinic Announcement
                         </Badge>
                         <h3 className="text-lg font-bold tracking-tight">

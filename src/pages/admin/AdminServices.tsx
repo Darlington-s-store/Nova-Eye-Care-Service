@@ -326,9 +326,9 @@ export default function AdminServices() {
                     animate={{ opacity: 1 }}
                   >
                     {viewMode === "list" ? (
-                      <Card className="p-4 hover:shadow-elegant transition-all group border-border/40 hover:border-primary/20 rounded-2xl">
+                      <Card className="p-4 hover:shadow-md transition-all group border-border/40 hover:border-primary/20 rounded-2xl">
                         <div className="flex flex-col sm:flex-row items-center gap-6">
-                          <div className="h-20 w-32 shrink-0 rounded-xl bg-muted overflow-hidden border border-border/10 shadow-sm relative">
+                          <div className="h-20 w-32 shrink-0 rounded-xl bg-muted overflow-hidden border border-border/10 relative">
                             <img 
                               src={serviceImageMap[s.slug] || s.imageUrl} 
                               alt={s.name} 
@@ -352,7 +352,7 @@ export default function AdminServices() {
                         </div>
                       </Card>
                     ) : (
-                      <Card className="p-0 overflow-hidden border-border/40 hover:shadow-elegant transition-all group flex flex-col h-full rounded-2xl relative">
+                      <Card className="p-0 overflow-hidden border-border/40 hover:shadow-md transition-all group flex flex-col h-full rounded-2xl relative">
                         <div className="aspect-video relative overflow-hidden">
                           <img 
                             src={serviceImageMap[s.slug] || s.imageUrl} 

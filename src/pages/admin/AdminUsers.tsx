@@ -274,7 +274,7 @@ const AdminUsers = () => {
                   <Button 
                     onClick={handleSaveProfile} 
                     disabled={saving} 
-                    className="gap-2 rounded-xl h-10 shadow-lg shadow-primary/10 transition-all"
+                    className="gap-2 rounded-xl h-10 shadow-sm transition-all"
                   >
                     {saving ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -287,7 +287,7 @@ const AdminUsers = () => {
               ) : (
                 <Button 
                   onClick={() => setIsEditing(true)} 
-                  className="gap-2 rounded-xl h-10 shadow-lg shadow-primary/10 transition-all"
+                  className="gap-2 rounded-xl h-10 shadow-sm transition-all"
                 >
                   <Edit3 className="h-4 w-4" /> Edit Profile
                 </Button>
@@ -548,7 +548,7 @@ const AdminUsers = () => {
                   <Button 
                     onClick={handleSaveProfile} 
                     disabled={saving} 
-                    className="flex-1 rounded-xl h-11 shadow-lg shadow-primary/10"
+                    className="flex-1 rounded-xl h-11 shadow-sm"
                   >
                     {saving ? (
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -574,7 +574,7 @@ const AdminUsers = () => {
                   {/* Header/Banner block */}
                   <div className="bg-slate-50 p-6 border-b border-slate-100 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
-                      <div className="h-16 w-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary border border-primary/20 shadow-inner">
+                      <div className="h-16 w-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary border border-primary/20">
                         <User className="h-8 w-8" />
                       </div>
                       <div>
@@ -823,7 +823,7 @@ const AdminUsers = () => {
             <p className="text-sm text-muted-foreground font-medium">
               Showing {filteredUsers.length} of {users.length} patients
             </p>
-            <Button onClick={() => setIsAddDialogOpen(true)} className="gap-2 rounded-xl h-11 px-5 shadow-lg shadow-primary/10">
+            <Button onClick={() => setIsAddDialogOpen(true)} className="gap-2 rounded-xl h-11 px-5 shadow-sm">
               <Plus className="h-5 w-5" />
               Add User
             </Button>

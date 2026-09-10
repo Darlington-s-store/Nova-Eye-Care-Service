@@ -78,7 +78,7 @@ export default function AdminSMS() {
       <div className="space-y-8">
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="p-6 border-none shadow-elegant bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl relative overflow-hidden group">
+          <Card className="p-6 border border-border/40 shadow-sm bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl relative overflow-hidden group">
             <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-500">
               <Send className="h-32 w-32" />
             </div>
@@ -91,7 +91,7 @@ export default function AdminSMS() {
             <p className="text-4xl font-black tracking-tight">{stats?.total || 0}</p>
           </Card>
 
-          <Card className="p-6 border-none shadow-elegant bg-gradient-to-br from-green-500/10 to-green-500/5 rounded-2xl relative overflow-hidden group">
+          <Card className="p-6 border border-border/40 shadow-sm bg-gradient-to-br from-green-500/10 to-green-500/5 rounded-2xl relative overflow-hidden group">
             <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-500 text-green-500">
               <CheckCircle className="h-32 w-32" />
             </div>
@@ -104,7 +104,7 @@ export default function AdminSMS() {
             <p className="text-4xl font-black tracking-tight text-green-600">{stats?.sent || 0}</p>
           </Card>
 
-          <Card className="p-6 border-none shadow-elegant bg-gradient-to-br from-destructive/10 to-destructive/5 rounded-2xl relative overflow-hidden group">
+          <Card className="p-6 border border-border/40 shadow-sm bg-gradient-to-br from-destructive/10 to-destructive/5 rounded-2xl relative overflow-hidden group">
             <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-500 text-destructive">
               <XCircle className="h-32 w-32" />
             </div>
@@ -129,7 +129,7 @@ export default function AdminSMS() {
           </TabsList>
 
           <TabsContent value="compose">
-            <Card className="p-8 border-none shadow-elegant rounded-2xl max-w-4xl">
+            <Card className="p-8 border border-border/40 shadow-sm rounded-2xl max-w-4xl">
               <div className="flex items-center justify-between mb-8">
                 <div>
                   <h2 className="text-2xl font-bold tracking-tight">Bulk Notification</h2>
@@ -188,7 +188,7 @@ export default function AdminSMS() {
                     onClick={handleSendBulk} 
                     disabled={sending || !message.trim()}
                     size="lg"
-                    className="rounded-xl px-12 gap-2 font-bold shadow-lg shadow-primary/20"
+                    className="rounded-xl px-12 gap-2 font-bold shadow-sm"
                   >
                     {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                     Broadcast SMS
@@ -199,7 +199,7 @@ export default function AdminSMS() {
           </TabsContent>
 
           <TabsContent value="history">
-            <Card className="border-none shadow-elegant rounded-2xl overflow-hidden">
+            <Card className="border border-border/40 shadow-sm rounded-2xl overflow-hidden">
               <div className="p-6 border-b border-muted bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="relative w-full sm:w-96">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground opacity-50" />

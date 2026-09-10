@@ -167,7 +167,7 @@ const Notifications = () => {
                           !n.isRead ? "bg-primary-soft/30 border-l-4 border-l-primary" : "border-l-4 border-l-transparent"
                         }`}
                       >
-                        <div className="h-11 w-11 rounded-xl bg-white border border-slate-100 shadow-sm flex items-center justify-center shrink-0">
+                        <div className="h-11 w-11 rounded-xl bg-white border border-slate-200 flex items-center justify-center shrink-0">
                           {getNotificationIcon(n.type)}
                         </div>
                         <div className="flex-1 min-w-0">

@@ -25,7 +25,7 @@ export const Footer = () => {
       <div className="container py-16 grid gap-10 md:grid-cols-4">
         <div className="md:col-span-2 space-y-4">
           <Link to="/" className="flex items-center gap-3 font-bold text-white mb-3">
-            <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-white overflow-hidden shadow-elegant p-1.5">
+            <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-white overflow-hidden border border-white/10 p-1.5">
               <img src={logo} alt="NOVA Eye Care Logo" className="h-full w-full object-contain" />
             </span>
             <span className="text-xl tracking-tight">NOVA Eye Care Services</span>

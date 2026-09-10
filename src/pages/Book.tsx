@@ -216,8 +216,8 @@ const Book = () => {
       <Layout>
         <section className="container py-24">
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <Card className="max-w-2xl mx-auto p-12 text-center shadow-elegant rounded-[2rem] border-primary/10">
-              <div className="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-full bg-primary-soft text-primary shadow-sm ring-8 ring-primary-soft/50">
+            <Card className="max-w-2xl mx-auto p-12 text-center shadow-card rounded-[2rem] border border-border/60">
+              <div className="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10 text-primary border border-primary/20">
                 <CheckCircle2 className="h-10 w-10" />
               </div>
               <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">Appointment Booked!</h1>
@@ -301,7 +301,7 @@ const Book = () => {
         <div className="grid gap-12 lg:grid-cols-3">
           {/* Sidebar info */}
           <aside className="lg:col-span-1 space-y-6 order-2 lg:order-1">
-            <Card className="p-8 bg-hero-gradient text-primary-foreground border-0 shadow-elegant rounded-3xl relative overflow-hidden group">
+            <Card className="p-8 bg-hero-gradient text-primary-foreground border-0 shadow-card rounded-3xl relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-700" />
               <h3 className="font-bold text-xl mb-4 flex items-center gap-2"><Sparkles className="h-5 w-5" /> why NOVA?</h3>
               <ul className="space-y-3 text-sm md:text-base opacity-100 font-medium">
@@ -353,8 +353,8 @@ const Book = () => {
                     return (
                       <div key={label} className="relative z-10 flex flex-col items-center gap-3 bg-card px-2">
                         <span 
-                          className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold shrink-0 transition-colors duration-500 ${
-                            done ? "bg-primary text-primary-foreground shadow-lg" : active ? "bg-primary-soft text-primary ring-2 ring-primary shadow-md" : "bg-muted text-muted-foreground"
+                          className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold shrink-0 transition-colors duration-300 border ${
+                            done ? "bg-primary text-primary-foreground border-primary" : active ? "bg-primary-soft text-primary border-primary font-bold" : "bg-muted text-muted-foreground border-transparent"
                           }`}
                         >
                           {done ? <CheckCircle2 className="h-5 w-5" /> : i + 1}
@@ -547,8 +547,8 @@ const Book = () => {
                         </div>
 
                         {form.appointment_date && form.appointment_time && (
-                          <div className="rounded-2xl bg-primary-soft p-6 flex items-center gap-4 text-primary shadow-sm">
-                            <div className="h-12 w-12 rounded-xl bg-white/50 flex items-center justify-center text-primary shadow-inner">
+                          <div className="rounded-2xl bg-primary-soft/60 border border-primary/20 p-6 flex items-center gap-4 text-primary">
+                            <div className="h-12 w-12 rounded-xl bg-white border border-primary/10 flex items-center justify-center text-primary">
                               <CalendarCheck className="h-6 w-6" />
                             </div>
                             <p className="text-base">
@@ -633,11 +633,11 @@ const Book = () => {
                         </Button>
                       )}
                       {step < STEPS.length - 1 ? (
-                        <Button type="button" variant="hero" size="lg" onClick={next} disabled={!canNext()} className="flex-1 h-14 rounded-xl font-bold shadow-lg">
+                        <Button type="button" variant="hero" size="lg" onClick={next} disabled={!canNext()} className="flex-1 h-14 rounded-xl font-bold shadow-sm">
                           Continue <ArrowRight className="h-4 w-4 ml-2" />
                         </Button>
                       ) : (
-                        <Button type="submit" variant="hero" size="lg" className="flex-1 h-14 rounded-xl font-bold shadow-lg shadow-primary/20" disabled={submitting}>
+                        <Button type="submit" variant="hero" size="lg" className="flex-1 h-14 rounded-xl font-bold shadow-sm" disabled={submitting}>
                           {submitting ? <><Loader2 className="h-5 w-5 animate-spin mr-2" /> Submitting...</> : "Confirm booking"}
                         </Button>
                       )}

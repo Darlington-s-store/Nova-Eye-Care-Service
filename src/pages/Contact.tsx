@@ -87,7 +87,7 @@ const Contact = () => {
               <ul className="space-y-6">
                 {[clinic?.phone1 || CLINIC.phones[0], clinic?.phone2].filter(Boolean).map((p, idx) => (
                   <motion.li key={p} variants={item} className="flex items-start gap-4 group/item">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-soft text-primary shrink-0 group-hover/item:bg-primary group-hover/item:text-white transition-all shadow-sm">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-soft text-primary shrink-0 group-hover/item:bg-primary group-hover/item:text-white transition-all border border-border/40">
                       <Phone className="h-5 w-5" />
                     </div>
                     <div>
@@ -98,7 +98,7 @@ const Contact = () => {
                 ))}
                 
                 <motion.li variants={item} className="flex items-start gap-4 group/item">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-soft text-primary shrink-0 group-hover/item:bg-primary group-hover/item:text-white transition-all shadow-sm">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-soft text-primary shrink-0 group-hover/item:bg-primary group-hover/item:text-white transition-all border border-border/40">
                     <Mail className="h-5 w-5" />
                   </div>
                   <div>
@@ -108,7 +108,7 @@ const Contact = () => {
                 </motion.li>
 
                 <motion.li variants={item} className="flex items-start gap-4 group/item">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-soft text-primary shrink-0 group-hover/item:bg-primary group-hover/item:text-white transition-all shadow-sm">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-soft text-primary shrink-0 group-hover/item:bg-primary group-hover/item:text-white transition-all border border-border/40">
                     <Clock className="h-5 w-5" />
                   </div>
                   <div className="w-full">
@@ -145,7 +145,7 @@ const Contact = () => {
                 </motion.li>
 
                 <motion.li variants={item} className="flex items-start gap-4 group/item">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-soft text-primary shrink-0 group-hover/item:bg-primary group-hover/item:text-white transition-all shadow-sm">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-soft text-primary shrink-0 group-hover/item:bg-primary group-hover/item:text-white transition-all border border-border/40">
                     <MapPin className="h-5 w-5" />
                   </div>
                   <div>
@@ -164,7 +164,7 @@ const Contact = () => {
              transition={{ delay: 0.4 }}
              className="relative group"
           >
-            <Card className="overflow-hidden border-border/60 rounded-3xl shadow-elegant h-[400px] relative z-0">
+            <Card className="overflow-hidden border-border/60 rounded-3xl shadow-card h-[400px] relative z-0">
               <iframe
                 title="NOVA Eye Care Location"
                 src={`https://maps.google.com/maps?q=${encodeURIComponent(clinic?.mapQuery || "AH-1192-7988")}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
@@ -175,10 +175,10 @@ const Contact = () => {
                 allowFullScreen
                 referrerPolicy="no-referrer-when-downgrade"
               />
-              <div className="absolute bottom-4 left-4 right-4 bg-background/85 backdrop-blur-lg p-4 rounded-2xl border border-border/50 shadow-xl flex items-center justify-between pointer-events-auto md:translate-y-20 md:group-hover:translate-y-0 translate-y-0 transition-all duration-500 ease-out z-10">
+              <div className="absolute bottom-4 left-4 right-4 bg-background/85 backdrop-blur-lg p-4 rounded-2xl border border-border/50 shadow-md flex items-center justify-between pointer-events-auto md:translate-y-20 md:group-hover:translate-y-0 translate-y-0 transition-all duration-500 ease-out z-10">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-sm shrink-0">
-                    <MapPin className="h-5 w-5 animate-bounce" style={{ animationDuration: '3s' }} />
+                  <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center text-white shrink-0">
+                    <MapPin className="h-5 w-5" />
                   </div>
                   <div className="min-w-0">
                     <div className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-widest">Visit Us</div>
@@ -207,8 +207,8 @@ const Contact = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   className="text-center py-12"
                 >
-                  <div className="h-24 w-24 rounded-full bg-primary-soft flex items-center justify-center text-primary mx-auto mb-8 shadow-inner ring-8 ring-primary-soft/50">
-                    <CheckCircle2 className="h-12 w-12" />
+                  <div className="h-20 w-20 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mx-auto mb-8">
+                    <CheckCircle2 className="h-10 w-10" />
                   </div>
                   <h3 className="font-bold text-3xl mb-4 tracking-tight">Message prepared!</h3>
                   <p className="text-muted-foreground text-lg mb-10 max-w-sm mx-auto">Your email client should have opened with your message ready to send.</p>
@@ -240,8 +240,8 @@ const Contact = () => {
                     <Textarea id="c-msg" rows={6} placeholder="How can we assist you?" value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} className="rounded-2xl border-border/60 px-4 py-4 focus-visible:ring-primary/20" />
                   </div>
                   
-                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Button type="submit" variant="hero" className="w-full h-16 rounded-2xl font-bold text-lg shadow-lg shadow-primary/20 gap-3">
+                  <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+                    <Button type="submit" variant="hero" className="w-full h-16 rounded-2xl font-bold text-lg shadow-sm gap-3">
                       <Send className="h-5 w-5" /> Send Enquiry
                     </Button>
                   </motion.div>

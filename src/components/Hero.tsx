@@ -89,7 +89,7 @@ export const Hero = ({ hero }: HeroProps) => {
             {hero?.subheading || "Comprehensive eye care for every stage of life, from routine exams to specialty vision services and DVLA testing."}
           </p>
           <div className="flex flex-row justify-center gap-2 sm:gap-6 animate-fade-in-up [animation-delay:400ms]">
-            <Button asChild className="flex-1 sm:flex-none rounded-xl px-3 sm:px-10 h-11 sm:h-14 md:h-16 text-xs sm:text-base font-bold shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all hover:-translate-y-0.5">
+            <Button asChild className="flex-1 sm:flex-none rounded-xl px-3 sm:px-10 h-11 sm:h-14 md:h-16 text-xs sm:text-base font-bold shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5">
               <Link to="/book" className="flex items-center justify-center">
                 <CalendarCheck className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2.5" />
                 {hero?.cta1 || "Book Appointment"}

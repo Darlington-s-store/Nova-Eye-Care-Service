@@ -121,7 +121,7 @@ const Login = () => {
           <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-primary via-blue-500 to-indigo-600" />
           
           <div className="text-center mb-8">
-            <Link to="/" className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-50 border border-slate-100 p-1.5 shadow-sm mb-4 transition-transform hover:scale-105 duration-300">
+            <Link to="/" className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-50 border border-slate-200 p-1.5 mb-4 transition-transform hover:scale-105 duration-300">
               <img src={logo} alt="NOVA Eye Care" className="h-full w-full object-contain rounded-xl" />
             </Link>
             <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Welcome back</h1>
@@ -180,7 +180,7 @@ const Login = () => {
 
             <Button 
               type="submit" 
-              className="w-full h-12 rounded-xl font-bold bg-primary text-white hover:bg-primary/95 shadow-md shadow-primary/10 transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2" 
+              className="w-full h-12 rounded-xl font-bold bg-primary text-white hover:bg-primary/95 shadow-sm transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2" 
               disabled={loading}
             >
               {loading ? (

@@ -306,7 +306,7 @@ const AdminSettings = () => {
                 </div>
               </div>
 
-              <Button type="submit" disabled={loading} className="w-full sm:w-auto h-11 px-8 shadow-lg shadow-primary/10" variant="hero">
+              <Button type="submit" disabled={loading} className="w-full sm:w-auto h-11 px-8 shadow-sm" variant="hero">
                 {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
                 Apply All Settings
               </Button>

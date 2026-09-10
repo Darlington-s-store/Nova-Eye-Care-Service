@@ -79,8 +79,8 @@ const About = () => {
               { icon: Eye, title: "Full Spectrum of Services", text: "From routine exams to vision therapy, low vision, and DVLA testing." },
             ].map((p) => (
               <motion.div key={p.title} variants={item} whileHover={{ y: -5 }} transition={{ type: "spring", stiffness: 300 }}>
-                <Card className="p-8 h-full shadow-card hover:shadow-elegant transition-shadow duration-500 border-border/60 rounded-[2rem]">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-soft text-primary mb-6 shadow-sm">
+                <Card className="p-8 h-full shadow-card hover:shadow-md transition-shadow duration-500 border-border/60 rounded-[2rem]">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-soft text-primary mb-6 border border-border/40">
                     <p.icon className="h-7 w-7" />
                   </div>
                   <h3 className="font-bold text-xl mb-3">{p.title}</h3>
@@ -121,7 +121,7 @@ const About = () => {
             >
               {team.map((m, idx) => (
                 <motion.div key={idx} variants={item}>
-                  <Card className="overflow-hidden h-full rounded-[2.5rem] border-0 shadow-card hover:shadow-elegant transition-all duration-500 group">
+                  <Card className="overflow-hidden h-full rounded-[2.5rem] border-0 shadow-card hover:shadow-md transition-all duration-500 group">
                     <div className="aspect-[4/5] bg-muted relative overflow-hidden">
                       {m.photo ? (
                         <img src={m.photo} alt={m.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />

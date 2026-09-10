@@ -102,7 +102,7 @@ const Home = () => {
                 const sImage = serviceImageMap[s.slug] || s.imageUrl;
                 return (
                   <Link key={s.slug} to="/services" className="group">
-                    <Card className="h-full bg-slate-50/50 hover:bg-white border border-slate-200/80 rounded-xl overflow-hidden hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300">
+                    <Card className="h-full bg-slate-50/50 hover:bg-white border border-slate-200/80 rounded-xl overflow-hidden hover:border-primary/50 hover:shadow-md transition-all duration-300">
                       <div className="h-48 overflow-hidden relative">
                         <img
                           src={sImage}

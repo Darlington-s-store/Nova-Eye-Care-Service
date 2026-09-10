@@ -149,7 +149,7 @@ const ReviewsPage = () => {
                 >
                   <div className="bg-muted/30 p-6 rounded-2xl text-center border border-dashed border-border">
                     <p className="text-sm text-muted-foreground mb-5">Sign in to share your experience with NOVA Eye Care.</p>
-                    <Button asChild variant="hero" className="w-full rounded-xl py-6 font-bold shadow-lg shadow-primary/20">
+                    <Button asChild variant="hero" className="w-full rounded-xl py-6 font-bold shadow-sm">
                       <Link to="/login">Sign in to Review</Link>
                     </Button>
                   </div>
@@ -188,7 +188,7 @@ const ReviewsPage = () => {
                       placeholder="Tell us about the care you received..." 
                     />
                   </div>
-                  <Button type="submit" variant="hero" className="w-full h-14 rounded-xl font-bold shadow-lg shadow-primary/20" disabled={submitting}>
+                  <Button type="submit" variant="hero" className="w-full h-14 rounded-xl font-bold shadow-sm" disabled={submitting}>
                     {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : "Submit Review"}
                   </Button>
                 </motion.form>
@@ -226,7 +226,7 @@ const ReviewsPage = () => {
             >
               {approved.map((r) => (
                 <motion.div key={r.id} variants={item} whileHover={{ y: -5 }}>
-                  <Card className="p-8 h-full shadow-card hover:shadow-elegant transition-all duration-500 relative border-border/60 rounded-3xl group">
+                  <Card className="p-8 h-full shadow-card hover:shadow-md transition-all duration-500 relative border-border/60 rounded-3xl group">
                     <Quote className="absolute top-6 right-8 h-10 w-10 text-primary/5 transition-colors duration-500 group-hover:text-primary/10" />
                     <div className="mb-6">
                       <Stars value={r.rating} readOnly />

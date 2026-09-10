@@ -20,7 +20,7 @@ const AdminLogin = () => {
 
   useEffect(() => {
     const check = async () => {
-      const token = localStorage.getItem('nova_auth_token');
+      const token = sessionStorage.getItem('nova_auth_token');
       if (!token) return;
       try {
         const user = await apiService.auth.getMe();

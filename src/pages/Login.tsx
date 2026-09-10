@@ -49,20 +49,23 @@ const Login = () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const google = (window as any).google;
       if (typeof google !== 'undefined') {
-        try {
-          google.accounts.id.initialize({
-            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '758066224355-dummygoogleclientid.apps.googleusercontent.com',
-            callback: handleGoogleLoginResponse
-          });
-          const btnElem = document.getElementById("google-signin-btn");
-          if (btnElem) {
-            google.accounts.id.renderButton(
-              btnElem,
-              { theme: "outline", size: "large", width: 368 }
-            );
+        const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+        if (googleClientId) {
+          try {
+            google.accounts.id.initialize({
+              client_id: googleClientId,
+              callback: handleGoogleLoginResponse
+            });
+            const btnElem = document.getElementById("google-signin-btn");
+            if (btnElem) {
+              google.accounts.id.renderButton(
+                btnElem,
+                { theme: "outline", size: "large", width: 368 }
+              );
+            }
+          } catch (e) {
+            console.error("Google script initialization error:", e);
           }
-        } catch (e) {
-          console.error("Google script initialization error:", e);
         }
       } else {
         setTimeout(initGoogle, 100);

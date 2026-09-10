@@ -9,7 +9,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   const checkAuth = useCallback(async () => {
-    const token = localStorage.getItem('nova_auth_token');
+    const token = sessionStorage.getItem('nova_auth_token');
     if (!token) {
       setUser(null);
       setRoles([]);
@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.error("Auth check failed:", err);
       const axiosError = err as { response?: { status: number } };
       if (axiosError.response?.status === 401) {
-        localStorage.removeItem('nova_auth_token');
+        sessionStorage.removeItem('nova_auth_token');
         setUser(null);
         setRoles([]);
       }

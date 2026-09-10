@@ -22,7 +22,6 @@ const VerifyOtp = () => {
   // Data retrieved from session storage
   const [signupData, setSignupData] = useState<Record<string, string> | null>(null);
   const [otpToken, setOtpToken] = useState("");
-  const [devOtp, setDevOtp] = useState("");
 
   // Timer state (10 minutes = 600 seconds)
   const [timeLeft, setTimeLeft] = useState(600);
@@ -32,7 +31,6 @@ const VerifyOtp = () => {
   useEffect(() => {
     const dataStr = sessionStorage.getItem("signup_data");
     const token = sessionStorage.getItem("signup_otp_token");
-    const dev = sessionStorage.getItem("signup_dev_otp");
     const channel = sessionStorage.getItem("signup_verification_channel") as 'email' | 'sms' || 'email';
 
     if (!dataStr || !token) {
@@ -44,7 +42,6 @@ const VerifyOtp = () => {
     try {
       setSignupData(JSON.parse(dataStr));
       setOtpToken(token);
-      if (dev) setDevOtp(dev);
     } catch (e) {
       toast.error("Invalid registration session.");
       navigate("/signup");
@@ -83,14 +80,6 @@ const VerifyOtp = () => {
       });
       setOtpToken(res.otpToken);
       sessionStorage.setItem("signup_otp_token", res.otpToken);
-      
-      if (res.devOtp) {
-        setDevOtp(res.devOtp);
-        sessionStorage.setItem("signup_dev_otp", res.devOtp);
-      } else {
-        setDevOtp("");
-        sessionStorage.removeItem("signup_dev_otp");
-      }
       
       toast.success("A new verification code has been sent!");
       setTimeLeft(600); // Reset timer
@@ -135,7 +124,6 @@ const VerifyOtp = () => {
       // Clean up session storage
       sessionStorage.removeItem("signup_data");
       sessionStorage.removeItem("signup_otp_token");
-      sessionStorage.removeItem("signup_dev_otp");
       
       window.location.href = "/dashboard";
     } catch (err) {
@@ -230,21 +218,6 @@ const VerifyOtp = () => {
                 </div>
               </div>
             </div>
-
-            {devOtp && (
-              <div className="mb-6 bg-amber-50 border border-amber-200 text-amber-800 text-xs p-3 rounded-lg font-semibold flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-300">
-                <span>[Dev Mode] OTP Code: <code className="bg-white px-1.5 py-0.5 rounded border font-mono font-bold text-sm">{devOtp}</code></span>
-                <Button 
-                  type="button" 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => setOtp(devOtp)}
-                  className="h-7 px-3 text-xs font-bold bg-amber-100 hover:bg-amber-200 text-amber-900 rounded"
-                >
-                  Autofill
-                </Button>
-              </div>
-            )}
 
             <div className="space-y-6">
               <div className="flex flex-col items-center justify-center py-2">

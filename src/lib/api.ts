@@ -29,7 +29,7 @@ const toCamel = (obj: any): any => {
 
 // Add interceptor for auth token
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('nova_auth_token');
+  const token = sessionStorage.getItem('nova_auth_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -231,21 +231,21 @@ export const apiService = {
   auth: {
     login: async (credentials: Record<string, unknown>): Promise<AuthResponse> => {
       const { data } = await api.post('/auth/login', credentials);
-      if (data.token) localStorage.setItem('nova_auth_token', data.token);
+      if (data.token) sessionStorage.setItem('nova_auth_token', data.token);
       return data;
     },
     register: async (userData: Record<string, unknown>): Promise<AuthResponse> => {
       const { data } = await api.post('/auth/register', userData);
-      if (data.token) localStorage.setItem('nova_auth_token', data.token);
+      if (data.token) sessionStorage.setItem('nova_auth_token', data.token);
       return data;
     },
     loginWithGoogle: async (idToken: string): Promise<AuthResponse> => {
       const { data } = await api.post('/auth/google', { idToken });
-      if (data.token) localStorage.setItem('nova_auth_token', data.token);
+      if (data.token) sessionStorage.setItem('nova_auth_token', data.token);
       return data;
     },
     logout: () => {
-      localStorage.removeItem('nova_auth_token');
+      sessionStorage.removeItem('nova_auth_token');
     },
     getMe: async (): Promise<User> => {
       const { data } = await api.get('/auth/me');
@@ -276,7 +276,6 @@ export const apiService = {
       otpToken: string;
       sentViaEmail: boolean;
       sentViaSMS: boolean;
-      devOtp?: string;
     }> => {
       const { data } = await api.post('/auth/send-otp', payload);
       return data;
@@ -286,7 +285,6 @@ export const apiService = {
       resetOtpToken: string;
       sentViaEmail: boolean;
       sentViaSMS: boolean;
-      devOtp?: string;
     }> => {
       const { data } = await api.post('/auth/send-reset-otp', payload);
       return data;

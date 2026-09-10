@@ -39,23 +39,7 @@ export type CMSContent = {
   clinic?: ClinicContact;
 };
 
-const CACHE_KEY = "nova_cms_cache";
-const CACHE_TIME = 10 * 60 * 1000; // 10 minutes
-
 export const getCMSContent = async <T = unknown>(section: string): Promise<T | null> => {
-  // Check cache first
-  try {
-    const cached = localStorage.getItem(`${CACHE_KEY}_${section}`);
-    if (cached) {
-      const { data, timestamp } = JSON.parse(cached);
-      if (Date.now() - timestamp < CACHE_TIME) {
-        return data;
-      }
-    }
-  } catch (e) {
-    console.warn("CMS Cache read error", e);
-  }
-
   // Fetch from Backend
   try {
     const data = await apiService.cms.getSection(section);
@@ -63,11 +47,6 @@ export const getCMSContent = async <T = unknown>(section: string): Promise<T | n
     if (data) {
       const record = data as Record<string, unknown>;
       const content = (record.contentJson || data) as T;
-      // Save to cache
-      localStorage.setItem(`${CACHE_KEY}_${section}`, JSON.stringify({
-        data: content,
-        timestamp: Date.now()
-      }));
       return content;
     }
   } catch (e) {

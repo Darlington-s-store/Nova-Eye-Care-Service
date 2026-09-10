@@ -90,21 +90,7 @@ const Dashboard = () => {
     fetchData();
   }, [user]);
 
-  useEffect(() => {
-    if (clinicSettings?.announcementBody) {
-      const dismissedBody = localStorage.getItem("nova_dismissed_announcement_body");
-      if (dismissedBody === clinicSettings.announcementBody) {
-        setAnnouncementDismissed(true);
-      } else {
-        setAnnouncementDismissed(false);
-      }
-    }
-  }, [clinicSettings]);
-
   const handleDismissAnnouncement = () => {
-    if (clinicSettings?.announcementBody) {
-      localStorage.setItem("nova_dismissed_announcement_body", clinicSettings.announcementBody);
-    }
     setAnnouncementDismissed(true);
   };
 

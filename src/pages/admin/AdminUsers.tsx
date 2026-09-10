@@ -1002,7 +1002,7 @@ const AdminUsers = () => {
                     id="add-fullName"
                     value={newUserForm.fullName}
                     onChange={(e) => setNewUserForm(p => ({ ...p, fullName: e.target.value }))}
-                    placeholder="John Doe"
+                    placeholder="Full Name"
                   />
                 </div>
                 <div className="space-y-2">

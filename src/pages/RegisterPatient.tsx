@@ -200,7 +200,7 @@ export default function RegisterPatient() {
                         <Input 
                           value={form.fullName}
                           onChange={(e) => setForm({...form, fullName: e.target.value})}
-                          placeholder="Akua Bio"
+                          placeholder="Full Name"
                           className="h-12 rounded-xl"
                         />
                       </div>

@@ -185,7 +185,7 @@ const Signup = () => {
                   <Input 
                     id="su-name" 
                     required 
-                    placeholder="Akua Mensah" 
+                    placeholder="Full Name" 
                     value={signup.fullName} 
                     onChange={(e) => setSignup({ ...signup, fullName: e.target.value })} 
                     className="h-12 rounded-xl border-slate-200 focus-visible:ring-primary focus-visible:border-primary text-base font-semibold px-4 transition-all focus:scale-[1.01]" 

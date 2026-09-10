@@ -37,7 +37,7 @@ const AdminSettings = () => {
       const user = await apiService.auth.getMe();
       if (user) {
         setProfile({
-          fullName: user.fullName || "Admin User",
+          fullName: user.fullName || "",
           email: user.email || "",
         });
       }

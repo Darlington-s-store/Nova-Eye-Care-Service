@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { apiService, KB } from "@/lib/api";
 import { toast } from "sonner";
-import { Loader2, Plus, Trash2, BookOpen, Save } from "lucide-react";
+import { Loader2, Plus, Trash2, BookOpen, Edit2 } from "lucide-react";
 
 const AdminChatbot = () => {
   const [items, setItems] = useState<KB[]>([]);
@@ -103,7 +103,7 @@ const AdminChatbot = () => {
                   </div>
                   <div className="flex gap-1 shrink-0">
                     <Switch checked={kb.active} onCheckedChange={() => toggle(kb)} />
-                    <Button size="icon" variant="ghost" onClick={() => setEditing(kb)} aria-label="Edit"><Save className="h-4 w-4" /></Button>
+                    <Button size="icon" variant="ghost" onClick={() => setEditing(kb)} aria-label="Edit"><Edit2 className="h-4 w-4" /></Button>
                     <Button size="icon" variant="ghost" className="text-destructive" onClick={() => remove(kb.id)} aria-label="Delete"><Trash2 className="h-4 w-4" /></Button>
                   </div>
                 </div>
@@ -113,7 +113,7 @@ const AdminChatbot = () => {
         </div>
 
         <div>
-          <Card className="p-5 sticky top-20 border shadow-sm">
+          <Card className="p-5 sticky top-20 border border-border/60">
             <h3 className="font-semibold mb-4">{editing?.id ? "Edit entry" : editing ? "New entry" : "Editor"}</h3>
             {!editing ? (
               <p className="text-sm text-muted-foreground">Select an entry or click "Add entry" to start.</p>

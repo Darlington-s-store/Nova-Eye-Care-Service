@@ -8,7 +8,8 @@ import { apiService, AdminStats } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { 
   CalendarDays, Star, Users, Clock, ArrowRight, Loader2, 
-  Activity, TrendingUp, Sparkles, DollarSign, BarChart2
+  Activity, TrendingUp, Sparkles, DollarSign, BarChart2,
+  LayoutGrid, BookOpen, ChevronRight
 } from "lucide-react";
 import {
   Chart as ChartJS,
@@ -371,7 +372,7 @@ const AdminOverview = () => {
                   <TrendingUp className="h-5 w-5 text-primary" /> Clinic Analytics
                 </h2>
                 <Badge className="bg-primary-soft text-primary border-primary/20 gap-1.5 py-1 px-3 rounded-full font-bold text-[10px]">
-                  <Sparkles className="h-3 w-3 text-primary animate-pulse" /> CMS Live Analytics
+                  <Activity className="h-3 w-3 text-primary" /> Live Analytics
                 </Badge>
               </div>
               <Button asChild variant="outline" size="sm" className="h-8 gap-1.5 text-xs font-semibold">
@@ -494,29 +495,31 @@ const AdminOverview = () => {
               <h2 className="font-semibold text-lg ml-1">Quick Actions</h2>
               <div className="grid gap-4">
                 <Link to="/admin/cms?tab=hero">
-                  <Card className="p-4 border hover:bg-muted/30 transition-all group">
+                  <Card className="p-4 border hover:bg-muted/30 transition-all group flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                        <ArrowRight className="h-5 w-5" />
+                      <div className="h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
+                        <LayoutGrid className="h-5 w-5" />
                       </div>
                       <div>
-                        <h4 className="font-bold text-sm">Manage Homepage Hero</h4>
+                        <h4 className="font-bold text-sm text-foreground">Manage Homepage Hero</h4>
                         <p className="text-[10px] font-bold text-slate-400 uppercase">Change text & background image</p>
                       </div>
                     </div>
+                    <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                   </Card>
                 </Link>
                 <Link to="/admin/chatbot">
-                  <Card className="p-4 border hover:bg-muted/30 transition-all group">
+                  <Card className="p-4 border hover:bg-muted/30 transition-all group flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
-                        <ArrowRight className="h-5 w-5" />
+                      <div className="h-10 w-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 group-hover:scale-105 transition-transform">
+                        <BookOpen className="h-5 w-5" />
                       </div>
                       <div>
-                        <h4 className="font-bold text-sm">Update AI Knowledge</h4>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase">Train your clinical assistant</p>
+                        <h4 className="font-bold text-sm text-foreground">Update Assistant Knowledge</h4>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase">Train clinical FAQ & responses</p>
                       </div>
                     </div>
+                    <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all" />
                   </Card>
                 </Link>
               </div>

@@ -204,7 +204,7 @@ export default function AdminScreenings() {
                 <Plus className="h-4 w-4" /> New Diagnosis
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl rounded-xl p-8 border shadow-lg">
+            <DialogContent className="max-w-2xl rounded-xl p-8 border border-border/80">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-bold flex items-center gap-2">
                   {editingId ? "Edit Eye Screening Record" : "New Eye Screening Record"}

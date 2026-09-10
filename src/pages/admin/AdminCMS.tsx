@@ -149,7 +149,7 @@ export default function AdminCMS() {
   return (
     <AdminLayout title="Content Management" subtitle="Wysiwyg control over your public website landing pages.">
       <Tabs defaultValue="hero" className="space-y-8">
-        <div className="flex justify-between items-center bg-muted p-1 rounded-lg border sticky top-0 z-10 shadow-sm">
+        <div className="flex justify-between items-center bg-muted p-1 rounded-lg border border-border/80 sticky top-0 z-10">
           <TabsList className="bg-transparent gap-1">
             <TabsTrigger value="hero" className="rounded-md gap-2 font-bold data-[state=active]:bg-primary data-[state=active]:text-white">
               <Layout className="h-4 w-4" /> Hero
@@ -216,7 +216,7 @@ export default function AdminCMS() {
                       .map(url => url.trim())
                       .filter(Boolean)
                       .map((url, idx) => (
-                        <div key={idx} className="relative w-24 h-16 rounded-lg overflow-hidden border bg-muted shadow-sm group">
+                        <div key={idx} className="relative w-24 h-16 rounded-lg overflow-hidden border border-border/60 bg-muted group">
                           <img 
                             src={url} 
                             alt={`Preview ${idx + 1}`} 
@@ -352,7 +352,7 @@ export default function AdminCMS() {
             </div>
             <div className="grid gap-4 max-w-2xl">
               {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map(day => (
-                <div key={day} className="flex items-center gap-6 p-4 bg-white rounded-2xl border shadow-sm group">
+                <div key={day} className="flex items-center gap-6 p-4 bg-white rounded-xl border border-border/60 group">
                   <span className="w-32 font-bold">{day}</span>
                   <div className="flex-1 flex gap-3 items-center">
                     <Input 

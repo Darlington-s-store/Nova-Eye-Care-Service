@@ -23,7 +23,6 @@ const Signup = () => {
   });
 
   const [sendingOtp, setSendingOtp] = useState(false);
-  const verificationChannel = 'email';
 
   const handleGoogleLoginResponse = useCallback(async (response: { credential?: string }) => {
     const token = response.credential;
@@ -85,15 +84,13 @@ const Signup = () => {
     try {
       const res = await apiService.auth.sendOtp({
         email: signup.email,
-        phone: signup.phone,
-        channel: verificationChannel
+        phone: signup.phone
       });
       
       sessionStorage.setItem("signup_data", JSON.stringify(signup));
       sessionStorage.setItem("signup_otp_token", res.otpToken);
-      sessionStorage.setItem("signup_verification_channel", verificationChannel);
 
-      toast.success("Verification code sent! Please verify your account.");
+      toast.success("Verification code sent to your email and phone!");
       navigate("/verify-otp");
     } catch (err) {
       const error = err as { response?: { data?: { message?: string } } };

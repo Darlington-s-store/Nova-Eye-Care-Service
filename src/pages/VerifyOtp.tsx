@@ -17,8 +17,6 @@ const VerifyOtp = () => {
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [otp, setOtp] = useState("");
-  const verificationChannel = 'email';
-  
   // Data retrieved from session storage
   const [signupData, setSignupData] = useState<Record<string, string> | null>(null);
   const [otpToken, setOtpToken] = useState("");
@@ -31,7 +29,6 @@ const VerifyOtp = () => {
   useEffect(() => {
     const dataStr = sessionStorage.getItem("signup_data");
     const token = sessionStorage.getItem("signup_otp_token");
-    const channel = sessionStorage.getItem("signup_verification_channel") as 'email' | 'sms' || 'email';
 
     if (!dataStr || !token) {
       toast.error("Registration session expired. Please sign up again.");
@@ -75,8 +72,7 @@ const VerifyOtp = () => {
     try {
       const res = await apiService.auth.sendOtp({
         email: signupData.email,
-        phone: signupData.phone,
-        channel: verificationChannel
+        phone: signupData.phone
       });
       setOtpToken(res.otpToken);
       sessionStorage.setItem("signup_otp_token", res.otpToken);
@@ -199,23 +195,37 @@ const VerifyOtp = () => {
                 <CheckCircle2 className="h-8 w-8 animate-pulse" />
               </div>
               <h1 className="text-2xl font-bold tracking-tight mb-2">
-                Check Your Inbox
+                Check Your Phone & Email
               </h1>
               <p className="text-sm text-slate-500 font-medium px-4 mb-4">
-                We've sent a 6-digit verification code to your chosen contact method.
+                We've sent a 6-digit verification code to both your email and phone number.
               </p>
               
               <div className="space-y-2.5 max-w-sm mx-auto">
-                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100 text-left animate-in fade-in duration-300">
-                  <div className="h-8 w-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
-                    <Mail className="h-4 w-4" />
+                {signupData?.email && (
+                  <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100 text-left animate-in fade-in duration-300">
+                    <div className="h-8 w-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
+                      <Mail className="h-4 w-4" />
+                    </div>
+                    <div className="overflow-hidden flex-1">
+                      <p className="text-[10px] uppercase font-bold text-slate-400 leading-none">Email Address</p>
+                      <p className="text-xs font-semibold text-slate-700 truncate mt-0.5">{signupData.email}</p>
+                    </div>
+                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">Dispatched</span>
                   </div>
-                  <div className="overflow-hidden flex-1">
-                    <p className="text-[10px] uppercase font-bold text-slate-400 leading-none">Email Address</p>
-                    <p className="text-xs font-semibold text-slate-700 truncate mt-0.5">{signupData.email}</p>
+                )}
+                {signupData?.phone && (
+                  <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100 text-left animate-in fade-in duration-300">
+                    <div className="h-8 w-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0">
+                      <Smartphone className="h-4 w-4" />
+                    </div>
+                    <div className="overflow-hidden flex-1">
+                      <p className="text-[10px] uppercase font-bold text-slate-400 leading-none">SMS / Phone</p>
+                      <p className="text-xs font-semibold text-slate-700 truncate mt-0.5">{signupData.phone}</p>
+                    </div>
+                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">Dispatched</span>
                   </div>
-                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">Dispatched</span>
-                </div>
+                )}
               </div>
             </div>
 

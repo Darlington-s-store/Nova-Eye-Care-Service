@@ -77,12 +77,12 @@ const Services = () => {
           >
             {services.map((s) => (
               <motion.div key={s.slug} variants={item}>
-                <Card id={s.slug} className="p-0 overflow-hidden border-orange-50/10 hover:shadow-2xl transition-all duration-500 scroll-mt-24 group h-full flex flex-col rounded-[1.5rem] bg-white">
+                <Card id={s.slug} className="p-0 overflow-hidden border border-border/70 hover:border-primary/50 shadow-sm hover:shadow-md transition-all duration-300 scroll-mt-24 group h-full flex flex-col rounded-2xl bg-white">
                   <div className="aspect-[16/10] relative overflow-hidden">
                     <img 
                       src={serviceImageMap[s.slug] || s.imageUrl} 
                       alt={s.name} 
-                      className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
                       onError={(e) => { e.currentTarget.src = "/placeholder.svg"; }}
                     />
                     <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />

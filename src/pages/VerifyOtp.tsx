@@ -192,8 +192,8 @@ const VerifyOtp = () => {
         <div className="w-full max-w-md">
           <Card className="p-8 border border-slate-200 rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow">
             <div className="text-center mb-6">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <CheckCircle2 className="h-8 w-8 animate-pulse" />
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20">
+                <CheckCircle2 className="h-8 w-8" />
               </div>
               <h1 className="text-2xl font-bold tracking-tight mb-2">
                 Check Your Phone for SMS

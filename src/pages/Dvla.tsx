@@ -3,7 +3,7 @@ import { Layout } from "@/components/Layout";
 import { PageHero } from "@/components/PageHero";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Car, CheckCircle2, FileCheck, Eye, ArrowRight } from "lucide-react";
+import { Car, CheckCircle2, FileCheck, Eye, Scan, ArrowRight } from "lucide-react";
 import heroDvla from "@/assets/hero-dvla.jpg";
 
 const Dvla = () => (
@@ -50,12 +50,14 @@ const Dvla = () => (
           <div className="grid gap-4 sm:grid-cols-3">
             {[
               { icon: Eye, title: "Visual Acuity", text: "Reading a standardised chart at a fixed distance, with and without correction." },
-              { icon: Eye, title: "Field of Vision", text: "Quick screening to confirm you have adequate peripheral vision for driving." },
+              { icon: Scan, title: "Field of Vision", text: "Quick screening to confirm you have adequate peripheral vision for driving." },
               { icon: FileCheck, title: "DVLA Form", text: "We complete and stamp your official DVLA form for submission." },
             ].map((s) => (
-              <Card key={s.title} className="p-5">
-                <s.icon className="h-6 w-6 text-primary mb-2" />
-                <h3 className="font-semibold mb-1">{s.title}</h3>
+              <Card key={s.title} className="p-5 border border-border/70 rounded-xl hover:border-primary/40 transition-all">
+                <div className="h-10 w-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mb-3">
+                  <s.icon className="h-5 w-5" />
+                </div>
+                <h3 className="font-semibold mb-1 text-slate-900">{s.title}</h3>
                 <p className="text-sm text-muted-foreground">{s.text}</p>
               </Card>
             ))}
@@ -76,8 +78,10 @@ const Dvla = () => (
       </div>
 
       <aside className="lg:col-span-1">
-        <Card className="p-6 sticky top-24 bg-soft-gradient border-primary/20">
-          <Car className="h-8 w-8 text-primary mb-3" />
+        <Card className="p-6 sticky top-24 bg-card border border-primary/20 rounded-xl shadow-sm">
+          <div className="h-12 w-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mb-4">
+            <Car className="h-6 w-6" />
+          </div>
           <h3 className="text-xl font-bold mb-2">Ready for your DVLA test?</h3>
           <p className="text-sm text-muted-foreground mb-5">
             Book today and get your form stamped the same day.

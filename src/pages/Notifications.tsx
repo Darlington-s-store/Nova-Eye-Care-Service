@@ -17,7 +17,7 @@ const getNotificationIcon = (type: string) => {
   switch (type?.toLowerCase()) {
     case "appointment":
     case "booking":
-      return <Calendar className="h-5 w-5 text-blue-500 animate-pulse" />;
+      return <Calendar className="h-5 w-5 text-blue-600" />;
     case "invoice":
     case "billing":
     case "payment":
@@ -146,7 +146,7 @@ const Notifications = () => {
                 ) : filteredItems.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-20 text-center px-4">
                     <div className="h-16 w-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 mb-4 border border-dashed border-slate-300">
-                      <Inbox className="h-7 w-7 animate-bounce" />
+                      <Inbox className="h-7 w-7 text-slate-400" />
                     </div>
                     <h3 className="font-bold text-slate-800 text-lg mb-1">No notifications here</h3>
                     <p className="text-sm text-slate-500 max-w-sm italic">

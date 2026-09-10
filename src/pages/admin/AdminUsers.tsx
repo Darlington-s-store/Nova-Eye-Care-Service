@@ -844,11 +844,11 @@ const AdminUsers = () => {
               </Card>
             ) : (
               filteredUsers.map((user) => (
-                <Card key={user.id} className="p-5 hover:shadow-md transition-all border-border/40 group">
+                <Card key={user.id} className="p-5 rounded-xl border border-border/70 hover:border-primary/40 shadow-sm hover:shadow-md transition-all group bg-white">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div className="flex items-center gap-4">
-                      <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center text-primary border border-border relative">
-                        <User className="h-6 w-6" />
+                      <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary border border-primary/20 relative shrink-0">
+                        <User className="h-5 w-5" />
                         {user.role === "admin" && (
                           <div className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground p-1 rounded-full border border-background">
                             <Shield className="h-3 w-3" />

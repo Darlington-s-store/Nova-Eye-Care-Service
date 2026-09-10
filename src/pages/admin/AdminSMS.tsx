@@ -78,43 +78,34 @@ export default function AdminSMS() {
       <div className="space-y-8">
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="p-6 border border-border/40 shadow-sm bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl relative overflow-hidden group">
-            <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-500">
-              <Send className="h-32 w-32" />
-            </div>
-            <div className="flex items-center gap-4 mb-4">
-              <div className="h-12 w-12 rounded-xl bg-primary/20 flex items-center justify-center text-primary">
-                <BarChart3 className="h-6 w-6" />
+          <Card className="p-6 border border-border/70 shadow-sm hover:shadow-md bg-white rounded-xl transition-all">
+            <div className="flex items-center gap-3.5 mb-4">
+              <div className="h-10 w-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+                <BarChart3 className="h-5 w-5" />
               </div>
-              <h3 className="font-bold text-muted-foreground uppercase text-xs tracking-widest">Total Messages</h3>
+              <h3 className="font-semibold text-slate-500 uppercase text-xs tracking-wider">Total Messages</h3>
             </div>
-            <p className="text-4xl font-black tracking-tight">{stats?.total || 0}</p>
+            <p className="text-3xl font-black text-slate-900 tracking-tight">{stats?.total || 0}</p>
           </Card>
 
-          <Card className="p-6 border border-border/40 shadow-sm bg-gradient-to-br from-green-500/10 to-green-500/5 rounded-2xl relative overflow-hidden group">
-            <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-500 text-green-500">
-              <CheckCircle className="h-32 w-32" />
-            </div>
-            <div className="flex items-center gap-4 mb-4">
-              <div className="h-12 w-12 rounded-xl bg-green-500/20 flex items-center justify-center text-green-500">
-                <CheckCircle className="h-6 w-6" />
+          <Card className="p-6 border border-border/70 shadow-sm hover:shadow-md bg-white rounded-xl transition-all">
+            <div className="flex items-center gap-3.5 mb-4">
+              <div className="h-10 w-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600">
+                <CheckCircle className="h-5 w-5" />
               </div>
-              <h3 className="font-bold text-muted-foreground uppercase text-xs tracking-widest">Successfully Sent</h3>
+              <h3 className="font-semibold text-slate-500 uppercase text-xs tracking-wider">Successfully Sent</h3>
             </div>
-            <p className="text-4xl font-black tracking-tight text-green-600">{stats?.sent || 0}</p>
+            <p className="text-3xl font-black text-emerald-600 tracking-tight">{stats?.sent || 0}</p>
           </Card>
 
-          <Card className="p-6 border border-border/40 shadow-sm bg-gradient-to-br from-destructive/10 to-destructive/5 rounded-2xl relative overflow-hidden group">
-            <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-500 text-destructive">
-              <XCircle className="h-32 w-32" />
-            </div>
-            <div className="flex items-center gap-4 mb-4">
-              <div className="h-12 w-12 rounded-xl bg-destructive/20 flex items-center justify-center text-destructive">
-                <XCircle className="h-6 w-6" />
+          <Card className="p-6 border border-border/70 shadow-sm hover:shadow-md bg-white rounded-xl transition-all">
+            <div className="flex items-center gap-3.5 mb-4">
+              <div className="h-10 w-10 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-600">
+                <XCircle className="h-5 w-5" />
               </div>
-              <h3 className="font-bold text-muted-foreground uppercase text-xs tracking-widest">Failed Delivery</h3>
+              <h3 className="font-semibold text-slate-500 uppercase text-xs tracking-wider">Failed Delivery</h3>
             </div>
-            <p className="text-4xl font-black tracking-tight text-destructive">{stats?.failed || 0}</p>
+            <p className="text-3xl font-black text-rose-600 tracking-tight">{stats?.failed || 0}</p>
           </Card>
         </div>
 

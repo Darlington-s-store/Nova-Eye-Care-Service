@@ -103,8 +103,8 @@ const About = () => {
               viewport={{ once: true }}
               className="text-center mb-16 max-w-2xl mx-auto"
             >
-              <span className="inline-flex items-center gap-2 px-3 py-1 text-[10px] font-bold rounded-full bg-primary/10 text-primary mb-4 tracking-[0.2em] uppercase">
-                <Sparkles className="h-3 w-3" /> Our Medical Experts
+              <span className="inline-flex items-center gap-2 px-3.5 py-1 text-[11px] font-bold rounded-full bg-primary/10 text-primary border border-primary/20 mb-4 tracking-wider uppercase">
+                <Eye className="h-3.5 w-3.5" /> Clinical Faculty & Optometrists
               </span>
               <h2 className="text-3xl md:text-5xl font-bold mb-4 tracking-tight">The Team Behind Your Care</h2>
               <p className="text-muted-foreground text-lg">
@@ -121,10 +121,10 @@ const About = () => {
             >
               {team.map((m, idx) => (
                 <motion.div key={idx} variants={item}>
-                  <Card className="overflow-hidden h-full rounded-[2.5rem] border-0 shadow-card hover:shadow-md transition-all duration-500 group">
+                  <Card className="overflow-hidden h-full rounded-2xl border border-border/70 shadow-sm hover:shadow-md transition-all duration-300 group bg-white">
                     <div className="aspect-[4/5] bg-muted relative overflow-hidden">
                       {m.photo ? (
-                        <img src={m.photo} alt={m.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                        <img src={m.photo} alt={m.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                           <User className="h-16 w-16 opacity-20" />

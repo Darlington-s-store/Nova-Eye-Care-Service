@@ -138,13 +138,13 @@ export const ChatWidget = () => {
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => setOpen(true)}
             aria-label="Open chat"
-            className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-all"
+            className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md hover:bg-primary/90 transition-all border border-white/20"
           >
-            <MessageCircle className="h-7 w-7" />
+            <MessageCircle className="h-6 w-6" />
           </motion.button>
         )}
       </AnimatePresence>
@@ -157,15 +157,15 @@ export const ChatWidget = () => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: 100 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed inset-0 sm:inset-auto sm:bottom-6 sm:right-6 z-50 sm:w-[380px] sm:h-[600px] flex flex-col bg-card border border-border sm:rounded-2xl shadow-2xl overflow-hidden"
+            className="fixed inset-0 sm:inset-auto sm:bottom-6 sm:right-6 z-50 sm:w-[380px] sm:h-[600px] flex flex-col bg-card border border-border/80 sm:rounded-2xl shadow-xl overflow-hidden"
           >
             {/* Header */}
             <div className="bg-primary text-primary-foreground p-4 flex items-start justify-between">
               <div>
                 <h3 className="font-bold text-lg leading-tight">NOVA Assistant</h3>
                 <div className="flex items-center gap-1.5 mt-1">
-                  <div className="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse" />
-                  <p className="text-xs opacity-90 font-medium">Always online to help</p>
+                  <div className="h-2 w-2 rounded-full bg-emerald-400" />
+                  <p className="text-xs opacity-90 font-medium">Online Clinical Assistant</p>
                 </div>
               </div>
               <button 

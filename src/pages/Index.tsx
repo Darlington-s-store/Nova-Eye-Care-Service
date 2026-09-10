@@ -79,7 +79,7 @@ const Home = () => {
       <section className="relative py-20 md:py-28 overflow-hidden bg-white text-slate-900 border-b border-slate-100">
         <div className="container relative z-10">
           <div className="text-center mb-16 max-w-2xl mx-auto">
-            <Badge className="mb-4 bg-primary/20 text-primary border border-primary/30 px-4 py-1.5 uppercase tracking-widest text-[10px] md:text-xs font-extrabold shadow-sm">
+            <Badge className="mb-4 bg-primary/10 text-primary border border-primary/20 px-3.5 py-1 uppercase tracking-widest text-[11px] font-bold">
               Nova Care Options
             </Badge>
             <h2 className="text-3xl md:text-5xl font-bold mb-4 tracking-tight">Our Services</h2>
@@ -139,11 +139,11 @@ const Home = () => {
           </div>
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {trustPoints.map((t) => (
-              <Card key={t.title} className="p-6 text-center border border-slate-200 rounded-xl shadow-none bg-white">
-                <div className="mx-auto h-14 w-14 flex items-center justify-center rounded-full bg-primary/10 text-primary mb-6">
-                  <t.icon className="h-7 w-7" />
+              <Card key={t.title} className="p-6 text-center border border-slate-200/80 rounded-xl shadow-none bg-white hover:border-primary/40 transition-all">
+                <div className="mx-auto h-14 w-14 flex items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 text-primary mb-5">
+                  <t.icon className="h-6 w-6" />
                 </div>
-                <h3 className="font-bold text-lg mb-2">{t.title}</h3>
+                <h3 className="font-bold text-lg mb-2 text-slate-900">{t.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{t.text}</p>
               </Card>
             ))}
@@ -166,7 +166,7 @@ const Home = () => {
 
             <div className="space-y-6">
               <div className="flex gap-4">
-                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                <div className="h-10 w-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
                   <MapPin className="h-5 w-5" />
                 </div>
                 <div>
@@ -176,7 +176,7 @@ const Home = () => {
               </div>
 
               <div className="flex gap-4">
-                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                <div className="h-10 w-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
                   <Clock className="h-5 w-5" />
                 </div>
                 <div>
@@ -194,7 +194,7 @@ const Home = () => {
             </Button>
           </div>
 
-          <div className="h-[400px] rounded-xl overflow-hidden border border-slate-200 shadow-sm">
+          <div className="h-[400px] rounded-xl overflow-hidden border border-slate-200">
             <iframe
               title="Location"
               src={`https://maps.google.com/maps?q=${encodeURIComponent(clinic?.mapQuery || "AH-1192-7988")}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
@@ -210,7 +210,7 @@ const Home = () => {
 
       {/* CTA */}
       <section className="container py-20">
-        <div className="bg-primary rounded-2xl p-10 md:p-20 text-center text-white shadow-lg">
+        <div className="bg-primary rounded-2xl p-10 md:p-20 text-center text-white border border-primary/20 shadow-md">
           <h2 className="text-3xl md:text-5xl font-bold mb-6">Ready to see clearly?</h2>
           <p className="text-lg opacity-90 mb-10 max-w-xl mx-auto">
             Book your appointment today and experience the NOVA difference with our expert care.

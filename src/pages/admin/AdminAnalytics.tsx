@@ -621,72 +621,72 @@ const AdminAnalytics = () => {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
               
               {/* Card 1: Total Appointments */}
-              <Card className="p-5 border bg-white shadow-sm flex flex-col justify-between">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Filtered Bookings</span>
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100">
+              <Card className="p-5 border border-border/70 bg-white rounded-xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Filtered Bookings</span>
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20">
                     <Activity className="h-4 w-4" />
                   </span>
                 </div>
                 <div>
-                  <p className="text-2xl font-black text-slate-800">{total}</p>
-                  <p className="text-[11px] text-slate-400 mt-1">Total matching records</p>
+                  <p className="text-2xl font-black text-slate-900">{total}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Total matching records</p>
                 </div>
               </Card>
 
               {/* Card 2: Completed */}
-              <Card className="p-5 border bg-white shadow-sm flex flex-col justify-between">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Completed</span>
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100">
+              <Card className="p-5 border border-border/70 bg-white rounded-xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Completed</span>
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
                     <CheckCircle2 className="h-4 w-4" />
                   </span>
                 </div>
                 <div>
-                  <p className="text-2xl font-black text-slate-800">{completed}</p>
-                  <p className="text-[11px] text-slate-400 mt-1">Successfully examined</p>
+                  <p className="text-2xl font-black text-slate-900">{completed}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Successfully examined</p>
                 </div>
               </Card>
 
               {/* Card 3: Active */}
-              <Card className="p-5 border bg-white shadow-sm flex flex-col justify-between">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Active Bookings</span>
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-600 border border-amber-100">
+              <Card className="p-5 border border-border/70 bg-white rounded-xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Active Bookings</span>
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 border border-amber-500/20">
                     <Clock className="h-4 w-4" />
                   </span>
                 </div>
                 <div>
-                  <p className="text-2xl font-black text-slate-800">{activeBookings}</p>
-                  <p className="text-[11px] text-slate-400 mt-1">Pending & confirmed</p>
+                  <p className="text-2xl font-black text-slate-900">{activeBookings}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Pending & confirmed</p>
                 </div>
               </Card>
 
               {/* Card 4: Cancelled */}
-              <Card className="p-5 border bg-white shadow-sm flex flex-col justify-between">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Cancelled</span>
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-50 text-red-600 border border-red-100">
+              <Card className="p-5 border border-border/70 bg-white rounded-xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Cancelled</span>
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-500/10 text-rose-600 border border-rose-500/20">
                     <XCircle className="h-4 w-4" />
                   </span>
                 </div>
                 <div>
-                  <p className="text-2xl font-black text-slate-800">{cancelled}</p>
-                  <p className="text-[11px] text-slate-400 mt-1">Failed to materialize</p>
+                  <p className="text-2xl font-black text-slate-900">{cancelled}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Failed to materialize</p>
                 </div>
               </Card>
 
               {/* Card 5: Cancellation Rate */}
-              <Card className="p-5 border bg-white shadow-sm flex flex-col justify-between">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Cancellation Rate</span>
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-50 text-slate-600 border">
+              <Card className="p-5 border border-border/70 bg-white rounded-xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Cancellation Rate</span>
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-700 border border-slate-200">
                     <AlertCircle className="h-4 w-4" />
                   </span>
                 </div>
                 <div>
-                  <p className="text-2xl font-black text-slate-800">{cancellationRate}%</p>
-                  <p className="text-[11px] text-slate-400 mt-1">Ratio of cancelled tasks</p>
+                  <p className="text-2xl font-black text-slate-900">{cancellationRate}%</p>
+                  <p className="text-xs text-muted-foreground mt-1">Ratio of cancelled tasks</p>
                 </div>
               </Card>
             </div>

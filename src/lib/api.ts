@@ -365,6 +365,12 @@ export const apiService = {
       const { data } = await api.post('/notifications', notificationData);
       return data;
     },
+    delete: async (id: string): Promise<void> => {
+      await api.delete(`/notifications/${id}`);
+    },
+    clearAll: async (): Promise<void> => {
+      await api.delete('/notifications/admin/clear-all');
+    },
   },
 
   // CMS
@@ -611,8 +617,19 @@ export const apiService = {
       const { data } = await api.get('/sms/stats');
       return data;
     },
-    sendBulk: async (bulkData: { message: string; recipients: 'all' | string[] }): Promise<{ message: string; details: Record<string, unknown> }> => {
+    sendBulk: async (bulkData: { 
+      message: string; 
+      recipients: 'all' | 'registered' | 'pending_registration' | 'appointments' | string[] | string 
+    }): Promise<{ message: string; details: Record<string, unknown> }> => {
       const { data } = await api.post('/sms/send-bulk', bulkData);
+      return data;
+    },
+    deleteLog: async (id: number): Promise<{ message: string }> => {
+      const { data } = await api.delete(`/sms/logs/${id}`);
+      return data;
+    },
+    clearLogs: async (status?: 'all' | 'failed' | 'sent'): Promise<{ message: string }> => {
+      const { data } = await api.delete('/sms/logs', { params: status ? { status } : {} });
       return data;
     }
   }

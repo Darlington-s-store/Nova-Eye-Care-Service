@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { apiService } from "@/lib/api";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { 
   Search, User, Mail, Phone, ArrowRight, Loader2, KeyRound, 
   MapPin, HeartPulse, PhoneCall, Info, Edit3, Trash2, Save, Undo, Plus, Shield, Eye,
-  ArrowLeft, Printer, UserCheck, AlertTriangle, FileText
+  ArrowLeft, Printer, UserCheck, AlertTriangle, FileText, MessageSquare
 } from "lucide-react";
 
 type UserProfile = {
@@ -62,6 +62,7 @@ const initialNewUserState = {
 };
 
 const AdminUsers = () => {
+  const navigate = useNavigate();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -261,6 +262,16 @@ const AdminUsers = () => {
               >
                 <Printer className="h-4 w-4 text-primary" /> Print Patient Folder
               </Button>
+
+              {selectedUser.phone && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate(`/admin/sms?phone=${encodeURIComponent(selectedUser.phone || '')}&name=${encodeURIComponent(selectedUser.fullName || 'Patient')}`)} 
+                  className="gap-2 rounded-xl h-10 border-primary/30 text-primary hover:bg-primary/5 transition-all"
+                >
+                  <MessageSquare className="h-4 w-4 text-primary" /> Send SMS
+                </Button>
+              )}
 
               {isEditing ? (
                 <>
@@ -894,6 +905,18 @@ const AdminUsers = () => {
                       </div>
 
                       <div className="flex gap-2 ml-auto">
+                        {user.phone && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-10 px-3 gap-1.5 border-primary/30 text-primary hover:bg-primary/5"
+                            onClick={() => navigate(`/admin/sms?phone=${encodeURIComponent(user.phone || '')}&name=${encodeURIComponent(user.fullName || 'Patient')}`)}
+                            title={`Send SMS to ${user.phone}`}
+                          >
+                            <MessageSquare className="h-4 w-4 text-primary" />
+                            <span className="hidden xl:inline">SMS</span>
+                          </Button>
+                        )}
                         <Button 
                           variant="outline" 
                           size="sm" 

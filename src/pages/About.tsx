@@ -38,8 +38,8 @@ const About = () => {
       <PageHero
         image={heroAbout}
         eyebrow="Who We Are"
-        title="About NOVA Eye Care"
-        subtitle="Compassionate, expert optometry care — committed to helping every Ghanaian see better and live brighter."
+        title="About Nova Eye Care"
+        subtitle="Dedicated eye care in Kumasi. We help you and your family protect your sight with thorough examinations and clear advice."
       />
 
       <section className="container py-20 max-w-4xl">
@@ -51,10 +51,10 @@ const About = () => {
         >
           <h2 className="text-3xl font-bold mb-6 tracking-tight">Our Mission</h2>
           <p className="text-muted-foreground leading-relaxed mb-16 text-lg">
-            At NOVA Eye Care Services, we believe great vision changes lives. Our mission is to make
-            high-quality eye care accessible across Ghana through patient-centred service, modern
-            technology, and community outreach. From a child's first eye exam to specialty low-vision
-            rehabilitation, every patient receives the same standard of attention and respect.
+            At Nova Eye Care, our goal is simple: helping you see clearly and keeping your eyes healthy. 
+            From your child's first vision screening to prescription glasses and senior eye health checks, 
+            we provide friendly, attentive service. We take the time to listen, answer your questions, 
+            and recommend treatment options that fit your everyday life.
           </p>
         </motion.div>
 
@@ -64,7 +64,7 @@ const About = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
-          <h2 className="text-3xl font-bold mb-8 tracking-tight">What sets us apart</h2>
+          <h2 className="text-3xl font-bold mb-8 tracking-tight">Why Choose Nova Eye Care</h2>
           <motion.div 
             variants={container}
             initial="hidden"
@@ -73,10 +73,10 @@ const About = () => {
             className="grid gap-6 sm:grid-cols-2"
           >
             {[
-              { icon: Award, title: "Qualified Specialists", text: "Licensed optometrists with years of clinical experience." },
-              { icon: Microscope, title: "Modern Equipment", text: "Up-to-date diagnostic technology for accurate, fast results." },
-              { icon: Heart, title: "Personalized Care", text: "Treatment plans tailored to each patient's lifestyle and needs." },
-              { icon: Eye, title: "Full Spectrum of Services", text: "From routine exams to vision therapy, low vision, and DVLA testing." },
+              { icon: Award, title: "Experienced Doctors", text: "Licensed optometrists who take time to explain your eye health in simple terms." },
+              { icon: Microscope, title: "Modern Testing", text: "Up-to-date tools for checking visual acuity, eye pressure, and retina health." },
+              { icon: Heart, title: "Personal Attention", text: "We listen to your daily visual needs and recommend practical, honest solutions." },
+              { icon: Eye, title: "Complete Eye Care", text: "Eye exams, frames, prescription lenses, low vision care, and DVLA testing." },
             ].map((p) => (
               <motion.div key={p.title} variants={item} whileHover={{ y: -5 }} transition={{ type: "spring", stiffness: 300 }}>
                 <Card className="p-8 h-full shadow-card hover:shadow-md transition-shadow duration-500 border-border/60 rounded-[2rem]">
@@ -104,11 +104,11 @@ const About = () => {
               className="text-center mb-16 max-w-2xl mx-auto"
             >
               <span className="inline-flex items-center gap-2 px-3.5 py-1 text-[11px] font-bold rounded-full bg-primary/10 text-primary border border-primary/20 mb-4 tracking-wider uppercase">
-                <Eye className="h-3.5 w-3.5" /> Clinical Faculty & Optometrists
+                <Eye className="h-3.5 w-3.5" /> Our Optometrists & Staff
               </span>
-              <h2 className="text-3xl md:text-5xl font-bold mb-4 tracking-tight">The Team Behind Your Care</h2>
+              <h2 className="text-3xl md:text-5xl font-bold mb-4 tracking-tight">Meet Our Doctors</h2>
               <p className="text-muted-foreground text-lg">
-                Meet our licensed optometrists and specialists dedicated to your vision health.
+                Our team is committed to giving you friendly and reliable eye care.
               </p>
             </motion.div>
             

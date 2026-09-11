@@ -64,7 +64,7 @@ const Contact = () => {
         image={heroContact}
         eyebrow="Get in Touch"
         title="Contact Us"
-        subtitle={clinic?.tagline || "We'd love to hear from you. Call, email, or visit us in person — our team is here for you."}
+        subtitle={clinic?.tagline || "Call, email, or visit our clinic in Kumasi. We're happy to help with your appointments and questions."}
       />
 
       <section className="container py-20 lg:py-24 grid gap-12 lg:grid-cols-2">

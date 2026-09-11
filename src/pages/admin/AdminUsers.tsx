@@ -240,8 +240,8 @@ const AdminUsers = () => {
   if (selectedUser) {
     return (
       <AdminLayout 
-        title="Patient EHR & Clinical Profile" 
-        subtitle={`Electronic Health Record folder for ${selectedUser.fullName || "Guest User"}`}
+        title="Patient Details" 
+        subtitle={`Profile and appointment records for ${selectedUser.fullName || "Patient"}`}
       >
         <div className="space-y-6">
           {/* Back Action Header */}
@@ -260,7 +260,7 @@ const AdminUsers = () => {
                 onClick={() => window.print()} 
                 className="gap-2 rounded-xl h-10 border-border/60 hover:bg-slate-50 transition-all"
               >
-                <Printer className="h-4 w-4 text-primary" /> Print Patient Folder
+                <Printer className="h-4 w-4 text-primary" /> Print Patient Summary
               </Button>
 
               {selectedUser.phone && (
@@ -1244,34 +1244,32 @@ const AdminUsers = () => {
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="max-w-md rounded-xl p-6">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold flex items-center gap-2 text-destructive">
-              <AlertTriangle className="h-5 w-5 text-destructive" /> Delete Patient Folder?
+            <DialogTitle className="text-lg font-bold flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5 text-destructive" /> Delete Patient Account?
             </DialogTitle>
-            <DialogDescription className="mt-2 text-foreground/80">
-              Are you sure you want to permanently delete patient <strong>{deleteUserName || "this user"}</strong>?
+            <DialogDescription className="mt-2 text-foreground/80 text-xs leading-relaxed">
+              Are you sure you want to permanently delete <strong>{deleteUserName || "this patient"}</strong>?
               <br /><br />
-              This will permanently delete all associated medical history, prescriptions, notifications, invoices, and clinical records.
-              <br /><br />
-              <span className="text-destructive font-semibold">This action cannot be undone and will delete the authentication credentials as well.</span>
+              This will remove all associated appointments, prescriptions, and records. This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
 
           <div className="flex justify-end gap-3 pt-4 border-t mt-4">
-            <Button type="button" variant="outline" className="rounded-xl" onClick={() => setIsDeleteDialogOpen(false)}>
+            <Button type="button" variant="outline" className="rounded-xl text-xs" onClick={() => setIsDeleteDialogOpen(false)}>
               Cancel
             </Button>
             <Button 
               type="button" 
-              className="rounded-xl bg-destructive hover:bg-destructive/90 text-white" 
+              className="rounded-xl bg-destructive hover:bg-destructive/90 text-white text-xs font-semibold" 
               onClick={handleDeleteUserSubmit} 
               disabled={deletingUser}
             >
               {deletingUser ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Deleting...
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Deleting...
                 </>
               ) : (
-                "Delete Patient Folder"
+                "Delete Account"
               )}
             </Button>
           </div>

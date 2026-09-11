@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,10 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { apiService, Profile, SMSLog, SMSStats } from "@/lib/api";
 import { 
-  Send, History, BarChart3, Loader2, Search, CheckCircle, XCircle, 
-  Clock, Users, RefreshCw, Smartphone, Sparkles, Filter, Check, 
+  Send, History, Loader2, Search, CheckCircle, XCircle, 
+  Clock, Users, RefreshCw, Sparkles, Check, 
   RotateCcw, UserCheck, Calendar, FileText, Glasses,
-  AlertCircle, ChevronRight, X, Trash2
+  AlertCircle, X, Trash2
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -20,42 +20,41 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 type RecipientMode = "all" | "selected" | "group" | "custom";
 type GroupFilter = "registered" | "pending_registration" | "appointments";
 
-const CLINICAL_TEMPLATES = [
+const MESSAGE_TEMPLATES = [
   {
     id: "reminder",
     title: "Appointment Reminder",
     icon: Calendar,
-    text: "Reminder: You have an upcoming eye consultation at Nova Eye Care clinic. Please arrive 10 minutes prior to your scheduled time. Call 0544172089 for enquiries."
+    text: "Reminder: You have an upcoming eye consultation at Nova Eye Care. Please arrive 10 minutes before your time. Call 0544172089 if you need to reschedule."
   },
   {
     id: "results",
-    title: "Screening Results Ready",
+    title: "Test Results Ready",
     icon: FileText,
-    text: "Hello from Nova Eye Care: Your comprehensive eye examination results and notes are now available on your patient portal. Visit novaeyecare.com to review."
+    text: "Hello, your eye examination results are now ready to view in your Nova Eye Care patient portal at novaeyecareservice.com."
   },
   {
     id: "glasses",
-    title: "Prescription Ready",
+    title: "Glasses Ready",
     icon: Glasses,
-    text: "Notice: Your optical lenses / prescription eyewear is ready for collection at Nova Eye Care. Visit our clinic during working hours (Mon-Sat)."
+    text: "Your prescription glasses / lenses are ready for pickup at Nova Eye Care. You can collect them Monday to Saturday during clinic hours."
   },
   {
     id: "checkup",
-    title: "Routine Checkup Alert",
+    title: "Checkup Reminder",
     icon: Sparkles,
-    text: "Nova Eye Care: It has been over 6 months since your last vision check. Protect your eyesight by scheduling your routine eye examination today."
+    text: "Hello from Nova Eye Care. It has been over 6 months since your last eye check. Protect your eyesight by booking a routine visit."
   },
   {
-    id: "notice",
-    title: "Clinic Hours Notice",
-    icon: AlertCircle,
-    text: "Nova Eye Care Update: Clinic hours are Monday to Friday 8:00 AM - 5:00 PM, and Saturday 9:00 AM - 2:00 PM. We look forward to serving your vision needs."
+    id: "hours",
+    title: "Working Hours",
+    icon: Clock,
+    text: "Nova Eye Care is open Monday to Friday from 8:00 AM to 5:00 PM, and Saturday from 9:00 AM to 2:00 PM. Call 0544172089 for bookings."
   }
 ];
 
 export default function AdminSMS() {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
 
   const [logs, setLogs] = useState<SMSLog[]>([]);
   const [stats, setStats] = useState<SMSStats | null>(null);
@@ -64,7 +63,7 @@ export default function AdminSMS() {
   const [profilesLoading, setProfilesLoading] = useState(false);
   const [sending, setSending] = useState(false);
   
-  // Composer State
+  // Composer
   const [recipientMode, setRecipientMode] = useState<RecipientMode>("all");
   const [selectedGroup, setSelectedGroup] = useState<GroupFilter>("registered");
   const [selectedPatientIds, setSelectedPatientIds] = useState<string[]>([]);
@@ -72,47 +71,16 @@ export default function AdminSMS() {
   const [patientSearch, setPatientSearch] = useState("");
   const [message, setMessage] = useState("");
 
-  // History Tab Filter State
+  // History Filter
   const [historySearch, setHistorySearch] = useState("");
   const [historyStatusFilter, setHistoryStatusFilter] = useState<"all" | "sent" | "failed">("all");
   const [activeTab, setActiveTab] = useState("compose");
 
-  // Clear logs modal state
+  // Modal State
   const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
   const [clearType, setClearType] = useState<"failed" | "all">("failed");
   const [clearing, setClearing] = useState(false);
 
-  const openClearConfirm = (type: "failed" | "all") => {
-    setClearType(type);
-    setIsClearDialogOpen(true);
-  };
-
-  const handleConfirmClearLogs = async () => {
-    setClearing(true);
-    try {
-      const res = await apiService.sms.clearLogs(clearType);
-      toast.success(res.message || "Message logs cleared");
-      setIsClearDialogOpen(false);
-      fetchData();
-    } catch {
-      toast.error("Failed to clear message logs");
-    } finally {
-      setClearing(false);
-    }
-  };
-
-  const handleDeleteLog = async (id: number) => {
-    try {
-      await apiService.sms.deleteLog(id);
-      toast.success("Log entry deleted");
-      setLogs(prev => prev.filter(l => l.id !== id));
-      fetchData();
-    } catch {
-      toast.error("Failed to delete log entry");
-    }
-  };
-
-  // Read URL params (e.g. from Admin Users page)
   useEffect(() => {
     const phoneParam = searchParams.get("phone");
     const nameParam = searchParams.get("name");
@@ -122,7 +90,7 @@ export default function AdminSMS() {
       setCustomPhonesInput(phoneParam);
       setActiveTab("compose");
       if (nameParam) {
-        toast.info(`Ready to compose SMS to ${nameParam} (${phoneParam})`);
+        toast.info(`Sending message to ${nameParam} (${phoneParam})`);
       }
     }
   }, [searchParams]);
@@ -141,8 +109,8 @@ export default function AdminSMS() {
       ]);
       setLogs(logsData || []);
       setStats(statsData);
-    } catch (error) {
-      toast.error("Failed to fetch SMS data");
+    } catch {
+      toast.error("Failed to load SMS records");
     } finally {
       setLoading(false);
     }
@@ -153,19 +121,17 @@ export default function AdminSMS() {
     try {
       const data = await apiService.profiles.getAll();
       setProfiles(data || []);
-    } catch (error) {
-      console.error("Failed to load profiles for SMS", error);
+    } catch {
+      console.error("Failed to load patient contacts");
     } finally {
       setProfilesLoading(false);
     }
   };
 
-  // Patients with valid phones
   const patientsWithPhones = useMemo(() => {
     return profiles.filter(p => p.phone && p.phone.trim().length >= 8);
   }, [profiles]);
 
-  // Registered vs Pending breakdown
   const registeredPatients = useMemo(() => {
     return patientsWithPhones.filter(p => p.registrationCompleted);
   }, [patientsWithPhones]);
@@ -174,7 +140,6 @@ export default function AdminSMS() {
     return patientsWithPhones.filter(p => !p.registrationCompleted);
   }, [patientsWithPhones]);
 
-  // Filtered patients for the picker
   const filteredPatients = useMemo(() => {
     if (!patientSearch.trim()) return patientsWithPhones;
     const q = patientSearch.toLowerCase();
@@ -185,7 +150,6 @@ export default function AdminSMS() {
     );
   }, [patientsWithPhones, patientSearch]);
 
-  // Parsed custom phones
   const parsedCustomPhones = useMemo(() => {
     if (!customPhonesInput.trim()) return [];
     return [...new Set(
@@ -196,7 +160,6 @@ export default function AdminSMS() {
     )];
   }, [customPhonesInput]);
 
-  // Effective recipient count based on active mode
   const effectiveRecipientCount = useMemo(() => {
     switch (recipientMode) {
       case "all":
@@ -212,7 +175,6 @@ export default function AdminSMS() {
     }
   }, [recipientMode, selectedGroup, patientsWithPhones, registeredPatients, pendingPatients, selectedPatientIds, parsedCustomPhones]);
 
-  // Toggle patient selection
   const togglePatient = (id: string) => {
     setSelectedPatientIds(prev => 
       prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
@@ -230,21 +192,19 @@ export default function AdminSMS() {
 
   const applyTemplate = (tplText: string) => {
     setMessage(tplText);
-    toast.success("Template inserted into composer");
   };
 
-  // SMS character & segment calculation
   const messageLength = message.length;
-  const smsSegments = Math.max(1, Math.ceil(messageLength / 160));
+  const smsUnits = Math.max(1, Math.ceil(messageLength / 160));
 
   const handleSend = async () => {
     if (!message.trim()) {
-      toast.error("Please enter a message to send");
+      toast.error("Please type a message first");
       return;
     }
 
     if (effectiveRecipientCount === 0) {
-      toast.error("No valid recipients selected. Please choose at least one recipient.");
+      toast.error("Please select at least one recipient");
       return;
     }
 
@@ -257,10 +217,9 @@ export default function AdminSMS() {
       } else if (recipientMode === "group") {
         recipientPayload = selectedGroup;
       } else if (recipientMode === "selected") {
-        const phoneList = profiles
+        recipientPayload = profiles
           .filter(p => selectedPatientIds.includes(p.id) && p.phone)
           .map(p => p.phone.trim());
-        recipientPayload = phoneList;
       } else {
         recipientPayload = parsedCustomPhones;
       }
@@ -270,16 +229,15 @@ export default function AdminSMS() {
         recipients: recipientPayload
       });
 
-      toast.success(result.message || "Messages processed successfully");
+      toast.success(result.message || "Message sent successfully");
       setMessage("");
       if (recipientMode === "custom") {
         setCustomPhonesInput("");
       }
-      // Refresh logs & stats
       fetchData();
       setActiveTab("history");
     } catch (error: unknown) {
-      let errorMsg = "Failed to send SMS";
+      let errorMsg = "Could not send SMS";
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as { response?: { data?: { message?: string } } };
         if (axiosError.response?.data?.message) {
@@ -299,24 +257,38 @@ export default function AdminSMS() {
     setCustomPhonesInput(log.phone);
     setMessage(log.message);
     setActiveTab("compose");
-    toast.info(`Loaded message and recipient (${log.phone}) into composer`);
+    toast.info(`Loaded message to ${log.phone}`);
   };
 
-  // Filtered logs for History Tab
-  const filteredLogs = logs.filter(log => {
-    const matchesSearch = 
-      log.phone.includes(historySearch) || 
-      log.message.toLowerCase().includes(historySearch.toLowerCase());
-    
-    if (!matchesSearch) return false;
-    if (historyStatusFilter === "sent") return log.status === "sent";
-    if (historyStatusFilter === "failed") return log.status === "failed";
-    return true;
-  });
+  const handleDeleteLog = async (id: number) => {
+    try {
+      await apiService.sms.deleteLog(id);
+      toast.success("Message removed");
+      setLogs(prev => prev.filter(l => l.id !== id));
+      fetchData();
+    } catch {
+      toast.error("Could not delete message");
+    }
+  };
 
-  const deliveryRate = stats?.total && stats.total > 0
-    ? Math.round(((stats.sent || 0) / stats.total) * 100)
-    : 100;
+  const openClearConfirm = (type: "failed" | "all") => {
+    setClearType(type);
+    setIsClearDialogOpen(true);
+  };
+
+  const handleConfirmClearLogs = async () => {
+    setClearing(true);
+    try {
+      const res = await apiService.sms.clearLogs(clearType);
+      toast.success(res.message || "Messages cleared");
+      setIsClearDialogOpen(false);
+      fetchData();
+    } catch {
+      toast.error("Could not clear messages");
+    } finally {
+      setClearing(false);
+    }
+  };
 
   const getLogFailureReason = (log: SMSLog) => {
     if (log.status !== "failed") return null;
@@ -328,18 +300,18 @@ export default function AdminSMS() {
     const label = destStatus?.label || resp?.handshake?.label || "";
     
     if (label === "DS_REJECTED_SENDER_UNREGISTERED") {
-      return 'Sender ID "NovaCare" awaiting approval in SMSOnlineGH dashboard';
+      return 'Sender ID "NovaCare" awaiting approval on SMSOnlineGH';
     }
     if (label === "HSHK_ERR_UA_AUTH") {
-      return "API authentication failure on SMSOnlineGH";
+      return "SMSOnlineGH API key error";
     }
     if (label.includes("INSUFFICIENT") || label.includes("BALANCE") || label.includes("CREDIT")) {
-      return "Insufficient SMS credits on SMSOnlineGH";
+      return "Low SMS balance on SMSOnlineGH";
     }
     if (label.includes("DESTINATION") || label.includes("INVALID")) {
-      return "Unreachable or invalid phone number";
+      return "Invalid phone number";
     }
-    return label ? `Provider error: ${label}` : "Provider delivery failed";
+    return label ? `Error: ${label}` : "Failed to deliver";
   };
 
   const hasSenderUnregisteredError = useMemo(() => {
@@ -351,162 +323,131 @@ export default function AdminSMS() {
     });
   }, [logs]);
 
+  const filteredLogs = logs.filter(log => {
+    const matchesSearch = 
+      log.phone.includes(historySearch) || 
+      log.message.toLowerCase().includes(historySearch.toLowerCase());
+    
+    if (!matchesSearch) return false;
+    if (historyStatusFilter === "sent") return log.status === "sent";
+    if (historyStatusFilter === "failed") return log.status === "failed";
+    return true;
+  });
+
   return (
     <AdminLayout 
-      title="SMS Communication Center" 
-      subtitle="Broadcast clinical notices, schedule alerts, and manage direct patient messaging via SMSOnlineGH."
+      title="SMS Messages" 
+      subtitle="Send appointment reminders, test results, and clinic announcements to your patients."
     >
-      <div className="space-y-8 pb-12">
-        {/* Unregistered Sender Warning Banner */}
+      <div className="space-y-6 pb-12">
+        {/* Simple Status Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card className="p-4 border rounded-xl bg-white shadow-none">
+            <p className="text-xs text-muted-foreground font-medium">Total Sent</p>
+            <p className="text-2xl font-bold mt-1">{stats?.total || 0}</p>
+          </Card>
+
+          <Card className="p-4 border rounded-xl bg-white shadow-none">
+            <p className="text-xs text-emerald-600 font-medium">Delivered</p>
+            <p className="text-2xl font-bold text-emerald-600 mt-1">{stats?.sent || 0}</p>
+          </Card>
+
+          <Card className="p-4 border rounded-xl bg-white shadow-none">
+            <p className="text-xs text-rose-600 font-medium">Failed</p>
+            <p className="text-2xl font-bold text-rose-600 mt-1">{stats?.failed || 0}</p>
+          </Card>
+
+          <Card className="p-4 border rounded-xl bg-white shadow-none">
+            <p className="text-xs text-muted-foreground font-medium">Patients with Phone</p>
+            <p className="text-2xl font-bold mt-1">{patientsWithPhones.length}</p>
+          </Card>
+        </div>
+
+        {/* Sender ID Warning (Simple & Human) */}
         {hasSenderUnregisteredError && (
-          <div className="p-4 sm:p-5 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col sm:flex-row items-start gap-4 text-amber-950 shadow-sm animate-in fade-in duration-300">
-            <div className="h-9 w-9 rounded-xl bg-amber-100 border border-amber-300/60 flex items-center justify-center text-amber-700 shrink-0">
-              <AlertCircle className="h-5 w-5" />
-            </div>
-            <div className="text-xs space-y-1.5 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="font-bold text-sm text-amber-950">
-                  SMS Gateway Status: Sender ID &ldquo;NovaCare&rdquo; Awaiting Registration Approval
-                </p>
-                <Badge className="bg-amber-200/80 text-amber-900 border-amber-300 text-[10px] uppercase font-bold">
-                  Action Required
-                </Badge>
-              </div>
-              <p className="text-amber-800 leading-relaxed">
-                Messages dispatched through your SMSOnlineGH gateway are failing with error code <code>DS_REJECTED_SENDER_UNREGISTERED</code>. 
-                Under National Communications Authority (NCA) Ghana telecom regulations, custom alphanumeric sender names must be added and approved in your SMSOnlineGH account before network operators (MTN, Telecel, AT) permit message delivery.
+          <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3 text-amber-900 text-sm">
+            <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <p className="font-semibold text-amber-950">
+                Notice: The sender name &ldquo;NovaCare&rdquo; needs approval on SMSOnlineGH
               </p>
-              <div className="pt-1 flex flex-wrap items-center gap-4">
-                <a
-                  href="https://www.smsonlinegh.com"
-                  target="_blank"
+              <p className="text-amber-800 text-xs leading-relaxed">
+                Messages to Ghanaian networks require the sender name to be registered first. Log in at{" "}
+                <a 
+                  href="https://www.smsonlinegh.com" 
+                  target="_blank" 
                   rel="noopener noreferrer"
-                  className="font-bold text-amber-950 underline hover:text-black inline-flex items-center gap-1 text-xs"
+                  className="font-semibold underline hover:text-amber-950"
                 >
-                  Open SMSOnlineGH Dashboard &rarr; SMS Messaging &rarr; Add Sender ID
-                </a>
-              </div>
+                  smsonlinegh.com
+                </a>{" "}
+                under <em>SMS Messaging &rarr; Sender Names</em> to add &ldquo;NovaCare&rdquo;.
+              </p>
             </div>
           </div>
         )}
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          <Card className="p-5 border border-slate-200/80 shadow-sm hover:shadow-md bg-white rounded-2xl transition-all">
-            <div className="flex items-center justify-between mb-3">
-              <span className="font-semibold text-slate-500 uppercase text-[11px] tracking-wider">Total Dispatches</span>
-              <div className="h-9 w-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
-                <BarChart3 className="h-4 w-4" />
-              </div>
-            </div>
-            <p className="text-3xl font-black text-slate-900 tracking-tight">{stats?.total || 0}</p>
-            <p className="text-xs text-muted-foreground mt-1">All outbound SMS attempts</p>
-          </Card>
-
-          <Card className="p-5 border border-emerald-100 shadow-sm hover:shadow-md bg-white rounded-2xl transition-all">
-            <div className="flex items-center justify-between mb-3">
-              <span className="font-semibold text-emerald-600 uppercase text-[11px] tracking-wider">Delivered</span>
-              <div className="h-9 w-9 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
-                <CheckCircle className="h-4 w-4" />
-              </div>
-            </div>
-            <p className="text-3xl font-black text-emerald-600 tracking-tight">{stats?.sent || 0}</p>
-            <div className="flex items-center gap-1.5 mt-1">
-              <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-none text-[10px] px-1.5 py-0 font-bold">
-                {deliveryRate}% Rate
-              </Badge>
-              <span className="text-xs text-muted-foreground">Successful</span>
-            </div>
-          </Card>
-
-          <Card className="p-5 border border-rose-100 shadow-sm hover:shadow-md bg-white rounded-2xl transition-all">
-            <div className="flex items-center justify-between mb-3">
-              <span className="font-semibold text-rose-600 uppercase text-[11px] tracking-wider">Undelivered</span>
-              <div className="h-9 w-9 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600">
-                <XCircle className="h-4 w-4" />
-              </div>
-            </div>
-            <p className="text-3xl font-black text-rose-600 tracking-tight">{stats?.failed || 0}</p>
-            <p className="text-xs text-muted-foreground mt-1">Rejected or invalid numbers</p>
-          </Card>
-
-          <Card className="p-5 border border-cyan-100 shadow-sm hover:shadow-md bg-white rounded-2xl transition-all">
-            <div className="flex items-center justify-between mb-3">
-              <span className="font-semibold text-cyan-700 uppercase text-[11px] tracking-wider">Patient Reach</span>
-              <div className="h-9 w-9 rounded-xl bg-cyan-50 border border-cyan-200 flex items-center justify-center text-cyan-700">
-                <Users className="h-4 w-4" />
-              </div>
-            </div>
-            <p className="text-3xl font-black text-cyan-700 tracking-tight">{patientsWithPhones.length}</p>
-            <p className="text-xs text-muted-foreground mt-1">Patients with active phone numbers</p>
-          </Card>
-        </div>
-
-        {/* Tabs for Compose vs History */}
+        {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="bg-slate-100 p-1.5 rounded-2xl mb-6 inline-flex border border-slate-200">
+          <TabsList className="bg-slate-100 p-1 rounded-xl mb-4 inline-flex">
             <TabsTrigger 
               value="compose" 
-              className="rounded-xl px-5 py-2.5 gap-2 text-sm font-semibold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm"
+              className="rounded-lg px-4 py-2 text-xs font-semibold data-[state=active]:bg-white"
             >
-              <Send className="h-4 w-4" /> Compose & Send Message
+              <Send className="h-3.5 w-3.5 mr-1.5" /> Send Message
             </TabsTrigger>
             <TabsTrigger 
               value="history" 
-              className="rounded-xl px-5 py-2.5 gap-2 text-sm font-semibold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm"
+              className="rounded-lg px-4 py-2 text-xs font-semibold data-[state=active]:bg-white"
             >
-              <History className="h-4 w-4" /> Message Delivery Logs ({logs.length})
+              <History className="h-3.5 w-3.5 mr-1.5" /> Sent History ({logs.length})
             </TabsTrigger>
           </TabsList>
 
           {/* TAB 1: COMPOSE */}
-          <TabsContent value="compose" className="space-y-6 animate-in fade-in-50 duration-200">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          <TabsContent value="compose" className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               
-              {/* Left 7 Columns: Form Controls */}
-              <div className="lg:col-span-7 space-y-6">
-                <Card className="p-6 sm:p-7 border border-slate-200/80 shadow-sm rounded-2xl bg-white space-y-6">
+              {/* Main Composer */}
+              <div className="lg:col-span-2 space-y-5">
+                <Card className="p-6 border rounded-xl bg-white shadow-none space-y-5">
                   
-                  {/* Step 1: Select Recipients */}
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between border-b pb-3">
-                      <div>
-                        <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                          <Users className="h-5 w-5 text-primary" />
-                          1. Target Recipients
-                        </h2>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          Choose who receives this message dispatch
-                        </p>
-                      </div>
-                      <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 px-3 py-1 font-semibold text-xs rounded-full">
-                        {effectiveRecipientCount} {effectiveRecipientCount === 1 ? 'Recipient' : 'Recipients'} Selected
-                      </Badge>
+                  {/* Recipient Selection */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wide">
+                        Choose Recipients
+                      </label>
+                      <span className="text-xs text-muted-foreground font-medium">
+                        {effectiveRecipientCount} {effectiveRecipientCount === 1 ? 'person' : 'people'} selected
+                      </span>
                     </div>
 
-                    {/* Mode Selector Buttons */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       <Button
                         type="button"
                         variant={recipientMode === "all" ? "default" : "outline"}
                         onClick={() => setRecipientMode("all")}
-                        className="rounded-xl h-11 text-xs sm:text-sm font-semibold"
+                        size="sm"
+                        className="rounded-lg text-xs"
                       >
-                        All Patients
+                        All Patients ({patientsWithPhones.length})
                       </Button>
                       <Button
                         type="button"
                         variant={recipientMode === "selected" ? "default" : "outline"}
                         onClick={() => setRecipientMode("selected")}
-                        className="rounded-xl h-11 text-xs sm:text-sm font-semibold relative"
+                        size="sm"
+                        className="rounded-lg text-xs"
                       >
-                        Selected ({selectedPatientIds.length})
+                        Select Patients {selectedPatientIds.length > 0 && `(${selectedPatientIds.length})`}
                       </Button>
                       <Button
                         type="button"
                         variant={recipientMode === "group" ? "default" : "outline"}
                         onClick={() => setRecipientMode("group")}
-                        className="rounded-xl h-11 text-xs sm:text-sm font-semibold"
+                        size="sm"
+                        className="rounded-lg text-xs"
                       >
                         Patient Groups
                       </Button>
@@ -514,7 +455,8 @@ export default function AdminSMS() {
                         type="button"
                         variant={recipientMode === "custom" ? "default" : "outline"}
                         onClick={() => setRecipientMode("custom")}
-                        className="rounded-xl h-11 text-xs sm:text-sm font-semibold"
+                        size="sm"
+                        className="rounded-lg text-xs"
                       >
                         Custom Number
                       </Button>
@@ -522,70 +464,62 @@ export default function AdminSMS() {
 
                     {/* Mode A: All Patients */}
                     {recipientMode === "all" && (
-                      <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center gap-3 text-sm text-slate-700">
-                        <Users className="h-5 w-5 text-primary shrink-0" />
-                        <div>
-                          <p className="font-semibold">Broadcast to entire patient database</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            This message will be queued for all <strong>{patientsWithPhones.length}</strong> patients with registered phone numbers.
-                          </p>
-                        </div>
+                      <div className="p-3 bg-slate-50 border rounded-lg text-xs text-slate-600">
+                        Will be sent to all <strong>{patientsWithPhones.length}</strong> patients with a valid phone number.
                       </div>
                     )}
 
-                    {/* Mode B: Specific Patient Picker */}
+                    {/* Mode B: Patient Checklist */}
                     {recipientMode === "selected" && (
-                      <div className="space-y-3 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+                      <div className="space-y-2 p-3 bg-slate-50 border rounded-lg">
+                        <div className="flex items-center gap-2">
                           <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                             <Input
                               value={patientSearch}
                               onChange={(e) => setPatientSearch(e.target.value)}
-                              placeholder="Search by name, phone or email..."
-                              className="pl-9 h-9 text-xs bg-white rounded-lg"
+                              placeholder="Search by patient name or phone..."
+                              className="pl-8 h-8 text-xs bg-white"
                             />
                           </div>
-                          <div className="flex items-center gap-2">
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={selectAllFiltered}
+                            className="h-8 text-xs"
+                          >
+                            Select All
+                          </Button>
+                          {selectedPatientIds.length > 0 && (
                             <Button 
                               type="button" 
-                              variant="outline" 
+                              variant="ghost" 
                               size="sm" 
-                              onClick={selectAllFiltered}
-                              className="h-9 text-xs rounded-lg bg-white"
+                              onClick={clearSelection}
+                              className="h-8 text-xs text-rose-600"
                             >
-                              Select All Filtered
+                              Clear
                             </Button>
-                            {selectedPatientIds.length > 0 && (
-                              <Button 
-                                type="button" 
-                                variant="ghost" 
-                                size="sm" 
-                                onClick={clearSelection}
-                                className="h-9 text-xs text-muted-foreground hover:text-rose-600 rounded-lg"
-                              >
-                                Clear
-                              </Button>
-                            )}
-                          </div>
+                          )}
                         </div>
 
                         {/* Selected Chips */}
                         {selectedPatientIds.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto p-1">
+                          <div className="flex flex-wrap gap-1 max-h-16 overflow-y-auto py-1">
                             {selectedPatientIds.map(id => {
                               const p = profiles.find(item => item.id === id);
                               if (!p) return null;
                               return (
                                 <span 
                                   key={id}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-primary/10 text-primary border border-primary/20"
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] bg-white border text-slate-700 font-medium"
                                 >
                                   {p.fullName || "Patient"} ({p.phone})
                                   <button
                                     type="button"
                                     onClick={() => togglePatient(id)}
-                                    className="hover:text-rose-600 transition-colors"
+                                    className="hover:text-rose-600"
                                   >
                                     <X className="h-3 w-3" />
                                   </button>
@@ -595,16 +529,15 @@ export default function AdminSMS() {
                           </div>
                         )}
 
-                        {/* Patient List */}
-                        <div className="max-h-52 overflow-y-auto divide-y divide-slate-200/80 bg-white rounded-xl border border-slate-200">
+                        {/* List */}
+                        <div className="max-h-48 overflow-y-auto divide-y bg-white rounded border">
                           {profilesLoading ? (
-                            <div className="p-8 text-center text-muted-foreground">
-                              <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2 text-primary" />
-                              <p className="text-xs">Loading patient directory...</p>
+                            <div className="p-4 text-center text-xs text-muted-foreground">
+                              Loading patients...
                             </div>
                           ) : filteredPatients.length === 0 ? (
-                            <div className="p-8 text-center text-xs text-muted-foreground">
-                              No patients found matching "{patientSearch}"
+                            <div className="p-4 text-center text-xs text-muted-foreground">
+                              No matching patients found
                             </div>
                           ) : (
                             filteredPatients.map(patient => {
@@ -613,30 +546,23 @@ export default function AdminSMS() {
                                 <div
                                   key={patient.id}
                                   onClick={() => togglePatient(patient.id)}
-                                  className={`p-2.5 flex items-center justify-between gap-3 cursor-pointer transition-colors ${
-                                    isSelected ? "bg-primary/5 hover:bg-primary/10" : "hover:bg-slate-50"
+                                  className={`p-2 flex items-center justify-between gap-2 cursor-pointer text-xs ${
+                                    isSelected ? "bg-primary/5" : "hover:bg-slate-50"
                                   }`}
                                 >
-                                  <div className="flex items-center gap-3 min-w-0">
-                                    <div className={`h-5 w-5 rounded border flex items-center justify-center transition-colors ${
-                                      isSelected ? "bg-primary border-primary text-white" : "border-slate-300 bg-white"
+                                  <div className="flex items-center gap-2">
+                                    <div className={`h-4 w-4 rounded border flex items-center justify-center ${
+                                      isSelected ? "bg-primary border-primary text-white" : "border-slate-300"
                                     }`}>
                                       {isSelected && <Check className="h-3 w-3" />}
                                     </div>
-                                    <div className="min-w-0">
-                                      <p className="text-xs font-bold text-slate-800 truncate">
-                                        {patient.fullName || "Unnamed Patient"}
-                                      </p>
-                                      <p className="text-[11px] text-muted-foreground truncate">
-                                        {patient.phone} {patient.email ? `• ${patient.email}` : ""}
-                                      </p>
-                                    </div>
+                                    <span className="font-medium text-slate-800">
+                                      {patient.fullName || "Patient"}
+                                    </span>
+                                    <span className="text-muted-foreground font-mono">
+                                      {patient.phone}
+                                    </span>
                                   </div>
-                                  {patient.registrationCompleted && (
-                                    <Badge variant="secondary" className="text-[10px] bg-green-50 text-green-700 border-green-200 shrink-0">
-                                      Registered
-                                    </Badge>
-                                  )}
                                 </div>
                               );
                             })
@@ -645,153 +571,118 @@ export default function AdminSMS() {
                       </div>
                     )}
 
-                    {/* Mode C: Group Filter */}
+                    {/* Mode C: Groups */}
                     {recipientMode === "group" && (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-                        <div 
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-slate-50 border rounded-lg">
+                        <button 
+                          type="button"
                           onClick={() => setSelectedGroup("registered")}
-                          className={`p-3.5 rounded-xl border cursor-pointer transition-all ${
+                          className={`p-3 rounded-lg border text-left transition-colors ${
                             selectedGroup === "registered" 
-                              ? "bg-white border-primary shadow-sm ring-1 ring-primary/30" 
-                              : "bg-white/70 border-slate-200 hover:bg-white"
+                              ? "bg-white border-primary shadow-xs" 
+                              : "bg-white/60 border-slate-200"
                           }`}
                         >
-                          <div className="flex items-center justify-between mb-1.5">
-                            <div className="flex items-center gap-2">
-                              <UserCheck className="h-4 w-4 text-emerald-600" />
-                              <span className="text-xs font-bold text-slate-800">Fully Registered</span>
-                            </div>
-                            <Badge className="bg-emerald-100 text-emerald-700 border-none text-[10px]">
-                              {registeredPatients.length} Patients
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs font-bold text-slate-800">Registered Patients</span>
+                            <Badge variant="secondary" className="text-[10px]">
+                              {registeredPatients.length}
                             </Badge>
                           </div>
                           <p className="text-[11px] text-muted-foreground">
-                            Patients who have completed their initial clinical and EHR onboarding.
+                            Patients with complete profile records.
                           </p>
-                        </div>
+                        </button>
 
-                        <div 
+                        <button 
+                          type="button"
                           onClick={() => setSelectedGroup("pending_registration")}
-                          className={`p-3.5 rounded-xl border cursor-pointer transition-all ${
+                          className={`p-3 rounded-lg border text-left transition-colors ${
                             selectedGroup === "pending_registration" 
-                              ? "bg-white border-primary shadow-sm ring-1 ring-primary/30" 
-                              : "bg-white/70 border-slate-200 hover:bg-white"
+                              ? "bg-white border-primary shadow-xs" 
+                              : "bg-white/60 border-slate-200"
                           }`}
                         >
-                          <div className="flex items-center justify-between mb-1.5">
-                            <div className="flex items-center gap-2">
-                              <Clock className="h-4 w-4 text-amber-600" />
-                              <span className="text-xs font-bold text-slate-800">Pending Registration</span>
-                            </div>
-                            <Badge className="bg-amber-100 text-amber-700 border-none text-[10px]">
-                              {pendingPatients.length} Patients
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs font-bold text-slate-800">Pending Registration</span>
+                            <Badge variant="secondary" className="text-[10px]">
+                              {pendingPatients.length}
                             </Badge>
                           </div>
                           <p className="text-[11px] text-muted-foreground">
-                            Users who signed up but have not completed full clinical registration.
+                            Users who signed up but haven't finished registering.
                           </p>
-                        </div>
+                        </button>
                       </div>
                     )}
 
                     {/* Mode D: Custom Numbers */}
                     {recipientMode === "custom" && (
-                      <div className="space-y-2 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-                        <label className="text-xs font-bold text-slate-700">
-                          Direct Phone Number(s)
-                        </label>
+                      <div className="space-y-1.5 p-3 bg-slate-50 border rounded-lg">
                         <Textarea
                           value={customPhonesInput}
                           onChange={(e) => setCustomPhonesInput(e.target.value)}
-                          placeholder="e.g. 0241234567, 0559876543, 233240000000 (separate by comma or newline)"
-                          rows={3}
-                          className="rounded-xl border-slate-200 bg-white text-xs font-mono"
+                          placeholder="Type or paste phone numbers, e.g. 0241234567, 0559876543"
+                          rows={2}
+                          className="bg-white text-xs font-mono"
                         />
-                        <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                          <span>
-                            Detected numbers: <strong className="text-primary">{parsedCustomPhones.length}</strong>
-                          </span>
-                          <span>Format: Ghana local (024X...) or International (23324X...)</span>
-                        </div>
+                        <p className="text-[11px] text-muted-foreground">
+                          {parsedCustomPhones.length} valid numbers detected (Ghana format: 024X... or 233X...)
+                        </p>
                       </div>
                     )}
                   </div>
 
-                  {/* Step 2: Message Content */}
-                  <div className="space-y-4 pt-2 border-t">
+                  {/* Message Content */}
+                  <div className="space-y-3 pt-3 border-t">
                     <div className="flex items-center justify-between">
-                      <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                        <FileText className="h-5 w-5 text-primary" />
-                        2. Message Content
-                      </h2>
-                      <div className="flex items-center gap-1.5">
-                        <span className={`text-xs font-bold ${messageLength > 160 ? 'text-amber-600' : 'text-slate-500'}`}>
-                          {messageLength} chars
-                        </span>
-                        <span className="text-slate-300">|</span>
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-semibold text-slate-600 border-slate-300">
-                          {smsSegments} SMS {smsSegments === 1 ? 'Unit' : 'Units'}
-                        </Badge>
-                      </div>
+                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wide">
+                        Message
+                      </label>
+                      <span className={`text-xs ${messageLength > 160 ? 'text-amber-600 font-semibold' : 'text-muted-foreground'}`}>
+                        {messageLength} / 160 characters ({smsUnits} {smsUnits === 1 ? 'credit' : 'credits'})
+                      </span>
                     </div>
 
                     {/* Quick Templates */}
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-slate-600 flex items-center gap-1.5">
-                        <Sparkles className="h-3.5 w-3.5 text-primary" />
-                        Quick Clinical Templates
-                      </label>
-                      <div className="flex flex-wrap gap-1.5">
-                        {CLINICAL_TEMPLATES.map(tpl => {
-                          const IconComp = tpl.icon;
-                          return (
-                            <button
-                              key={tpl.id}
-                              type="button"
-                              onClick={() => applyTemplate(tpl.text)}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-primary/10 hover:text-primary text-slate-700 rounded-lg transition-colors border border-slate-200"
-                            >
-                              <IconComp className="h-3.5 w-3.5 shrink-0" />
-                              {tpl.title}
-                            </button>
-                          );
-                        })}
-                      </div>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="text-xs text-muted-foreground mr-1">Templates:</span>
+                      {MESSAGE_TEMPLATES.map(tpl => (
+                        <button
+                          key={tpl.id}
+                          type="button"
+                          onClick={() => applyTemplate(tpl.text)}
+                          className="px-2.5 py-1 text-xs rounded border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 transition-colors"
+                        >
+                          {tpl.title}
+                        </button>
+                      ))}
                     </div>
 
                     <Textarea 
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
-                      placeholder="Type your clinical update, reminder, or general announcement here..."
-                      rows={5}
-                      className="rounded-xl border-slate-200 p-4 text-sm leading-relaxed focus-visible:ring-primary/20"
+                      placeholder="Write your SMS message here..."
+                      rows={4}
+                      className="text-sm"
                     />
-
-                    <p className="text-[11px] text-muted-foreground italic">
-                      * Sender ID is set to <strong>NovaCare</strong> via SMSOnlineGH v5. Standard telecom SMS rates apply.
-                    </p>
                   </div>
 
-                  {/* Step 3: Dispatch Actions */}
-                  <div className="pt-4 border-t flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-                    <div className="text-xs text-muted-foreground space-y-0.5">
-                      <div className="flex items-center gap-1.5 font-medium text-slate-700">
-                        <Clock className="h-3.5 w-3.5 text-primary" />
-                        Delivery: Immediate Dispatch
-                      </div>
-                      <p>
-                        Total SMS Volume: <strong>{effectiveRecipientCount * smsSegments}</strong> message units
-                      </p>
-                    </div>
+                  {/* Submit Bar */}
+                  <div className="pt-3 border-t flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">
+                      Sending via <strong>NovaCare</strong>
+                    </p>
 
                     <div className="flex items-center gap-2">
                       {message && (
                         <Button 
                           type="button" 
                           variant="ghost" 
+                          size="sm"
                           onClick={() => setMessage("")}
                           disabled={sending}
-                          className="rounded-xl text-xs"
+                          className="text-xs"
                         >
                           Clear
                         </Button>
@@ -800,18 +691,17 @@ export default function AdminSMS() {
                         type="button"
                         onClick={handleSend} 
                         disabled={sending || !message.trim() || effectiveRecipientCount === 0}
-                        size="lg"
-                        className="rounded-xl px-8 gap-2 font-bold shadow-sm"
+                        className="rounded-xl px-6 font-semibold"
                       >
                         {sending ? (
                           <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Dispatching...
+                            <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
+                            Sending...
                           </>
                         ) : (
                           <>
-                            <Send className="h-4 w-4" />
-                            Send SMS ({effectiveRecipientCount})
+                            <Send className="h-4 w-4 mr-1.5" />
+                            Send ({effectiveRecipientCount})
                           </>
                         )}
                       </Button>
@@ -820,104 +710,57 @@ export default function AdminSMS() {
                 </Card>
               </div>
 
-              {/* Right 5 Columns: Live Smartphone Mockup & Info Card */}
-              <div className="lg:col-span-5 space-y-6">
-                {/* Live Mockup */}
-                <Card className="border border-slate-200/90 shadow-sm rounded-2xl p-6 bg-slate-50 flex flex-col items-center">
-                  <div className="flex items-center justify-between w-full mb-4 px-1">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                      <Smartphone className="h-4 w-4 text-primary" />
-                      Live Handset Preview
-                    </h3>
-                    <Badge variant="outline" className="text-[10px] bg-white">
-                      Sender: NovaCare
-                    </Badge>
+              {/* Sidebar: Clean Preview & Info */}
+              <div className="space-y-4">
+                <Card className="p-5 border rounded-xl bg-white shadow-none space-y-3">
+                  <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wide">
+                    Message Preview
+                  </h3>
+                  
+                  <div className="p-3.5 bg-slate-50 border rounded-lg text-xs leading-relaxed text-slate-800">
+                    {message.trim() ? (
+                      message
+                    ) : (
+                      <span className="text-muted-foreground italic">
+                        Type a message to see how it reads...
+                      </span>
+                    )}
                   </div>
 
-                  {/* Phone Screen Frame */}
-                  <div className="w-full max-w-[320px] rounded-[38px] p-3.5 bg-slate-900 shadow-xl border-4 border-slate-800">
-                    {/* Speaker notch */}
-                    <div className="h-4 w-28 bg-slate-800 rounded-full mx-auto mb-2 flex items-center justify-center">
-                      <div className="h-1.5 w-8 bg-slate-700 rounded-full"></div>
-                    </div>
-
-                    {/* Inside Screen */}
-                    <div className="bg-slate-100 rounded-[26px] overflow-hidden min-h-[380px] flex flex-col justify-between p-3.5 text-slate-800">
-                      {/* Top App Header */}
-                      <div className="text-center border-b border-slate-200 pb-2 mb-3">
-                        <div className="h-10 w-10 rounded-full bg-primary text-white font-bold flex items-center justify-center mx-auto text-xs mb-1 shadow-sm">
-                          NC
-                        </div>
-                        <p className="font-bold text-xs text-slate-800">NovaCare</p>
-                        <p className="text-[9px] text-muted-foreground">SMS Notification</p>
-                      </div>
-
-                      {/* SMS Chat Bubble */}
-                      <div className="flex-1 flex flex-col justify-start space-y-2">
-                        <div className="text-[10px] text-center text-muted-foreground my-1">
-                          Today • {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </div>
-
-                        <div className="bg-white border border-slate-200 text-slate-800 p-3 rounded-2xl rounded-tl-sm text-xs leading-relaxed shadow-sm max-w-[95%]">
-                          {message.trim() ? (
-                            message
-                          ) : (
-                            <span className="text-slate-400 italic">
-                              Your composed message will render here in real-time...
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Bottom Footer Note */}
-                      <div className="pt-2 text-center text-[10px] text-slate-400 border-t border-slate-200">
-                        SMSOnlineGH • Direct Telecom Route
-                      </div>
-                    </div>
+                  <div className="text-[11px] text-muted-foreground space-y-1 pt-2 border-t">
+                    <p>• Standard messages are 160 characters per SMS credit.</p>
+                    <p>• Recipient phones receive messages from <strong>NovaCare</strong>.</p>
+                    <p>• Include the clinic phone (0544172089) for patient enquiries.</p>
                   </div>
-                </Card>
-
-                {/* Best Practice Tips */}
-                <Card className="p-5 border border-slate-200/80 shadow-sm rounded-2xl bg-white space-y-2.5">
-                  <h4 className="font-bold text-xs uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                    <Sparkles className="h-4 w-4 text-primary" />
-                    SMS Best Practices
-                  </h4>
-                  <ul className="text-xs text-muted-foreground space-y-1.5 pl-4 list-disc">
-                    <li>Keep messages concise under <strong>160 characters</strong> to prevent multiple billing units.</li>
-                    <li>Always include Nova Eye Care contact info (e.g. <code>0544172089</code>) for patient callbacks.</li>
-                    <li>Verify phone numbers for patients whose messages previously bounced or failed.</li>
-                  </ul>
                 </Card>
               </div>
 
             </div>
           </TabsContent>
 
-          {/* TAB 2: MESSAGE HISTORY */}
-          <TabsContent value="history" className="animate-in fade-in-50 duration-200">
-            <Card className="border border-slate-200/80 shadow-sm rounded-2xl overflow-hidden bg-white">
+          {/* TAB 2: HISTORY */}
+          <TabsContent value="history">
+            <Card className="border rounded-xl overflow-hidden bg-white shadow-none">
               
-              {/* Table Controls */}
-              <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50/50">
-                <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-                  <div className="relative w-full sm:w-80">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              {/* Header Actions */}
+              <div className="p-4 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-50/50">
+                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                  <div className="relative w-full sm:w-64">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                     <Input 
                       value={historySearch}
                       onChange={(e) => setHistorySearch(e.target.value)}
-                      placeholder="Search recipient phone or content..."
-                      className="pl-9 rounded-xl border-slate-200 bg-white h-10 text-xs"
+                      placeholder="Search phone or text..."
+                      className="pl-8 h-9 text-xs bg-white"
                     />
                   </div>
 
-                  {/* Status Filter Chips */}
-                  <div className="flex items-center bg-white border border-slate-200 p-0.5 rounded-xl text-xs">
+                  <div className="flex items-center bg-white border p-0.5 rounded-lg text-xs">
                     <button
                       type="button"
                       onClick={() => setHistoryStatusFilter("all")}
-                      className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
-                        historyStatusFilter === "all" ? "bg-primary text-white" : "text-slate-600 hover:text-slate-900"
+                      className={`px-2.5 py-1 rounded font-medium ${
+                        historyStatusFilter === "all" ? "bg-slate-900 text-white" : "text-slate-600"
                       }`}
                     >
                       All ({logs.length})
@@ -925,8 +768,8 @@ export default function AdminSMS() {
                     <button
                       type="button"
                       onClick={() => setHistoryStatusFilter("sent")}
-                      className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
-                        historyStatusFilter === "sent" ? "bg-emerald-600 text-white" : "text-slate-600 hover:text-emerald-700"
+                      className={`px-2.5 py-1 rounded font-medium ${
+                        historyStatusFilter === "sent" ? "bg-emerald-600 text-white" : "text-slate-600"
                       }`}
                     >
                       Delivered
@@ -934,8 +777,8 @@ export default function AdminSMS() {
                     <button
                       type="button"
                       onClick={() => setHistoryStatusFilter("failed")}
-                      className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
-                        historyStatusFilter === "failed" ? "bg-rose-600 text-white" : "text-slate-600 hover:text-rose-700"
+                      className={`px-2.5 py-1 rounded font-medium ${
+                        historyStatusFilter === "failed" ? "bg-rose-600 text-white" : "text-slate-600"
                       }`}
                     >
                       Failed
@@ -950,10 +793,9 @@ export default function AdminSMS() {
                       variant="outline" 
                       onClick={() => openClearConfirm("failed")} 
                       size="sm" 
-                      className="gap-1.5 text-rose-600 border-rose-200 hover:bg-rose-50 rounded-xl h-10 text-xs font-semibold"
-                      title="Delete all failed message dispatch records"
+                      className="text-rose-600 border-rose-200 hover:bg-rose-50 h-9 text-xs"
                     >
-                      <Trash2 className="h-3.5 w-3.5" /> Clear Failed ({stats.failed})
+                      <Trash2 className="h-3.5 w-3.5 mr-1" /> Clear Failed ({stats.failed})
                     </Button>
                   ) : null}
 
@@ -963,10 +805,9 @@ export default function AdminSMS() {
                       variant="outline" 
                       onClick={() => openClearConfirm("all")} 
                       size="sm" 
-                      className="gap-1.5 text-slate-600 border-slate-200 hover:bg-rose-50 hover:text-rose-600 rounded-xl h-10 text-xs"
-                      title="Clear all message records"
+                      className="text-slate-600 h-9 text-xs"
                     >
-                      <Trash2 className="h-3.5 w-3.5" /> Clear All History
+                      <Trash2 className="h-3.5 w-3.5 mr-1" /> Clear All
                     </Button>
                   )}
 
@@ -975,44 +816,40 @@ export default function AdminSMS() {
                     variant="outline" 
                     onClick={fetchData} 
                     size="sm" 
-                    className="gap-2 text-slate-600 rounded-xl h-10 border-slate-200 hover:bg-white"
+                    className="h-9 text-xs"
                   >
-                    <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
+                    <RefreshCw className={`h-3.5 w-3.5 mr-1 ${loading ? 'animate-spin' : ''}`} /> Refresh
                   </Button>
                 </div>
               </div>
 
-              {/* Logs Table */}
+              {/* Table */}
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full text-left border-collapse text-xs">
                   <thead>
-                    <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                      <th className="p-4">Recipient</th>
-                      <th className="p-4">Message Content</th>
-                      <th className="p-4 text-center">Status</th>
-                      <th className="p-4 text-right">Sent Date</th>
-                      <th className="p-4 text-right">Action</th>
+                    <tr className="bg-slate-50 border-b text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                      <th className="p-3.5">Recipient</th>
+                      <th className="p-3.5">Message</th>
+                      <th className="p-3.5 text-center">Status</th>
+                      <th className="p-3.5 text-right">Sent Date</th>
+                      <th className="p-3.5 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 text-xs">
+                  <tbody className="divide-y divide-slate-100">
                     {loading ? (
-                      Array.from({ length: 5 }).map((_, i) => (
+                      Array.from({ length: 4 }).map((_, i) => (
                         <tr key={i} className="animate-pulse">
-                          <td className="p-4"><div className="h-4 w-28 bg-slate-200 rounded"></div></td>
-                          <td className="p-4"><div className="h-4 w-72 bg-slate-200 rounded"></div></td>
-                          <td className="p-4 text-center"><div className="h-4 w-16 bg-slate-200 rounded mx-auto"></div></td>
-                          <td className="p-4 text-right"><div className="h-4 w-28 bg-slate-200 rounded ml-auto"></div></td>
-                          <td className="p-4 text-right"><div className="h-4 w-12 bg-slate-200 rounded ml-auto"></div></td>
+                          <td className="p-3.5"><div className="h-3.5 w-24 bg-slate-200 rounded"></div></td>
+                          <td className="p-3.5"><div className="h-3.5 w-60 bg-slate-200 rounded"></div></td>
+                          <td className="p-3.5 text-center"><div className="h-3.5 w-16 bg-slate-200 rounded mx-auto"></div></td>
+                          <td className="p-3.5 text-right"><div className="h-3.5 w-24 bg-slate-200 rounded ml-auto"></div></td>
+                          <td className="p-3.5 text-right"><div className="h-3.5 w-12 bg-slate-200 rounded ml-auto"></div></td>
                         </tr>
                       ))
                     ) : filteredLogs.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="p-16 text-center text-muted-foreground">
-                          <History className="h-10 w-10 mx-auto mb-3 opacity-25 text-slate-400" />
-                          <p className="font-medium">No message records found.</p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Dispatched messages and provider receipts will appear here.
-                          </p>
+                        <td colSpan={5} className="p-12 text-center text-muted-foreground">
+                          No messages found.
                         </td>
                       </tr>
                     ) : (
@@ -1020,59 +857,59 @@ export default function AdminSMS() {
                         const matchedPatient = profiles.find(p => p.phone && p.phone.trim() === log.phone);
 
                         return (
-                          <tr key={log.id} className="hover:bg-slate-50/80 transition-colors group">
-                            <td className="p-4">
-                              <p className="font-bold text-slate-900 font-mono text-xs">{log.phone}</p>
+                          <tr key={log.id} className="hover:bg-slate-50/70 transition-colors">
+                            <td className="p-3.5">
+                              <p className="font-semibold text-slate-800 font-mono">{log.phone}</p>
                               {matchedPatient && (
                                 <p className="text-[11px] text-muted-foreground">
                                   {matchedPatient.fullName}
                                 </p>
                               )}
                             </td>
-                            <td className="p-4 max-w-md">
-                              <p className="text-slate-700 leading-relaxed break-words">{log.message}</p>
+                            <td className="p-3.5 max-w-sm">
+                              <p className="text-slate-700 leading-normal">{log.message}</p>
                             </td>
-                            <td className="p-4 text-center">
+                            <td className="p-3.5 text-center">
                               {log.status === 'sent' ? (
-                                <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 rounded-full font-bold uppercase text-[10px] px-2.5 py-0.5">
+                                <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] font-semibold">
                                   Delivered
                                 </Badge>
                               ) : (
-                                <div className="space-y-1">
-                                  <Badge variant="destructive" className="bg-rose-50 text-rose-700 border-rose-200 rounded-full font-bold uppercase text-[10px] px-2.5 py-0.5">
+                                <div className="space-y-0.5">
+                                  <Badge variant="destructive" className="bg-rose-50 text-rose-700 border-rose-200 text-[10px] font-semibold">
                                     Failed
                                   </Badge>
-                                  <p className="text-[10px] text-rose-600 font-medium max-w-[200px] leading-tight mx-auto">
+                                  <p className="text-[10px] text-rose-600 max-w-[180px] mx-auto leading-tight">
                                     {getLogFailureReason(log)}
                                   </p>
                                 </div>
                               )}
                             </td>
-                            <td className="p-4 text-right text-slate-500 font-medium">
+                            <td className="p-3.5 text-right text-muted-foreground">
                               <div>{new Date(log.createdAt).toLocaleDateString()}</div>
-                              <div className="text-[10px] text-muted-foreground">
+                              <div className="text-[10px]">
                                 {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </div>
                             </td>
-                            <td className="p-4 text-right">
+                            <td className="p-3.5 text-right">
                               <div className="flex items-center justify-end gap-1">
                                 <Button
                                   type="button"
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => handleResendLog(log)}
-                                  className="h-8 px-2.5 text-xs text-primary hover:text-primary hover:bg-primary/10 rounded-lg gap-1"
+                                  className="h-7 px-2 text-xs text-primary hover:bg-primary/10"
                                 >
-                                  <RotateCcw className="h-3.5 w-3.5" />
-                                  Reuse
+                                  <RotateCcw className="h-3 w-3 mr-1" />
+                                  Resend
                                 </Button>
                                 <Button
                                   type="button"
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => handleDeleteLog(log.id)}
-                                  className="h-8 w-8 p-0 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                                  title="Delete log entry"
+                                  className="h-7 w-7 p-0 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded"
+                                  title="Delete"
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
                                 </Button>
@@ -1089,44 +926,39 @@ export default function AdminSMS() {
           </TabsContent>
         </Tabs>
 
-        {/* Clear Logs Confirmation Dialog */}
+        {/* Clear Confirmation Modal */}
         <Dialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
-          <DialogContent className="max-w-md rounded-2xl p-6">
+          <DialogContent className="max-w-md p-6">
             <DialogHeader>
-              <DialogTitle className="text-lg font-bold flex items-center gap-2 text-rose-600">
-                <Trash2 className="h-5 w-5 text-rose-600" />
-                {clearType === "failed" ? "Clear Failed SMS Logs?" : "Clear All SMS History Logs?"}
+              <DialogTitle className="text-base font-bold text-slate-900">
+                {clearType === "failed" ? "Clear Failed Messages" : "Clear All Messages"}
               </DialogTitle>
-              <DialogDescription className="mt-2 text-slate-600 leading-relaxed text-xs">
+              <DialogDescription className="text-xs text-slate-600 mt-1">
                 {clearType === "failed" 
-                  ? "Are you sure you want to permanently delete all failed SMS dispatch records? This cannot be undone."
-                  : "Are you sure you want to permanently delete all SMS dispatch history records from the system? This action cannot be undone."
+                  ? "Are you sure you want to delete all failed SMS records from the list?"
+                  : "Are you sure you want to delete all SMS delivery records?"
                 }
               </DialogDescription>
             </DialogHeader>
 
-            <div className="flex justify-end gap-3 pt-4 border-t mt-4">
+            <div className="flex justify-end gap-2 pt-4 border-t mt-3">
               <Button 
                 type="button" 
                 variant="outline" 
-                className="rounded-xl text-xs"
+                size="sm"
+                className="text-xs"
                 onClick={() => setIsClearDialogOpen(false)}
               >
                 Cancel
               </Button>
               <Button 
                 type="button" 
-                className="rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs"
+                size="sm"
+                className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold"
                 onClick={handleConfirmClearLogs}
                 disabled={clearing}
               >
-                {clearing ? (
-                  <>
-                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Clearing...
-                  </>
-                ) : (
-                  clearType === "failed" ? "Delete Failed Logs" : "Delete All Logs"
-                )}
+                {clearing ? "Clearing..." : "Delete"}
               </Button>
             </div>
           </DialogContent>

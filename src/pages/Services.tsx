@@ -57,16 +57,16 @@ const Services = () => {
     <Layout>
       <PageHero
         image={heroServices}
-        eyebrow="Our Expertise"
+        eyebrow="What We Do"
         title="Our Services"
-        subtitle="From routine eye exams to specialty vision services, NOVA Eye Care provides comprehensive optometry care tailored to every patient."
+        subtitle="Eye examinations, prescription glasses, contact lenses, and eye health checks for patients of all ages."
       />
 
       <section className="container py-20 pb-32">
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center gap-4 text-muted-foreground animate-fade-in">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm font-medium">Loading clinical services...</p>
+            <p className="text-sm font-medium">Loading services...</p>
           </div>
         ) : (
           <motion.div 

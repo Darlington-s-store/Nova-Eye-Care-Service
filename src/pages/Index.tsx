@@ -17,10 +17,10 @@ import { apiService, Service } from "@/lib/api";
 import { serviceImageMap } from "@/lib/service-images";
 
 const trustPoints = [
-  { icon: Award, title: "Qualified Specialists", text: "Licensed optometrists with years of clinical experience." },
-  { icon: Microscope, title: "Modern Equipment", text: "Advanced diagnostic technology for precise results." },
-  { icon: HeartHandshake, title: "Personalized Care", text: "Tailored treatment plans for every patient's needs." },
-  { icon: Clock, title: "Flexible Hours", text: "Weekday and Saturday appointments to fit your schedule." },
+  { icon: Award, title: "Licensed Optometrists", text: "Experienced eye doctors who take time to answer your questions." },
+  { icon: Microscope, title: "Modern Testing Equipment", text: "Accurate vision checks, eye pressure testing, and retinal health scans." },
+  { icon: HeartHandshake, title: "Friendly, Caring Staff", text: "Clear advice and recommendations tailored to your daily life." },
+  { icon: Clock, title: "Convenient Hours", text: "Open Monday through Saturday with minimal wait times." },
 ];
 
 const Home = () => {
@@ -29,8 +29,6 @@ const Home = () => {
   const [clinic, setClinic] = useState<ClinicContact | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [loadingServices, setLoadingServices] = useState(true);
-
-
 
   useEffect(() => {
     const fetchContent = async () => {
@@ -80,17 +78,17 @@ const Home = () => {
         <div className="container relative z-10">
           <div className="text-center mb-16 max-w-2xl mx-auto">
             <Badge className="mb-4 bg-primary/10 text-primary border border-primary/20 px-3.5 py-1 uppercase tracking-widest text-[11px] font-bold">
-              Nova Care Options
+              Eye Care Services
             </Badge>
             <h2 className="text-3xl md:text-5xl font-bold mb-4 tracking-tight">Our Services</h2>
             <p className="text-slate-600 text-base md:text-lg">
-              Professional eye care using modern diagnostic technology.
+              Comprehensive eye exams, prescription glasses, and vision care for all ages.
             </p>
           </div>
           {loadingServices ? (
             <div className="py-20 flex flex-col items-center justify-center gap-4 text-slate-500">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-sm font-medium animate-pulse">Loading clinical services...</p>
+              <p className="text-sm font-medium animate-pulse">Loading services...</p>
             </div>
           ) : services.length === 0 ? (
             <div className="py-20 text-center text-slate-500">

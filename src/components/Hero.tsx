@@ -86,7 +86,7 @@ export const Hero = ({ hero }: HeroProps) => {
             {hero?.heading || CLINIC.name}
           </h1>
           <p className="text-xs sm:text-lg md:text-xl xl:text-2xl mb-4 sm:mb-12 opacity-95 mx-auto max-w-3xl leading-relaxed font-medium text-slate-100 drop-shadow animate-fade-in-up [animation-delay:200ms]">
-            {hero?.subheading || "Comprehensive eye care for every stage of life, from routine exams to specialty vision services and DVLA testing."}
+            {hero?.subheading || "Trusted eye care for children, adults, and seniors in Kumasi. Eye examinations, prescription glasses, and DVLA testing."}
           </p>
           <div className="flex flex-row justify-center gap-2 sm:gap-6 animate-fade-in-up [animation-delay:400ms]">
             <Button asChild className="flex-1 sm:flex-none rounded-xl px-3 sm:px-10 h-11 sm:h-14 md:h-16 text-xs sm:text-base font-bold shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5">

@@ -12,7 +12,7 @@ const CHAT_URL = `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}
 const INITIAL_GREETING: Msg = {
   role: "assistant",
   content:
-    "Hi! 👋 I'm the NOVA Eye Care Assistant. I can answer your questions or help you book an appointment. How can I help you today?",
+    "Hello! 👋 Welcome to NOVA Eye Care. How can we help you today? You can ask about our eye tests, opening hours, or booking an appointment.",
 };
 
 export const ChatWidget = () => {
@@ -84,7 +84,7 @@ export const ChatWidget = () => {
       });
 
       if (resp.status === 429) { setError("Too many requests. Please try again in a moment."); setLoading(false); return; }
-      if (resp.status === 402) { setError("AI service unavailable right now. Please call +233544172089."); setLoading(false); return; }
+      if (resp.status === 402) { setError("Live chat is currently unavailable. Please call us at +233 54 417 2089 or book online."); setLoading(false); return; }
       
       if (!resp.ok) {
         const errorData = await resp.json().catch(() => ({}));
@@ -162,10 +162,10 @@ export const ChatWidget = () => {
             {/* Header */}
             <div className="bg-primary text-primary-foreground p-4 flex items-start justify-between">
               <div>
-                <h3 className="font-bold text-lg leading-tight">NOVA Assistant</h3>
+                <h3 className="font-bold text-lg leading-tight">NOVA Clinic Help</h3>
                 <div className="flex items-center gap-1.5 mt-1">
                   <div className="h-2 w-2 rounded-full bg-emerald-400" />
-                  <p className="text-xs opacity-90 font-medium">Online Clinical Assistant</p>
+                  <p className="text-xs opacity-90 font-medium">Online Support & Inquiries</p>
                 </div>
               </div>
               <button 

@@ -230,7 +230,7 @@ const Dashboard = () => {
               <h1 className="text-3xl font-bold text-slate-900">
                 {navItems.find(n => n.id === activeTab)?.label}
               </h1>
-              <p className="text-slate-500 mt-1">Manage your ocular health journey with NOVA.</p>
+              <p className="text-slate-500 mt-1">View your visits, clinical reports, and prescriptions.</p>
             </div>
             <div className="flex gap-3">
               <Button asChild className="rounded-xl font-bold bg-primary hover:bg-primary/90 text-white px-6 h-12 shadow-sm">

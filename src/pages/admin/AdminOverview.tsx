@@ -508,8 +508,8 @@ const AdminOverview = () => {
                         <BookOpen className="h-5 w-5" />
                       </div>
                       <div>
-                        <h4 className="font-bold text-sm text-foreground">Update Assistant Knowledge</h4>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase">Train clinical FAQ & responses</p>
+                        <h4 className="font-bold text-sm text-foreground">Chat FAQ & Automated Answers</h4>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase">Manage common patient questions & answers</p>
                       </div>
                     </div>
                     <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all" />

@@ -76,7 +76,7 @@ const AdminChatbot = () => {
   };
 
   return (
-    <AdminLayout title="Chatbot Knowledge Base" subtitle="Train the assistant by adding question/answer pairs it will use to reply.">
+    <AdminLayout title="Help & FAQ Answers" subtitle="Common questions and answers that our automated assistant uses to help patients online.">
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-3">
           <div className="flex justify-between items-center mb-1">
@@ -88,7 +88,7 @@ const AdminChatbot = () => {
           {loading ? (
             <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
           ) : items.length === 0 ? (
-            <Card className="p-10 text-center text-muted-foreground">No entries yet — add one to start training the bot.</Card>
+            <Card className="p-10 text-center text-muted-foreground">No questions added yet — click 'Add entry' to provide an answer for patient inquiries.</Card>
           ) : (
             items.map((kb) => (
               <Card key={kb.id} className={`p-4 ${!kb.active ? "opacity-60" : ""}`}>
@@ -101,7 +101,7 @@ const AdminChatbot = () => {
                     </div>
                     <p className="text-sm text-muted-foreground line-clamp-3">{kb.answer}</p>
                   </div>
-                  <div className="flex gap-1 shrink-0">
+                  <div className="flex items-center gap-1 shrink-0">
                     <Switch checked={kb.active} onCheckedChange={() => toggle(kb)} />
                     <Button size="icon" variant="ghost" onClick={() => setEditing(kb)} aria-label="Edit"><Edit2 className="h-4 w-4" /></Button>
                     <Button size="icon" variant="ghost" className="text-destructive" onClick={() => remove(kb.id)} aria-label="Delete"><Trash2 className="h-4 w-4" /></Button>
@@ -114,22 +114,22 @@ const AdminChatbot = () => {
 
         <div>
           <Card className="p-5 sticky top-20 border border-border/60">
-            <h3 className="font-semibold mb-4">{editing?.id ? "Edit entry" : editing ? "New entry" : "Editor"}</h3>
+            <h3 className="font-semibold mb-4">{editing?.id ? "Edit Entry" : editing ? "New Entry" : "Editor"}</h3>
             {!editing ? (
               <p className="text-sm text-muted-foreground">Select an entry or click "Add entry" to start.</p>
             ) : (
               <div className="space-y-3">
                 <div>
-                  <Label htmlFor="q">Question / topic</Label>
-                  <Input id="q" value={editing.question ?? ""} onChange={(e) => setEditing({ ...editing, question: e.target.value })} className="mt-1.5" placeholder="e.g. Do you accept walk-ins?" />
+                  <Label htmlFor="q">Question / Inquiry</Label>
+                  <Input id="q" value={editing.question ?? ""} onChange={(e) => setEditing({ ...editing, question: e.target.value })} className="mt-1.5" placeholder="e.g. Do you test children?" />
                 </div>
                 <div>
                   <Label htmlFor="a">Answer</Label>
-                  <Textarea id="a" value={editing.answer ?? ""} onChange={(e) => setEditing({ ...editing, answer: e.target.value })} rows={5} className="mt-1.5" placeholder="The answer the chatbot should give..." />
+                  <Textarea id="a" value={editing.answer ?? ""} onChange={(e) => setEditing({ ...editing, answer: e.target.value })} rows={5} className="mt-1.5" placeholder="The helpful answer to provide the patient..." />
                 </div>
                 <div>
                   <Label htmlFor="cat">Category (optional)</Label>
-                  <Input id="cat" value={editing.category ?? ""} onChange={(e) => setEditing({ ...editing, category: e.target.value })} className="mt-1.5" placeholder="hours, services, pricing..." />
+                  <Input id="cat" value={editing.category ?? ""} onChange={(e) => setEditing({ ...editing, category: e.target.value })} className="mt-1.5" placeholder="e.g. Services, Pricing" />
                 </div>
                 <div className="flex items-center gap-2">
                   <Switch checked={editing.active ?? true} onCheckedChange={(v) => setEditing({ ...editing, active: v })} />

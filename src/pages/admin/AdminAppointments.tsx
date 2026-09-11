@@ -360,7 +360,7 @@ const AdminAppointments = () => {
               <Card className="p-6 border-border/40 shadow-sm relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-1.5 h-full bg-primary" />
                 <h3 className="text-sm font-bold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
-                  <UserCheck className="h-4 w-4 text-primary" /> Patient Demographics
+                  <UserCheck className="h-4 w-4 text-primary" /> Patient Information
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6">
                   <div>
@@ -571,7 +571,7 @@ const AdminAppointments = () => {
               <Card className="p-6 border-border/40 shadow-sm relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-1.5 h-full bg-amber-500" />
                 <h3 className="text-sm font-bold text-amber-600 uppercase tracking-widest mb-4 flex items-center gap-2">
-                  <Activity className="h-4 w-4" /> Clinic Workflow
+                  <Activity className="h-4 w-4" /> Appointment Status
                 </h3>
                 
                 {/* Active Status Badge */}
@@ -601,7 +601,7 @@ const AdminAppointments = () => {
                   )}
                   {viewAppt.status !== "cancelled" && viewAppt.status !== "completed" && (
                     <Button 
-                      variant="outline"
+                      variant="outline" 
                       onClick={() => updateStatus(viewAppt, "cancelled")} 
                       className="w-full h-11 justify-center rounded-xl text-destructive hover:bg-destructive/5 border-destructive/20 gap-2 font-bold"
                     >
@@ -649,11 +649,11 @@ const AdminAppointments = () => {
           <p className="text-3xl font-black mt-2 text-yellow-700">{pending}</p>
         </Card>
         <Card className="p-4 border-border/40 border-l-4 border-l-primary">
-          <p className="text-xs font-bold text-primary uppercase tracking-wider">Confirmed Slots</p>
+          <p className="text-xs font-bold text-primary uppercase tracking-wider">Confirmed Visits</p>
           <p className="text-3xl font-black mt-2 text-primary">{confirmed}</p>
         </Card>
         <Card className="p-4 border-border/40 border-l-4 border-l-green-500">
-          <p className="text-xs font-bold text-green-600 uppercase tracking-wider">Completed Sessions</p>
+          <p className="text-xs font-bold text-green-600 uppercase tracking-wider">Completed Visits</p>
           <p className="text-3xl font-black mt-2 text-green-700">{completed}</p>
         </Card>
       </div>

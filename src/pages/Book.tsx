@@ -303,11 +303,11 @@ const Book = () => {
           <aside className="lg:col-span-1 space-y-6 order-2 lg:order-1">
             <Card className="p-8 bg-hero-gradient text-primary-foreground border-0 shadow-card rounded-3xl relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-700" />
-              <h3 className="font-bold text-xl mb-4 flex items-center gap-2"><Sparkles className="h-5 w-5" /> why NOVA?</h3>
+              <h3 className="font-bold text-xl mb-4 flex items-center gap-2"><Sparkles className="h-5 w-5" /> Why Choose NOVA?</h3>
               <ul className="space-y-3 text-sm md:text-base opacity-100 font-medium">
                 <li className="flex items-center gap-2"><div className="h-1.5 w-1.5 rounded-full bg-white/50" /> Same-week availability</li>
                 <li className="flex items-center gap-2"><div className="h-1.5 w-1.5 rounded-full bg-white/50" /> Qualified, licensed optometrists</li>
-                <li className="flex items-center gap-2"><div className="h-1.5 w-1.5 rounded-full bg-white/50" /> Comprehensive examinations</li>
+                <li className="flex items-center gap-2"><div className="h-1.5 w-1.5 rounded-full bg-white/50" /> Thorough eye examinations</li>
                 <li className="flex items-center gap-2"><div className="h-1.5 w-1.5 rounded-full bg-white/50" /> Friendly, modern clinic</li>
               </ul>
             </Card>
@@ -336,7 +336,7 @@ const Book = () => {
             </Card>
             <p className="text-xs text-muted-foreground flex items-start gap-2 px-1 leading-relaxed">
               <ShieldCheck className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-              Your data is encrypted and handled according to healthcare privacy standards.
+              Your personal details and medical records are kept strictly confidential.
             </p>
           </aside>
 

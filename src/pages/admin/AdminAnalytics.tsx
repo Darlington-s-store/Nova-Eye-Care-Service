@@ -201,7 +201,7 @@ const AdminAnalytics = () => {
 
     autoTable(doc, {
       startY: nextY + 4,
-      head: [["Date", "Patient Name", "Ocular Service", "Doctor", "Type", "Status"]],
+      head: [["Date", "Patient Name", "Service", "Doctor", "Type", "Status"]],
       body: tableRows,
       theme: 'striped',
       headStyles: { fillColor: [0, 59, 92], textColor: [255, 255, 255], fontStyle: 'bold' },
@@ -446,7 +446,7 @@ const AdminAnalytics = () => {
   const statusColors = ['#f59e0b', '#3b82f6', '#10b981', '#ef4444'];
 
   return (
-    <AdminLayout title="Clinic Analytics" subtitle="Interactive database filters & visual performance metrics.">
+    <AdminLayout title="Clinic Analytics" subtitle="Track appointment attendance, service demand, and doctor schedules.">
       <div className="space-y-8 animate-in fade-in duration-300">
         
         {/* Print-Only Header */}
@@ -469,7 +469,7 @@ const AdminAnalytics = () => {
         <Card className="p-6 border shadow-sm bg-white print:hidden">
           <div className="flex items-center justify-between mb-4 pb-2 border-b flex-wrap gap-3">
             <span className="text-sm font-bold text-slate-800 uppercase tracking-wide flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-primary" /> Filter Diagnostics
+              <Calendar className="h-4 w-4 text-primary" /> Filter Appointments
             </span>
             <div className="flex items-center gap-2 flex-wrap">
               <Button 
@@ -511,7 +511,7 @@ const AdminAnalytics = () => {
           <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
             {/* Service Filter */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase">Ocular Service</label>
+              <label className="text-xs font-bold text-slate-500 uppercase">Service</label>
               <select 
                 value={filterService}
                 onChange={(e) => setFilterService(e.target.value)}
@@ -526,7 +526,7 @@ const AdminAnalytics = () => {
 
             {/* Doctor Filter */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase">Consulting Doctor</label>
+              <label className="text-xs font-bold text-slate-500 uppercase">Optometrist / Doctor</label>
               <select 
                 value={filterDoctor}
                 onChange={(e) => setFilterDoctor(e.target.value)}

@@ -95,7 +95,7 @@ export default function MedicalHistoryPage() {
             <Loader2 className="h-16 w-16 animate-spin text-primary opacity-20" />
             <FileHeart className="h-8 w-8 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
           </div>
-          <p className="font-bold text-lg text-muted-foreground animate-pulse tracking-tight">Consulting health records...</p>
+          <p className="font-bold text-lg text-muted-foreground animate-pulse tracking-tight">Loading medical history...</p>
         </div>
       </Layout>
     );
@@ -105,9 +105,9 @@ export default function MedicalHistoryPage() {
     <Layout>
       <PageHero
         image={heroServices}
-        eyebrow="Clinical Profile"
+        eyebrow="Health Records"
         title="Medical History"
-        subtitle="Help our specialists provide precise care by keeping your health information up to date."
+        subtitle="Let our optometrists know about any previous eye conditions, medications, or allergies before your visit."
       />
 
       <div className="container py-16 -mt-12 relative z-10">
@@ -117,7 +117,7 @@ export default function MedicalHistoryPage() {
           className="mb-8"
         >
           <Button asChild variant="ghost" className="rounded-xl hover:bg-primary-soft hover:text-primary transition-all">
-            <Link to="/dashboard" className="gap-2 font-bold"><ChevronLeft className="h-4 w-4" /> Back to Patient Portal</Link>
+            <Link to="/dashboard" className="gap-2 font-bold"><ChevronLeft className="h-4 w-4" /> Back to Dashboard</Link>
           </Button>
         </motion.div>
 

@@ -31,9 +31,9 @@ const allItems = [
   { to: "/admin/services", label: "Services", icon: Briefcase },
   { to: "/admin/screenings", label: "Eye Screenings", icon: Eye },
   { to: "/admin/notifications", label: "Notifications", icon: MessageSquare },
-  { to: "/admin/sms", label: "SMS Management", icon: MessageSquare },
-  { to: "/admin/chatbot", label: "Chatbot KB", icon: BookOpen },
-  { to: "/admin/cms", label: "Website CMS", icon: FileText },
+  { to: "/admin/sms", label: "Send SMS", icon: MessageSquare },
+  { to: "/admin/chatbot", label: "Help FAQ & Chat", icon: BookOpen },
+  { to: "/admin/cms", label: "Website Content", icon: FileText },
   { to: "/admin/settings", label: "Settings", icon: Settings2 },
 ];
 

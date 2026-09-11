@@ -258,10 +258,10 @@ const AdminSettings = () => {
                   <div className="space-y-0.5">
                     <Label className="font-bold flex items-center gap-2 text-base">
                       <MessageSquare className="h-5 w-5 text-primary" />
-                      Live Chatbot Assistant
+                      Website Chat Widget
                     </Label>
                     <p className="text-xs text-muted-foreground">
-                      Enable or disable the floating AI assistant widget on the public website pages.
+                      Show or hide the help chat widget for visitors on the public website.
                     </p>
                   </div>
                   <div className="flex items-center space-x-2">

@@ -256,7 +256,7 @@ export default function AdminScreenings() {
                     className="h-4 w-4 rounded border-border text-primary focus:ring-primary cursor-pointer"
                   />
                   <label htmlFor="isVisibleToPatient" className="text-sm font-medium text-foreground select-none cursor-pointer">
-                    Visible to patient in portal
+                    Visible to patient on their dashboard
                   </label>
                 </div>
               </div>
@@ -277,7 +277,7 @@ export default function AdminScreenings() {
           {loading ? (
             <div className="p-20 flex flex-col items-center gap-4">
               <Loader2 className="h-10 w-10 animate-spin text-primary opacity-50" />
-              <p className="text-sm font-medium animate-pulse">Consulting medical database...</p>
+              <p className="text-sm font-medium text-muted-foreground">Loading examination records...</p>
             </div>
           ) : screenings.length === 0 ? (
             <div className="p-20 text-center">

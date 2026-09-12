@@ -662,8 +662,18 @@ export const apiService = {
       const { data } = await api.get('/system/metrics');
       return data;
     },
-    getAuditLogs: async (params?: { action?: string; limit?: number }): Promise<AuditLogItem[]> => {
+    getAuditLogs: async (params?: { 
+      action?: string; 
+      limit?: number; 
+      userId?: string; 
+      search?: string; 
+      category?: string; 
+    }): Promise<AuditLogItem[]> => {
       const { data } = await api.get('/system/audit-logs', { params });
+      return data;
+    },
+    logActivity: async (action: string, details?: Record<string, unknown>): Promise<{ success: boolean }> => {
+      const { data } = await api.post('/system/activity', { action, details });
       return data;
     },
     getLockedUsers: async (): Promise<LockedUserItem[]> => {

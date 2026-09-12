@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { apiService, SystemMetrics, AuditLogItem, LockedUserItem } from "@/lib/api";
 import { toast } from "sonner";
 import {
@@ -25,31 +26,61 @@ import {
   Mail,
   Search,
   Filter,
-  ShieldAlert
+  ShieldAlert,
+  Calendar,
+  Eye,
+  FileText,
+  Globe,
+  Sparkles,
+  Copy,
+  ChevronRight,
+  Info,
+  X,
+  UserCheck,
+  Laptop
 } from "lucide-react";
+
+interface UserOption {
+  id: string;
+  fullName: string | null;
+  email: string | null;
+  role?: string;
+}
 
 export default function AdminMonitoring() {
   const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([]);
   const [lockedUsers, setLockedUsers] = useState<LockedUserItem[]>([]);
+  const [allUsers, setAllUsers] = useState<UserOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [actionFilter, setActionFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [selectedUserId, setSelectedUserId] = useState<string>("all");
   const [searchLog, setSearchLog] = useState<string>("");
   const [manualUnlockEmail, setManualUnlockEmail] = useState<string>("");
   const [unlocking, setUnlocking] = useState(false);
+  const [inspectLog, setInspectLog] = useState<AuditLogItem | null>(null);
 
   const fetchDashboardData = useCallback(async (isSilent = false) => {
     if (!isSilent) setRefreshing(true);
     try {
-      const [metricsData, logsData, lockedData] = await Promise.all([
+      const [metricsData, logsData, lockedData, usersData] = await Promise.all([
         apiService.system.getMetrics(),
-        apiService.system.getAuditLogs({ limit: 100 }),
-        apiService.system.getLockedUsers()
+        apiService.system.getAuditLogs({ 
+          limit: 200,
+          userId: selectedUserId !== "all" ? selectedUserId : undefined,
+          category: categoryFilter !== "all" ? categoryFilter : undefined,
+        }),
+        apiService.system.getLockedUsers(),
+        apiService.profiles.getAll().catch(() => [])
       ]);
       setMetrics(metricsData);
       setAuditLogs(logsData);
       setLockedUsers(lockedData);
+      if (usersData && Array.isArray(usersData)) {
+        setAllUsers(usersData);
+      }
     } catch (err: unknown) {
       console.error("Failed to load monitoring telemetry:", err);
       if (!isSilent) {
@@ -59,7 +90,7 @@ export default function AdminMonitoring() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [selectedUserId, categoryFilter]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -87,41 +118,89 @@ export default function AdminMonitoring() {
 
   const getActionBadge = (action: string) => {
     switch (action) {
+      // Auth & Security
       case "LOGIN_SUCCESS":
-        return <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">Login Success</Badge>;
+        return <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 gap-1"><Lock className="w-3 h-3" /> Login Success</Badge>;
       case "LOGIN_FAILED":
       case "LOGIN_FAILED_UNKNOWN_USER":
-        return <Badge className="bg-amber-50 text-amber-700 border-amber-200">Failed Login</Badge>;
+        return <Badge className="bg-amber-50 text-amber-700 border-amber-200 gap-1"><AlertTriangle className="w-3 h-3" /> Failed Login</Badge>;
       case "ACCOUNT_LOCKED":
       case "LOGIN_BLOCKED_LOCKED":
-        return <Badge className="bg-red-50 text-red-700 border-red-200">Account Locked</Badge>;
+        return <Badge className="bg-red-50 text-red-700 border-red-200 gap-1"><ShieldAlert className="w-3 h-3" /> Account Locked</Badge>;
       case "ACCOUNT_UNLOCKED":
-        return <Badge className="bg-blue-50 text-blue-700 border-blue-200">Account Unlocked</Badge>;
+        return <Badge className="bg-blue-50 text-blue-700 border-blue-200 gap-1"><Unlock className="w-3 h-3" /> Account Unlocked</Badge>;
       case "ROLE_CHANGED":
-        return <Badge className="bg-purple-50 text-purple-700 border-purple-200">Role Modified</Badge>;
+        return <Badge className="bg-purple-50 text-purple-700 border-purple-200 gap-1"><ShieldCheck className="w-3 h-3" /> Role Modified</Badge>;
+      case "REGISTER_SUCCESS":
+        return <Badge className="bg-teal-50 text-teal-700 border-teal-200 gap-1"><UserCheck className="w-3 h-3" /> Registered Account</Badge>;
+
+      // Appointments
+      case "APPOINTMENT_BOOKED":
+        return <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 gap-1"><Calendar className="w-3 h-3 text-emerald-600" /> Booked Appointment</Badge>;
+      case "APPOINTMENT_UPDATED":
+        return <Badge className="bg-sky-50 text-sky-700 border-sky-200 gap-1"><Calendar className="w-3 h-3 text-sky-600" /> Updated Appointment</Badge>;
+      case "APPOINTMENT_STATUS_UPDATED":
+        return <Badge className="bg-indigo-50 text-indigo-700 border-indigo-200 gap-1"><Calendar className="w-3 h-3 text-indigo-600" /> Status Changed</Badge>;
+      case "APPOINTMENT_CANCELLED":
+        return <Badge className="bg-rose-50 text-rose-700 border-rose-200 gap-1"><Calendar className="w-3 h-3 text-rose-600" /> Cancelled Booking</Badge>;
+      case "APPOINTMENT_DELETED":
+        return <Badge className="bg-red-50 text-red-700 border-red-200 gap-1"><Calendar className="w-3 h-3 text-red-600" /> Deleted Booking</Badge>;
+
+      // Clinical & Screenings
+      case "EYE_SCREENING_RECORDED":
+        return <Badge className="bg-indigo-100 text-indigo-800 border-indigo-300 gap-1"><Eye className="w-3 h-3 text-indigo-600" /> Screening Recorded</Badge>;
+      case "EYE_SCREENING_UPDATED":
+        return <Badge className="bg-indigo-50 text-indigo-700 border-indigo-200 gap-1"><Eye className="w-3 h-3 text-indigo-600" /> Screening Updated</Badge>;
+      case "MEDICAL_HISTORY_UPDATED":
+        return <Badge className="bg-teal-50 text-teal-700 border-teal-200 gap-1"><FileText className="w-3 h-3 text-teal-600" /> Medical History</Badge>;
+
+      // Reviews
+      case "REVIEW_SUBMITTED":
+        return <Badge className="bg-amber-50 text-amber-700 border-amber-200 gap-1"><Sparkles className="w-3 h-3 text-amber-600" /> Review Submitted</Badge>;
+      case "REVIEW_APPROVED":
+        return <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 gap-1"><Sparkles className="w-3 h-3 text-emerald-600" /> Review Approved</Badge>;
+      case "REVIEW_REJECTED":
+        return <Badge className="bg-slate-50 text-slate-700 border-slate-200 gap-1"><Sparkles className="w-3 h-3 text-slate-400" /> Review Rejected</Badge>;
+      case "REVIEW_DELETED":
+        return <Badge className="bg-rose-50 text-rose-700 border-rose-200 gap-1"><Sparkles className="w-3 h-3 text-rose-600" /> Review Deleted</Badge>;
+
+      // Communications & Admin
       case "SMS_BROADCAST":
-        return <Badge className="bg-indigo-50 text-indigo-700 border-indigo-200">SMS Broadcast</Badge>;
+      case "SMS_SENT":
+        return <Badge className="bg-violet-50 text-violet-700 border-violet-200 gap-1"><MessageSquare className="w-3 h-3 text-violet-600" /> SMS Dispatched</Badge>;
+      case "UPDATE_CMS_CONTENT":
+        return <Badge className="bg-slate-100 text-slate-800 border-slate-300 gap-1"><FileText className="w-3 h-3 text-slate-600" /> Website Content</Badge>;
       case "ADMIN_USER_CREATED":
-        return <Badge className="bg-cyan-50 text-cyan-700 border-cyan-200">User Created</Badge>;
+        return <Badge className="bg-cyan-50 text-cyan-700 border-cyan-200 gap-1"><Users className="w-3 h-3" /> Admin Created</Badge>;
       case "ADMIN_PASSWORD_RESET":
-        return <Badge className="bg-orange-50 text-orange-700 border-orange-200">Password Reset</Badge>;
+        return <Badge className="bg-orange-50 text-orange-700 border-orange-200 gap-1"><Lock className="w-3 h-3" /> Password Reset</Badge>;
+      case "PAGE_VIEW":
+        return <Badge className="bg-zinc-100 text-zinc-700 border-zinc-300 gap-1"><Globe className="w-3 h-3 text-zinc-500" /> Page Visit</Badge>;
+
       default:
         return <Badge variant="outline">{action}</Badge>;
     }
   };
 
-  const filteredLogs = auditLogs.filter((log) => {
-    const matchesAction = actionFilter === "all" || log.action === actionFilter;
-    const q = searchLog.toLowerCase();
-    const matchesSearch =
-      !q ||
-      log.action.toLowerCase().includes(q) ||
-      (log.email && log.email.toLowerCase().includes(q)) ||
-      (log.fullName && log.fullName.toLowerCase().includes(q)) ||
-      (log.ip && log.ip.includes(q)) ||
-      (log.details && JSON.stringify(log.details).toLowerCase().includes(q));
-    return matchesAction && matchesSearch;
-  });
+  const selectedUserObj = useMemo(() => {
+    if (selectedUserId === "all") return null;
+    return allUsers.find(u => u.id === selectedUserId) || null;
+  }, [allUsers, selectedUserId]);
+
+  const filteredLogs = useMemo(() => {
+    return auditLogs.filter((log) => {
+      const matchesAction = actionFilter === "all" || log.action === actionFilter;
+      const q = searchLog.toLowerCase();
+      const matchesSearch =
+        !q ||
+        log.action.toLowerCase().includes(q) ||
+        (log.email && log.email.toLowerCase().includes(q)) ||
+        (log.fullName && log.fullName.toLowerCase().includes(q)) ||
+        (log.ip && log.ip.includes(q)) ||
+        (log.details && JSON.stringify(log.details).toLowerCase().includes(q));
+      return matchesAction && matchesSearch;
+    });
+  }, [auditLogs, actionFilter, searchLog]);
 
   return (
     <AdminLayout
@@ -459,98 +538,327 @@ export default function AdminMonitoring() {
           </CardContent>
         </Card>
 
-        {/* System & Security Audit Logs Feed */}
-        <Card className="rounded-xl border border-border/70 shadow-sm">
-          <CardHeader className="p-5 pb-3 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <CardTitle className="text-base font-bold flex items-center gap-2 text-slate-900">
-                <ShieldCheck className="h-4 w-4 text-primary" /> Live Security Audit Log Feed
-              </CardTitle>
-              <CardDescription className="text-xs">
-                Permanent event record tracking logins, lockout events, role modifications, SMS broadcasts, and account unlocks.
-              </CardDescription>
-            </div>
-
-            {/* Filter controls */}
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="relative">
-                <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Filter audit logs..."
-                  value={searchLog}
-                  onChange={(e) => setSearchLog(e.target.value)}
-                  className="h-9 pl-8 text-xs w-44 rounded-lg"
-                />
+        {/* Comprehensive User Activity & Security Audit Monitoring Center */}
+        <Card className="rounded-xl border border-border/70 shadow-sm overflow-hidden">
+          <CardHeader className="p-5 pb-4 border-b border-slate-100 bg-slate-50/50">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <CardTitle className="text-base font-bold flex items-center gap-2 text-slate-900">
+                  <Activity className="h-5 w-5 text-primary animate-pulse" /> User Activity & Telemetry Monitor
+                </CardTitle>
+                <CardDescription className="text-xs mt-0.5">
+                  Real-time activity tracking across all patients, doctors, and system administrators.
+                </CardDescription>
               </div>
 
-              <select
-                value={actionFilter}
-                onChange={(e) => setActionFilter(e.target.value)}
-                className="h-9 px-3 rounded-lg border border-input bg-background text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary"
-              >
-                <option value="all">All Event Types</option>
-                <option value="LOGIN_SUCCESS">Login Success</option>
-                <option value="LOGIN_FAILED">Login Failed</option>
-                <option value="ACCOUNT_LOCKED">Account Locked</option>
-                <option value="ACCOUNT_UNLOCKED">Account Unlocked</option>
-                <option value="ROLE_CHANGED">Role Changed</option>
-                <option value="SMS_BROADCAST">SMS Broadcast</option>
-                <option value="ADMIN_PASSWORD_RESET">Password Reset</option>
-              </select>
+              {/* User filter selector and Search */}
+              <div className="flex flex-wrap items-center gap-2.5">
+                {/* Specific User Filter Dropdown */}
+                <div className="flex items-center gap-1.5 bg-white border border-input rounded-lg px-2.5 py-1">
+                  <Users className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <select
+                    value={selectedUserId}
+                    onChange={(e) => setSelectedUserId(e.target.value)}
+                    aria-label="Filter by user"
+                    className="text-xs bg-transparent border-0 focus:ring-0 focus:outline-none max-w-[180px] truncate font-medium text-slate-800"
+                  >
+                    <option value="all">All Users & Patients</option>
+                    {allUsers.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.fullName || u.email || "Unnamed User"} ({u.role || "patient"})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Text Filter Input */}
+                <div className="relative">
+                  <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Search name, IP, email..."
+                    value={searchLog}
+                    onChange={(e) => setSearchLog(e.target.value)}
+                    className="h-8 pl-8 text-xs w-44 rounded-lg bg-white"
+                  />
+                </div>
+
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    setSelectedUserId("all");
+                    setCategoryFilter("all");
+                    setActionFilter("all");
+                    setSearchLog("");
+                  }}
+                  className="h-8 text-xs text-muted-foreground hover:text-slate-900"
+                  title="Reset all filters"
+                >
+                  Reset
+                </Button>
+              </div>
+            </div>
+
+            {/* Category Filter Badges */}
+            <div className="flex flex-wrap gap-1.5 pt-3 border-t border-slate-200/60 mt-3">
+              {[
+                { id: "all", label: "All Activities", icon: Activity },
+                { id: "appointments", label: "Appointments", icon: Calendar },
+                { id: "clinical", label: "Screenings & EHR", icon: Eye },
+                { id: "auth", label: "Auth & Security", icon: Lock },
+                { id: "reviews", label: "Reviews", icon: Sparkles },
+                { id: "sms", label: "SMS Alerts", icon: MessageSquare },
+                { id: "admin", label: "Admin Operations", icon: ShieldCheck },
+                { id: "portal", label: "Portal Visits", icon: Globe }
+              ].map((cat) => {
+                const isSelected = categoryFilter === cat.id;
+                const Icon = cat.icon;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => setCategoryFilter(cat.id)}
+                    className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full transition-all ${
+                      isSelected
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100/70"
+                    }`}
+                  >
+                    <Icon className="h-3 w-3" />
+                    {cat.label}
+                  </button>
+                );
+              })}
             </div>
           </CardHeader>
-          <CardContent className="p-5">
+
+          {/* Active User Filter Alert Banner (if user selected) */}
+          {selectedUserObj && (
+            <div className="bg-primary/5 border-b border-primary/20 px-5 py-3 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-xs">
+                  {selectedUserObj.fullName ? selectedUserObj.fullName[0].toUpperCase() : "U"}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-900">
+                      Tracking: {selectedUserObj.fullName || "Guest Patient"}
+                    </span>
+                    <Badge variant="outline" className="text-[10px] capitalize">
+                      {selectedUserObj.role || "patient"}
+                    </Badge>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground font-mono">
+                    {selectedUserObj.email} • ID: {selectedUserObj.id}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Badge className="bg-primary text-primary-foreground text-xs">
+                  {filteredLogs.length} Events Recorded
+                </Badge>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setSelectedUserId("all")}
+                  className="h-7 text-xs gap-1 rounded-md"
+                >
+                  <X className="h-3 w-3" /> Clear User Filter
+                </Button>
+              </div>
+            </div>
+          )}
+
+          <CardContent className="p-0">
             {filteredLogs.length === 0 ? (
-              <div className="p-8 text-center text-muted-foreground">
-                <p className="text-sm font-medium">No audit log entries matching criteria.</p>
+              <div className="p-12 text-center text-muted-foreground">
+                <Activity className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+                <p className="text-sm font-semibold text-slate-800">No User Activity Recorded</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {selectedUserId !== "all" 
+                    ? "This user has no recorded actions matching the current filter."
+                    : "No system events matching the selected filters."}
+                </p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
                   <thead className="bg-slate-50 text-slate-700 uppercase font-semibold text-[11px] border-b">
                     <tr>
-                      <th className="p-3">Timestamp</th>
-                      <th className="p-3">Action</th>
-                      <th className="p-3">Account / Actor</th>
-                      <th className="p-3">IP Address</th>
-                      <th className="p-3">Event Details</th>
+                      <th className="p-3.5 pl-5">Timestamp</th>
+                      <th className="p-3.5">Action Performed</th>
+                      <th className="p-3.5">User / Actor</th>
+                      <th className="p-3.5">IP & Client</th>
+                      <th className="p-3.5">Event Context</th>
+                      <th className="p-3.5 pr-5 text-right">Details</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {filteredLogs.map((log) => (
-                      <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="p-3 text-muted-foreground font-mono whitespace-nowrap">
-                          {new Date(log.createdAt).toLocaleString("en-GB", {
-                            day: "2-digit",
-                            month: "short",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            second: "2-digit"
-                          })}
-                        </td>
-                        <td className="p-3 whitespace-nowrap">{getActionBadge(log.action)}</td>
-                        <td className="p-3">
-                          <div className="font-semibold text-slate-900">{log.fullName || log.email || "System"}</div>
-                          {log.role && (
-                            <span className="text-[10px] text-muted-foreground uppercase font-bold">
-                              {log.role}
-                            </span>
-                          )}
-                        </td>
-                        <td className="p-3 font-mono text-[11px] text-muted-foreground whitespace-nowrap">
-                          {log.ip || "unknown"}
-                        </td>
-                        <td className="p-3 font-mono text-[11px] text-slate-600 max-w-xs truncate">
-                          {typeof log.details === "object" ? JSON.stringify(log.details) : String(log.details)}
-                        </td>
-                      </tr>
-                    ))}
+                    {filteredLogs.map((log) => {
+                      const detailsObj = typeof log.details === "object" && log.details !== null ? log.details : null;
+                      const hasDetails = !!detailsObj && Object.keys(detailsObj).length > 0;
+                      
+                      return (
+                        <tr key={log.id} className="hover:bg-slate-50/70 transition-colors group">
+                          {/* Timestamp */}
+                          <td className="p-3.5 pl-5 text-muted-foreground font-mono whitespace-nowrap">
+                            <div className="text-slate-900 font-medium">
+                              {new Date(log.createdAt).toLocaleTimeString("en-GB", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                second: "2-digit"
+                              })}
+                            </div>
+                            <div className="text-[10px] text-muted-foreground">
+                              {new Date(log.createdAt).toLocaleDateString("en-GB", {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric"
+                              })}
+                            </div>
+                          </td>
+
+                          {/* Action Badge */}
+                          <td className="p-3.5 whitespace-nowrap">
+                            {getActionBadge(log.action)}
+                          </td>
+
+                          {/* User / Actor */}
+                          <td className="p-3.5">
+                            <button
+                              onClick={() => log.userId && setSelectedUserId(log.userId)}
+                              className={`text-left ${log.userId ? "hover:underline cursor-pointer" : ""}`}
+                              title={log.userId ? "Click to isolate this user's activities" : undefined}
+                            >
+                              <div className="font-semibold text-slate-900 flex items-center gap-1.5">
+                                {log.fullName || log.email || "System Service"}
+                                {log.role === "super_admin" && (
+                                  <Badge className="bg-amber-500/15 text-amber-700 text-[9px] py-0 px-1 font-bold">
+                                    Boss
+                                  </Badge>
+                                )}
+                              </div>
+                              {log.email && (
+                                <div className="text-muted-foreground font-mono text-[10px]">{log.email}</div>
+                              )}
+                            </button>
+                          </td>
+
+                          {/* IP Address & Agent */}
+                          <td className="p-3.5 font-mono text-[11px] text-muted-foreground whitespace-nowrap">
+                            <div className="text-slate-700">{log.ip || "—"}</div>
+                            {detailsObj && detailsObj.userAgent && (
+                              <div className="text-[9px] text-muted-foreground/70 truncate max-w-[120px]" title={String(detailsObj.userAgent)}>
+                                <Laptop className="w-2.5 h-2.5 inline mr-1" />
+                                {String(detailsObj.userAgent).slice(0, 25)}...
+                              </div>
+                            )}
+                          </td>
+
+                          {/* Event Summary */}
+                          <td className="p-3.5 text-slate-600 max-w-sm">
+                            <div className="truncate font-mono text-[11px]">
+                              {detailsObj ? (
+                                <span>
+                                  {detailsObj.patientName ? `Patient: ${detailsObj.patientName}` : ""}
+                                  {detailsObj.service ? ` • ${detailsObj.service}` : ""}
+                                  {detailsObj.newStatus ? ` • Status: ${detailsObj.newStatus}` : ""}
+                                  {detailsObj.diagnosis ? ` • Diagnosis: ${detailsObj.diagnosis}` : ""}
+                                  {detailsObj.section ? ` • Section: ${detailsObj.section}` : ""}
+                                  {!detailsObj.patientName && !detailsObj.service && !detailsObj.diagnosis
+                                    ? JSON.stringify(detailsObj).slice(0, 60)
+                                    : ""}
+                                </span>
+                              ) : (
+                                String(log.details || "—")
+                              )}
+                            </div>
+                          </td>
+
+                          {/* Action button */}
+                          <td className="p-3.5 pr-5 text-right">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setInspectLog(log)}
+                              className="h-7 text-xs gap-1 opacity-80 group-hover:opacity-100 hover:bg-slate-200/60"
+                            >
+                              <Info className="h-3.5 w-3.5" /> Inspect
+                            </Button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
             )}
           </CardContent>
         </Card>
+
+        {/* Payload Inspection Modal */}
+        <Dialog open={!!inspectLog} onOpenChange={(open) => !open && setInspectLog(null)}>
+          <DialogContent className="max-w-lg rounded-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-base">
+                <ShieldCheck className="h-5 w-5 text-primary" />
+                Audit Event Inspection
+              </DialogTitle>
+              <DialogDescription className="text-xs">
+                Detailed telemetry payload and metadata for audit event ID #{inspectLog?.id}
+              </DialogDescription>
+            </DialogHeader>
+
+            {inspectLog && (
+              <div className="space-y-4 pt-2">
+                <div className="grid grid-cols-2 gap-3 bg-slate-50 p-3.5 rounded-xl border text-xs">
+                  <div>
+                    <span className="text-muted-foreground text-[10px] uppercase font-bold">Action</span>
+                    <div className="mt-0.5">{getActionBadge(inspectLog.action)}</div>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground text-[10px] uppercase font-bold">Timestamp</span>
+                    <p className="font-semibold text-slate-800 mt-0.5">
+                      {new Date(inspectLog.createdAt).toLocaleString("en-GB")}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground text-[10px] uppercase font-bold">User / Actor</span>
+                    <p className="font-semibold text-slate-800 mt-0.5">
+                      {inspectLog.fullName || inspectLog.email || "System"}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground text-[10px] uppercase font-bold">IP Address</span>
+                    <p className="font-mono text-slate-800 mt-0.5">{inspectLog.ip || "unknown"}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-700">Raw Context Payload (JSON)</span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs gap-1"
+                      onClick={() => {
+                        navigator.clipboard.writeText(JSON.stringify(inspectLog.details, null, 2));
+                        toast.success("Payload copied to clipboard");
+                      }}
+                    >
+                      <Copy className="h-3 w-3" /> Copy JSON
+                    </Button>
+                  </div>
+                  <pre className="p-3.5 bg-slate-950 text-emerald-400 font-mono text-xs rounded-xl overflow-x-auto max-h-60 border border-slate-800">
+                    {typeof inspectLog.details === "object"
+                      ? JSON.stringify(inspectLog.details, null, 2)
+                      : String(inspectLog.details)}
+                  </pre>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );

@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { apiService } from "@/lib/api";
+import { apiService, AuditLogItem } from "@/lib/api";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -14,7 +14,8 @@ import { Label } from "@/components/ui/label";
 import { 
   Search, User, Mail, Phone, ArrowRight, Loader2, KeyRound, 
   MapPin, HeartPulse, PhoneCall, Info, Edit3, Trash2, Save, Undo, Plus, Shield, Eye,
-  ArrowLeft, Printer, UserCheck, AlertTriangle, FileText, MessageSquare, Lock
+  ArrowLeft, Printer, UserCheck, AlertTriangle, FileText, MessageSquare, Lock, Activity,
+  Clock, CheckCircle2
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -87,6 +88,10 @@ const AdminUsers = () => {
   const [newPassword, setNewPassword] = useState("");
   const [resettingPassword, setResettingPassword] = useState(false);
 
+  // Super Admin User Activity Monitor states
+  const [userActivities, setUserActivities] = useState<AuditLogItem[]>([]);
+  const [loadingActivities, setLoadingActivities] = useState(false);
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -107,6 +112,15 @@ const AdminUsers = () => {
     setSelectedUser(user);
     setIsEditing(false);
     setEditForm(user);
+    setUserActivities([]);
+
+    if (isSuperAdmin) {
+      setLoadingActivities(true);
+      apiService.system.getAuditLogs({ userId: user.id, limit: 50 })
+        .then((logs) => setUserActivities(logs || []))
+        .catch(() => setUserActivities([]))
+        .finally(() => setLoadingActivities(false));
+    }
 
     try {
       const history = await apiService.medicalHistory.getByPatient(user.id);
@@ -752,6 +766,77 @@ const AdminUsers = () => {
                     </div>
                   </div>
                 </Card>
+
+                {/* Super Admin User Activity History Card */}
+                {isSuperAdmin && (
+                  <Card className="p-6 border-border/40 shadow-sm relative overflow-hidden bg-white">
+                    <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500" />
+                    <div className="flex items-center justify-between border-b pb-3 mb-4">
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                          <Activity className="h-4 w-4 text-emerald-600 animate-pulse" /> User Activity History
+                          <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px]">
+                            Super Admin Oversight
+                          </Badge>
+                        </h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Chronological audit trail of all actions recorded for this patient.
+                        </p>
+                      </div>
+                      <Badge variant="outline" className="text-xs font-mono">
+                        {userActivities.length} Events
+                      </Badge>
+                    </div>
+
+                    {loadingActivities ? (
+                      <div className="flex justify-center py-8">
+                        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      </div>
+                    ) : userActivities.length === 0 ? (
+                      <div className="p-6 text-center text-muted-foreground bg-slate-50/50 rounded-xl border border-dashed text-xs">
+                        <CheckCircle2 className="h-6 w-6 text-emerald-500 mx-auto mb-1.5 opacity-60" />
+                        <p className="font-semibold text-slate-700">No Historical Activities Logged</p>
+                        <p className="text-[11px] text-muted-foreground">This user has not yet triggered any monitored system events.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
+                        {userActivities.map((act) => {
+                          const details = typeof act.details === "object" && act.details !== null ? act.details : null;
+                          return (
+                            <div key={act.id} className="p-3 bg-slate-50/70 border border-slate-100 rounded-xl flex items-start justify-between gap-3 text-xs hover:bg-slate-100/70 transition-colors">
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline" className="text-[10px] font-semibold">
+                                    {act.action.replace(/_/g, " ")}
+                                  </Badge>
+                                  <span className="text-muted-foreground font-mono text-[10px]">
+                                    {act.ip || "unknown IP"}
+                                  </span>
+                                </div>
+                                {details && (
+                                  <p className="text-slate-700 font-mono text-[11px]">
+                                    {details.service ? `Service: ${details.service}` : ""}
+                                    {details.newStatus ? ` • Status: ${details.newStatus}` : ""}
+                                    {details.diagnosis ? ` • Diagnosis: ${details.diagnosis}` : ""}
+                                    {details.patientName ? ` • ${details.patientName}` : ""}
+                                  </p>
+                                )}
+                              </div>
+                              <span className="text-muted-foreground font-mono text-[10px] whitespace-nowrap">
+                                {new Date(act.createdAt).toLocaleString("en-GB", {
+                                  day: "2-digit",
+                                  month: "short",
+                                  hour: "2-digit",
+                                  minute: "2-digit"
+                                })}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </Card>
+                )}
               </div>
 
               {/* Right Column: Alerts, Quick Stats & Clinical Actions */}

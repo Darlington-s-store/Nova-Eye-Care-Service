@@ -36,13 +36,24 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Add interceptor for response conversion
-api.interceptors.response.use((response) => {
-  if (response.data) {
-    response.data = toCamel(response.data);
+// Add interceptor for response conversion and error normalization
+api.interceptors.response.use(
+  (response) => {
+    if (response.data) {
+      response.data = toCamel(response.data);
+    }
+    return response;
+  },
+  (error) => {
+    if (error.response?.status === 429) {
+      const retryAfter = error.response.data?.retryAfterSeconds || error.response.headers?.['retry-after'];
+      if (retryAfter) {
+        error.message = `Rate limit reached. Please wait ${retryAfter} seconds before trying again.`;
+      }
+    }
+    return Promise.reject(error);
   }
-  return response;
-});
+);
 
 export interface AuthResponse {
   token: string;

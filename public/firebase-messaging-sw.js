@@ -4,12 +4,14 @@
 importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js');
 
-// Standard Firebase config - can be customized or configured
+// Nova Eye Care Firebase web app configuration
 const firebaseConfig = {
-  apiKey: 'AIzaSyDemoPlaceholderKey1234567890',
-  projectId: 'nova-eye-care',
-  messagingSenderId: '123456789012',
-  appId: '1:123456789012:web:abcdef123456'
+  apiKey: "AIzaSyByzZYAmgdVImGaUNvvSp8tPde-jxCczIc",
+  authDomain: "nova-eye-care.firebaseapp.com",
+  projectId: "nova-eye-care",
+  storageBucket: "nova-eye-care.firebasestorage.app",
+  messagingSenderId: "260223243081",
+  appId: "1:260223243081:web:062646e48756d457548098"
 };
 
 firebase.initializeApp(firebaseConfig);

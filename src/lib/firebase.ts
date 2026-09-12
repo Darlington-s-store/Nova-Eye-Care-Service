@@ -1,16 +1,18 @@
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, Auth } from 'firebase/auth';
 import { getMessaging, getToken, onMessage, Messaging, isSupported } from 'firebase/messaging';
+import { getAnalytics, isSupported as isAnalyticsSupported, Analytics } from 'firebase/analytics';
 import { apiService } from './api';
 
-// Frontend Firebase configuration using Vite environment variables
+// Frontend Firebase configuration using Vite environment variables with live defaults
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyDemoPlaceholderKey1234567890',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || `${import.meta.env.VITE_FIREBASE_PROJECT_ID || 'nova-eye-care'}.firebaseapp.com`,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyByzZYAmgdVImGaUNvvSp8tPde-jxCczIc',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'nova-eye-care.firebaseapp.com',
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'nova-eye-care',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || `${import.meta.env.VITE_FIREBASE_PROJECT_ID || 'nova-eye-care'}.appspot.com`,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '123456789012',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:123456789012:web:abcdef123456'
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'nova-eye-care.firebasestorage.app',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '260223243081',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:260223243081:web:062646e48756d457548098',
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || 'G-N3TL24SQKD'
 };
 
 const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY || '';
@@ -18,11 +20,19 @@ const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY || '';
 // Initialize Firebase App safely
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
+let analytics: Analytics | null = null;
 let messagingPromise: Promise<Messaging | null> | null = null;
 
 try {
   app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
   auth = getAuth(app);
+  if (typeof window !== 'undefined') {
+    isAnalyticsSupported().then((supported) => {
+      if (supported && app) {
+        analytics = getAnalytics(app);
+      }
+    }).catch(() => {});
+  }
 } catch (err) {
   console.warn('[Firebase] Initialization warning:', err);
 }
@@ -179,4 +189,4 @@ export const signInWithGoogleFirebase = async () => {
   };
 };
 
-export { app, auth, messagingPromise };
+export { app, auth, analytics, messagingPromise };

@@ -113,7 +113,7 @@ const Dashboard = () => {
     };
 
     fetchData();
-  }, [user]);
+  }, [user, isAdmin]);
 
   const handleDismissAnnouncement = () => {
     setAnnouncementDismissed(true);

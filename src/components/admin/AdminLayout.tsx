@@ -1,15 +1,38 @@
 import { ReactNode, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
-  SidebarProvider, Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
-  SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarTrigger, useSidebar,
+  SidebarProvider,
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { apiService } from "@/lib/api";
 import {
-  LayoutDashboard, CalendarDays, Users, Star, MessageSquare, BookOpen,
-  Home as HomeIcon, Settings, Briefcase, Eye, FileText, Settings2, ChevronLeft, User, LogOut,
-  BarChart2, ShieldCheck, Shield
+  LayoutDashboard,
+  CalendarDays,
+  Users,
+  Star,
+  MessageSquare,
+  BookOpen,
+  Home as HomeIcon,
+  Settings,
+  Briefcase,
+  Eye,
+  FileText,
+  Settings2,
+  ChevronLeft,
+  User,
+  LogOut,
+  BarChart2,
+  ShieldCheck,
+  Shield
 } from "lucide-react";
 import logo from "@/assets/logo.jpeg";
 import { NotificationBell } from "@/components/NotificationBell";

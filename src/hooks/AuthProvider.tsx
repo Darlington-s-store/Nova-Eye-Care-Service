@@ -17,34 +17,53 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
+    const attemptGetMe = async (isRetry = false): Promise<boolean> => {
+      try {
+        const data = await apiService.auth.getMe();
+        
+        // Map backend roles to frontend roles (super_admin, admin, patient)
+        let frontendRole: Role = 'patient';
+        if (data.role === 'super_admin') {
+          frontendRole = 'super_admin';
+        } else if (data.role === 'admin') {
+          frontendRole = 'admin';
+        }
+        
+        const mappedUser: NovaUser = {
+          id: data.id,
+          email: data.email,
+          fullName: data.fullName,
+          role: frontendRole
+        };
+        
+        setUser(mappedUser);
+        setRoles([frontendRole]);
+        return true;
+      } catch (err: unknown) {
+        const axiosError = err as { response?: { status: number }; code?: string; message?: string };
+        
+        // If 401 Unauthorized, token is definitely invalid / expired
+        if (axiosError.response?.status === 401) {
+          sessionStorage.removeItem('nova_auth_token');
+          setUser(null);
+          setRoles([]);
+          return false;
+        }
+
+        // If timeout or network failure and hasn't retried yet, retry once after a short delay (Render cold start)
+        if (!isRetry && (axiosError.code === 'ECONNABORTED' || axiosError.message?.includes('timeout') || !axiosError.response)) {
+          console.warn("Backend warming up, retrying auth check...");
+          await new Promise(r => setTimeout(r, 2000));
+          return attemptGetMe(true);
+        }
+
+        console.error("Auth check failed:", err);
+        return false;
+      }
+    };
+
     try {
-      const data = await apiService.auth.getMe();
-      
-      // Map backend roles to frontend roles (super_admin, admin, patient)
-      let frontendRole: Role = 'patient';
-      if (data.role === 'super_admin') {
-        frontendRole = 'super_admin';
-      } else if (data.role === 'admin') {
-        frontendRole = 'admin';
-      }
-      
-      const mappedUser: NovaUser = {
-        id: data.id,
-        email: data.email,
-        fullName: data.fullName,
-        role: frontendRole
-      };
-      
-      setUser(mappedUser);
-      setRoles([frontendRole]);
-    } catch (err: unknown) {
-      console.error("Auth check failed:", err);
-      const axiosError = err as { response?: { status: number } };
-      if (axiosError.response?.status === 401) {
-        sessionStorage.removeItem('nova_auth_token');
-        setUser(null);
-        setRoles([]);
-      }
+      await attemptGetMe(false);
     } finally {
       setLoading(false);
     }

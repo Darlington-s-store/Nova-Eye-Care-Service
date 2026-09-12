@@ -24,7 +24,7 @@ const AdminLogin = () => {
       if (!token) return;
       try {
         const user = await apiService.auth.getMe();
-        if (user && user.role === "admin") {
+        if (user && (user.role === "admin" || user.role === "super_admin")) {
           navigate("/admin", { replace: true });
         }
       } catch (err) {
@@ -42,14 +42,14 @@ const AdminLogin = () => {
     setLoading(true);
     try {
       const data = await apiService.auth.login(form);
-      if (data.user.role !== "admin") {
+      if (data.user.role !== "admin" && data.user.role !== "super_admin") {
         apiService.auth.logout();
         toast.error("This account does not have admin access.");
         setLoading(false);
         return;
       }
       await refresh();
-      toast.success("Welcome, Admin");
+      toast.success(data.user.role === "super_admin" ? "Welcome, Super Admin" : "Welcome, Admin");
       window.location.href = "/admin";
     } catch (err) {
       const error = err as { response?: { data?: { message?: string } } };

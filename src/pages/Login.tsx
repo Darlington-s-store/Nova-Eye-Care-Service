@@ -20,7 +20,11 @@ const Login = () => {
 
   useEffect(() => {
     if (user) {
-      navigate("/dashboard", { replace: true });
+      if (user.role === 'admin' || user.role === 'super_admin') {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate("/dashboard", { replace: true });
+      }
     }
   }, [user, navigate]);
 
@@ -29,10 +33,14 @@ const Login = () => {
     if (!token) return;
     setLoading(true);
     try {
-      await apiService.auth.loginWithGoogle(token);
+      const data = await apiService.auth.loginWithGoogle(token);
       await refresh();
       toast.success("Welcome back!");
-      window.location.href = "/dashboard";
+      if (data.user.role === 'admin' || data.user.role === 'super_admin') {
+        window.location.href = "/admin";
+      } else {
+        window.location.href = "/dashboard";
+      }
     } catch (err) {
       const error = err as { response?: { data?: { message?: string } }; message?: string };
       const message = error.response?.data?.message || error.message || "Google Authentication failed.";
@@ -85,14 +93,18 @@ const Login = () => {
     }
     setLoading(true);
     try {
-      await apiService.auth.login({
+      const res = await apiService.auth.login({
         email: signin.email,
         password: signin.password
       });
       await refresh();
       sessionStorage.setItem("nova_just_logged_in", "true");
       toast.success("Welcome back!");
-      window.location.href = "/dashboard";
+      if (res.user.role === 'admin' || res.user.role === 'super_admin') {
+        window.location.href = "/admin";
+      } else {
+        window.location.href = "/dashboard";
+      }
     } catch (err) {
       const error = err as { response?: { data?: { message?: string } } };
       const message = error.response?.data?.message || (err as Error).message || "Invalid email or password.";

@@ -69,8 +69,8 @@ export default function AdminScreenings() {
 
   const fetchPatients = async () => {
     try {
-      const data = await apiService.profiles.getAll();
-      if (data) setPatients(data);
+      const data = await apiService.profiles.getAll({ role: "patient" });
+      if (data) setPatients(data.filter(p => p.role !== 'admin' && p.role !== 'super_admin'));
     } catch (err) {
       console.error("Failed to fetch patients:", err);
     }

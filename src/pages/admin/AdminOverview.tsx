@@ -85,7 +85,7 @@ const AdminOverview = () => {
       accent: "text-indigo-600 bg-indigo-500/10 border-indigo-500/20"
     },
     { 
-      label: "Registered users", 
+      label: "Registered patients", 
       value: stats?.summary.totalUsers, 
       icon: Users, 
       link: "/admin/users",

@@ -86,7 +86,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     roles,
     isSuperAdmin: roles.includes("super_admin"),
     isAdmin: roles.includes("admin") || roles.includes("super_admin"),
-    isPatient: roles.includes("patient") || roles.includes("admin") || roles.includes("super_admin"),
+    isPatient: roles.includes("patient") && !roles.includes("admin") && !roles.includes("super_admin"),
     loading,
     refresh: checkAuth
   };

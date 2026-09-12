@@ -72,7 +72,7 @@ export default function AdminManagement() {
     setLoading(true);
     try {
       const [allProfiles, pending] = await Promise.all([
-        apiService.profiles.getAll(),
+        apiService.profiles.getAll({ role: "admin" }),
         apiService.auth.getPendingAdmins().catch(() => [])
       ]);
 

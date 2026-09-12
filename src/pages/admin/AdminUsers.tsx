@@ -95,8 +95,9 @@ const AdminUsers = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const data = await apiService.profiles.getAll();
-      setUsers(data || []);
+      const data = await apiService.profiles.getAll({ role: "patient" });
+      const patientsOnly = (data || []).filter(u => u.role !== "admin" && u.role !== "super_admin");
+      setUsers(patientsOnly);
     } catch (error) {
       toast.error("Failed to load patient records");
     } finally {
@@ -247,7 +248,8 @@ const AdminUsers = () => {
     setIsResetDialogOpen(true);
   };
 
-  const filteredUsers = users.filter(u => 
+  const patientsOnly = users.filter(u => u.role !== "admin" && u.role !== "super_admin");
+  const filteredUsers = patientsOnly.filter(u => 
     u.fullName?.toLowerCase().includes(search.toLowerCase()) ||
     u.email?.toLowerCase().includes(search.toLowerCase()) ||
     u.phone?.includes(search)
@@ -940,7 +942,7 @@ const AdminUsers = () => {
   }
 
   return (
-    <AdminLayout title="User Management" subtitle="Manage patient accounts, create new accounts, change roles, and reset credentials.">
+    <AdminLayout title="Patient Records" subtitle="Manage registered patient profiles, medical histories, and clinical records.">
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
           <div className="relative w-full md:w-96">
@@ -955,11 +957,11 @@ const AdminUsers = () => {
           
           <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
             <p className="text-sm text-muted-foreground font-medium">
-              Showing {filteredUsers.length} of {users.length} patients
+              Showing {filteredUsers.length} of {patientsOnly.length} patients
             </p>
             <Button onClick={() => setIsAddDialogOpen(true)} className="gap-2 rounded-xl h-11 px-5 shadow-sm">
               <Plus className="h-5 w-5" />
-              Add User
+              Register Patient
             </Button>
           </div>
         </div>
@@ -983,32 +985,12 @@ const AdminUsers = () => {
                     <div className="flex items-center gap-4">
                       <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary border border-primary/20 relative shrink-0">
                         <User className="h-5 w-5" />
-                        {user.role === "super_admin" && (
-                          <div className="absolute -bottom-1 -right-1 bg-amber-500 text-white p-1 rounded-full border border-background shadow-sm">
-                            <Shield className="h-3 w-3" />
-                          </div>
-                        )}
-                        {user.role === "admin" && (
-                          <div className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground p-1 rounded-full border border-background">
-                            <Shield className="h-3 w-3" />
-                          </div>
-                        )}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 className="font-bold text-lg text-foreground group-hover:text-primary transition-colors">
                             {user.fullName || "Guest User"}
                           </h3>
-                          {user.role === "super_admin" && (
-                            <Badge className="bg-amber-500/15 text-amber-700 hover:bg-amber-500/25 border-amber-300 text-[10px] h-5 rounded-full px-2 font-bold flex items-center gap-1">
-                              <Shield className="h-2.5 w-2.5 text-amber-600" /> Super Admin
-                            </Badge>
-                          )}
-                          {user.role === "admin" && (
-                            <Badge className="bg-primary/10 text-primary hover:bg-primary/20 border-primary/20 text-[10px] h-5 rounded-full px-2">
-                              Admin
-                            </Badge>
-                          )}
                           {user.registrationCompleted && (
                             <Badge variant="secondary" className="bg-green-50 text-green-700 hover:bg-green-100 border-green-200 text-[10px] h-5 rounded-full px-2">
                               Registered
@@ -1098,10 +1080,10 @@ const AdminUsers = () => {
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto rounded-xl p-6">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-              <Plus className="h-6 w-6 text-primary" /> Create User Account
+              <Plus className="h-6 w-6 text-primary" /> Register Patient Account
             </DialogTitle>
             <DialogDescription>
-              Create a new user/patient or admin account. Complete all registration, profile, and clinical details at once.
+              Create a new patient account. Complete all registration, profile, and clinical details at once.
             </DialogDescription>
           </DialogHeader>
 
@@ -1109,7 +1091,7 @@ const AdminUsers = () => {
             {/* Account Credentials */}
             <div className="space-y-4">
               <h4 className="font-bold text-sm text-primary uppercase tracking-wider border-b pb-1">1. Authentication Credentials</h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="add-email">Email Address *</Label>
                   <Input 
@@ -1131,20 +1113,6 @@ const AdminUsers = () => {
                     onChange={(e) => setNewUserForm(p => ({ ...p, password: e.target.value }))}
                     placeholder="••••••••"
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="add-role">System Role</Label>
-                  <Select 
-                    value={newUserForm.role}
-                    onValueChange={(val) => setNewUserForm(p => ({ ...p, role: val }))}
-                  >
-                    <SelectTrigger id="add-role"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="user">Patient (User)</SelectItem>
-                      <SelectItem value="admin">Administrator</SelectItem>
-                      <SelectItem value="super_admin">Super Administrator (Overall Boss)</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
               </div>
             </div>

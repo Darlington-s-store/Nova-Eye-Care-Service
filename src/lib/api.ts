@@ -333,8 +333,8 @@ export const apiService = {
       const { data } = await api.get('/profiles/me');
       return data;
     },
-    getAll: async (): Promise<Profile[]> => {
-      const { data } = await api.get('/profiles');
+    getAll: async (params?: { role?: string }): Promise<Profile[]> => {
+      const { data } = await api.get('/profiles', { params });
       return data;
     },
     getOne: async (id: string): Promise<Profile> => {
@@ -606,8 +606,8 @@ export const apiService = {
 
   // User Management
   users: {
-    getAll: async (): Promise<User[]> => {
-      const { data } = await api.get('/users');
+    getAll: async (params?: { role?: string }): Promise<User[]> => {
+      const { data } = await api.get('/users', { params });
       return data;
     },
     delete: async (id: string): Promise<void> => {

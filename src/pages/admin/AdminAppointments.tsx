@@ -117,8 +117,8 @@ const AdminAppointments = () => {
       const data = await apiService.appointments.getAll();
       setItems(data || []);
       
-      const patients = await apiService.profiles.getAll();
-      setProfiles(patients || []);
+      const patients = await apiService.profiles.getAll({ role: "patient" });
+      setProfiles((patients || []).filter(p => p.role !== 'admin' && p.role !== 'super_admin'));
     } catch (err) {
       console.error("Failed to load appointments:", err);
       toast.error("Error fetching administrative records");

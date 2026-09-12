@@ -129,26 +129,29 @@ export const Navbar = () => {
                 <DropdownMenuLabel className="px-2 py-1.5 text-xs text-muted-foreground font-normal">
                   Manage Account
                 </DropdownMenuLabel>
-                {isAdmin && (
+                {isAdmin ? (
                   <DropdownMenuItem asChild className="rounded-lg cursor-pointer focus:bg-primary-soft">
                     <Link to="/admin" className="flex items-center w-full">
                       <ShieldCheck className="mr-2 h-4 w-4 text-primary" />
                       <span className="font-bold text-primary">Admin Dashboard</span>
                     </Link>
                   </DropdownMenuItem>
+                ) : (
+                  <>
+                    <DropdownMenuItem asChild className="rounded-lg cursor-pointer focus:bg-primary-soft">
+                      <Link to="/dashboard" className="flex items-center w-full">
+                        <LayoutDashboard className="mr-2 h-4 w-4 text-primary" />
+                        <span>Patient Portal</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="rounded-lg cursor-pointer focus:bg-primary-soft">
+                      <Link to="/profile" className="flex items-center w-full">
+                        <User className="mr-2 h-4 w-4 text-primary" />
+                        <span>My Profile</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
                 )}
-                <DropdownMenuItem asChild className="rounded-lg cursor-pointer focus:bg-primary-soft">
-                  <Link to="/dashboard" className="flex items-center w-full">
-                    <LayoutDashboard className="mr-2 h-4 w-4 text-primary" />
-                    <span>Patient Portal</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild className="rounded-lg cursor-pointer focus:bg-primary-soft">
-                  <Link to="/profile" className="flex items-center w-full">
-                    <User className="mr-2 h-4 w-4 text-primary" />
-                    <span>My Profile</span>
-                  </Link>
-                </DropdownMenuItem>
                 <DropdownMenuSeparator className="my-2 bg-border/40" />
                 <DropdownMenuItem 
                   onClick={handleLogout}
@@ -224,26 +227,29 @@ export const Navbar = () => {
               <motion.div variants={{ hidden: { y: 20, opacity: 0 }, show: { y: 0, opacity: 1 } }} className="flex flex-col gap-3 pt-4 border-t border-border/40 mt-2">
                 {session ? (
                   <>
-                    {isAdmin && (
+                    {isAdmin ? (
                       <Button asChild variant="outline" className="w-full rounded-xl h-12 font-bold justify-start px-5 bg-primary/5 border-primary/20" onClick={() => setOpen(false)}>
                         <Link to="/admin" className="flex items-center">
                           <ShieldCheck className="mr-2 h-4 w-4 text-primary" />
                           Admin Dashboard
                         </Link>
                       </Button>
+                    ) : (
+                      <>
+                        <Button asChild variant="outline" className="w-full rounded-xl h-12 font-bold justify-start px-5" onClick={() => setOpen(false)}>
+                          <Link to="/dashboard" className="flex items-center">
+                            <LayoutDashboard className="mr-2 h-4 w-4 text-primary" />
+                            Patient Portal
+                          </Link>
+                        </Button>
+                        <Button asChild variant="outline" className="w-full rounded-xl h-12 font-bold justify-start px-5" onClick={() => setOpen(false)}>
+                          <Link to="/profile" className="flex items-center">
+                            <User className="mr-2 h-4 w-4 text-primary" />
+                            My Profile
+                          </Link>
+                        </Button>
+                      </>
                     )}
-                    <Button asChild variant="outline" className="w-full rounded-xl h-12 font-bold justify-start px-5" onClick={() => setOpen(false)}>
-                      <Link to="/dashboard" className="flex items-center">
-                        <LayoutDashboard className="mr-2 h-4 w-4 text-primary" />
-                        Patient Portal
-                      </Link>
-                    </Button>
-                    <Button asChild variant="outline" className="w-full rounded-xl h-12 font-bold justify-start px-5" onClick={() => setOpen(false)}>
-                      <Link to="/profile" className="flex items-center">
-                        <User className="mr-2 h-4 w-4 text-primary" />
-                        My Profile
-                      </Link>
-                    </Button>
                     <div className="px-4 py-2.5 border-y border-border/40 bg-muted/20 rounded-xl my-1">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Alerts</span>

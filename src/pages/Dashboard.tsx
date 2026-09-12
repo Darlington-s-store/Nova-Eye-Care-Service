@@ -77,7 +77,13 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
-    if (!user) return;
+    if (!authLoading && user && isAdmin) {
+      navigate("/admin", { replace: true });
+    }
+  }, [authLoading, user, isAdmin, navigate]);
+
+  useEffect(() => {
+    if (!user || isAdmin) return;
     const fetchData = async () => {
       setLoading(true);
       try {

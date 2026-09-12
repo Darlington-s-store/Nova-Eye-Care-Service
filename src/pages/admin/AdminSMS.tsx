@@ -119,8 +119,8 @@ export default function AdminSMS() {
   const loadProfiles = async () => {
     setProfilesLoading(true);
     try {
-      const data = await apiService.profiles.getAll();
-      setProfiles(data || []);
+      const data = await apiService.profiles.getAll({ role: "patient" });
+      setProfiles((data || []).filter(p => p.role !== 'admin' && p.role !== 'super_admin'));
     } catch {
       console.error("Failed to load patient contacts");
     } finally {

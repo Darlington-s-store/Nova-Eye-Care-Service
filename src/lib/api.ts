@@ -4,7 +4,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 30000, // 30s timeout — allows headroom for Neon database cold starts and external APIs
+  timeout: 60000, // 60s timeout — allows headroom for Neon database cold starts and external APIs
   headers: {
     'Content-Type': 'application/json',
   },
@@ -36,13 +36,24 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Add interceptor for response conversion
-api.interceptors.response.use((response) => {
-  if (response.data) {
-    response.data = toCamel(response.data);
+// Add interceptor for response conversion and error normalization
+api.interceptors.response.use(
+  (response) => {
+    if (response.data) {
+      response.data = toCamel(response.data);
+    }
+    return response;
+  },
+  (error) => {
+    if (error.response?.status === 429) {
+      const retryAfter = error.response.data?.retryAfterSeconds || error.response.headers?.['retry-after'];
+      if (retryAfter) {
+        error.message = `Rate limit reached. Please wait ${retryAfter} seconds before trying again.`;
+      }
+    }
+    return Promise.reject(error);
   }
-  return response;
-});
+);
 
 export interface AuthResponse {
   token: string;
@@ -53,7 +64,7 @@ export interface User {
   id: string;
   email: string;
   fullName: string;
-  role: 'patient' | 'admin';
+  role: 'patient' | 'admin' | 'super_admin';
 }
 
 export interface Profile {
@@ -261,6 +272,17 @@ export const apiService = {
     adminResetPassword: async (resetData: { userId: string; newPassword: string }): Promise<void> => {
       await api.post('/auth/admin-reset-password', resetData);
     },
+    getPendingAdmins: async (): Promise<{ email: string; createdAt: string }[]> => {
+      const { data } = await api.get('/auth/pending-admins');
+      return data;
+    },
+    addPendingAdmin: async (email: string): Promise<{ email: string; createdAt: string }> => {
+      const { data } = await api.post('/auth/pending-admins', { email });
+      return data;
+    },
+    removePendingAdmin: async (email: string): Promise<void> => {
+      await api.delete(`/auth/pending-admins/${encodeURIComponent(email)}`);
+    },
     getCaptcha: async (): Promise<{ question: string; captchaToken: string }> => {
       const { data } = await api.get('/auth/captcha');
       return data;
@@ -364,6 +386,12 @@ export const apiService = {
     create: async (notificationData: Record<string, unknown>): Promise<Notification> => {
       const { data } = await api.post('/notifications', notificationData);
       return data;
+    },
+    delete: async (id: string): Promise<void> => {
+      await api.delete(`/notifications/${id}`);
+    },
+    clearAll: async (): Promise<void> => {
+      await api.delete('/notifications/admin/clear-all');
     },
   },
 
@@ -600,7 +628,7 @@ export const apiService = {
       return data;
     }
   },
-
+  
   // SMS Management
   sms: {
     getLogs: async (): Promise<SMSLog[]> => {
@@ -611,11 +639,133 @@ export const apiService = {
       const { data } = await api.get('/sms/stats');
       return data;
     },
-    sendBulk: async (bulkData: { message: string; recipients: 'all' | string[] }): Promise<{ message: string; details: Record<string, unknown> }> => {
+    sendBulk: async (bulkData: { 
+      message: string; 
+      recipients: 'all' | 'registered' | 'pending_registration' | 'appointments' | string[] | string 
+    }): Promise<{ message: string; details: Record<string, unknown> }> => {
       const { data } = await api.post('/sms/send-bulk', bulkData);
+      return data;
+    },
+    deleteLog: async (id: number): Promise<{ message: string }> => {
+      const { data } = await api.delete(`/sms/logs/${id}`);
+      return data;
+    },
+    clearLogs: async (status?: 'all' | 'failed' | 'sent'): Promise<{ message: string }> => {
+      const { data } = await api.delete('/sms/logs', { params: status ? { status } : {} });
+      return data;
+    }
+  },
+
+  // System Telemetry & Security Monitoring
+  system: {
+    getMetrics: async (): Promise<SystemMetrics> => {
+      const { data } = await api.get('/system/metrics');
+      return data;
+    },
+    getAuditLogs: async (params?: { 
+      action?: string; 
+      limit?: number; 
+      userId?: string; 
+      search?: string; 
+      category?: string; 
+    }): Promise<AuditLogItem[]> => {
+      const { data } = await api.get('/system/audit-logs', { params });
+      return data;
+    },
+    logActivity: async (action: string, details?: Record<string, unknown>): Promise<{ success: boolean }> => {
+      const { data } = await api.post('/system/activity', { action, details });
+      return data;
+    },
+    getLockedUsers: async (): Promise<LockedUserItem[]> => {
+      const { data } = await api.get('/system/locked-users');
+      return data;
+    },
+    unlockUser: async (params: { userId?: string; email?: string }): Promise<{ message: string; user?: Record<string, unknown> }> => {
+      const { data } = await api.post('/system/unlock-user', params);
       return data;
     }
   }
 };
 
+export interface SystemMetrics {
+  timestamp: string;
+  system: {
+    uptimeSeconds: number;
+    uptimeFormatted: string;
+    nodeVersion: string;
+    platform: string;
+    cpus: number;
+    memory: {
+      rssMB: string;
+      heapTotalMB: string;
+      heapUsedMB: string;
+      heapUtilizationPercent: string;
+    };
+  };
+  database: {
+    status: 'healthy' | 'degraded' | 'slow';
+    latencyMs: number;
+    provider: string;
+    version: string;
+    pool: {
+      total: number;
+      idle: number;
+      waiting: number;
+    };
+  };
+  providers: {
+    database: {
+      status: string;
+      latencyMs: number;
+      provider: string;
+      version: string;
+      pool: {
+        total: number;
+        idle: number;
+        waiting: number;
+      };
+    };
+    sms: {
+      status: string;
+      provider: string;
+      senderId: string;
+    };
+    email: {
+      status: string;
+      provider: string;
+    };
+  };
+  security: {
+    lockedAccountsCount: number;
+    failedLogins24h: number;
+    totalUsers: number;
+    totalAppointments: number;
+    totalAuditLogs: number;
+    alerts: Array<{ level: string; message: string }>;
+  };
+}
+
+export interface AuditLogItem {
+  id: number;
+  userId: string | null;
+  action: string;
+  details: Record<string, unknown> | string | null;
+  ip: string;
+  createdAt: string;
+  email?: string;
+  fullName?: string;
+  role?: string;
+}
+
+export interface LockedUserItem {
+  id: string;
+  email: string;
+  fullName: string;
+  phone: string;
+  role: string;
+  failedAttempts: number;
+  lockedUntil: string | null;
+}
+
 export default api;
+

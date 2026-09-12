@@ -177,18 +177,18 @@ const Dashboard = () => {
   }
 
   const navItems = [
-    { id: "overview", label: "Overview", icon: LayoutDashboard },
-    { id: "profile", label: "My Profile", icon: User },
-    { id: "appointments", label: "Appointments", icon: Calendar },
-    { id: "records", label: "Medical Records", icon: ClipboardList },
-    { id: "billing", label: "Invoices & Billing", icon: CreditCard },
-  ];
+    { id: "overview", label: "Overview", shortLabel: "Overview", icon: LayoutDashboard },
+    { id: "appointments", label: "Appointments", shortLabel: "Visits", icon: Calendar },
+    { id: "records", label: "Medical Records", shortLabel: "Records", icon: ClipboardList },
+    { id: "billing", label: "Invoices & Billing", shortLabel: "Billing", icon: CreditCard },
+    { id: "profile", label: "My Profile", shortLabel: "Profile", icon: User },
+  ] as const;
 
   return (
     <Layout>
       <div className="min-h-screen bg-slate-50 flex flex-col lg:flex-row">
-        {/* Portal Sidebar */}
-        <aside className="lg:w-64 bg-white border-r border-slate-200 flex flex-col shrink-0">
+        {/* Desktop Portal Sidebar (hidden on mobile, visible on lg screens) */}
+        <aside className="hidden lg:flex lg:w-64 bg-white border-r border-slate-200 flex-col shrink-0">
           <div className="p-6 border-b border-slate-100 flex items-center gap-3">
             <div className="h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center">
               <User className="h-5 w-5 text-primary" />
@@ -205,14 +205,24 @@ const Dashboard = () => {
                 key={item.id}
                 onClick={() => setActiveTab(item.id as typeof activeTab)}
                 className={cn(
-                  "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all",
+                  "w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold transition-all",
                   activeTab === item.id 
-                    ? "bg-primary text-white" 
+                    ? "bg-primary text-white shadow-sm" 
                     : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                 )}
               >
-                <item.icon className="h-5 w-5" />
-                {item.label}
+                <div className="flex items-center gap-3">
+                  <item.icon className="h-5 w-5" />
+                  <span>{item.label}</span>
+                </div>
+                {item.id === "appointments" && upcoming.length > 0 && (
+                  <span className={cn(
+                    "px-2 py-0.5 rounded-full text-[10px] font-extrabold",
+                    activeTab === item.id ? "bg-white/20 text-white" : "bg-primary/10 text-primary"
+                  )}>
+                    {upcoming.length}
+                  </span>
+                )}
               </button>
             ))}
           </nav>
@@ -229,37 +239,109 @@ const Dashboard = () => {
           </div>
         </aside>
 
+        {/* Mobile Portal Header & Sticky Tabs Navigation (< lg screens) */}
+        <div className="lg:hidden w-full bg-white border-b border-slate-200">
+          <div className="px-4 py-3 flex items-center justify-between gap-3 border-b border-slate-100">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="h-9 w-9 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
+                <User className="h-4 w-4 text-primary" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Patient Portal</p>
+                <h2 className="font-bold text-slate-900 text-sm truncate">{profile?.fullName || "Patient Portal"}</h2>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <Button asChild size="sm" variant="ghost" className="h-9 w-9 p-0 rounded-xl text-slate-500 hover:text-primary">
+                <Link to="/profile" title="Profile Settings"><Settings className="h-4 w-4" /></Link>
+              </Button>
+              {isAdmin && (
+                <Button asChild size="sm" variant="ghost" className="h-9 w-9 p-0 rounded-xl text-slate-500 hover:text-primary">
+                  <Link to="/admin" title="Admin Portal"><ShieldCheck className="h-4 w-4" /></Link>
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Sticky horizontal pill navigation */}
+          <div className="sticky top-16 z-30 bg-white/95 backdrop-blur-md px-3 py-2.5 overflow-x-auto no-scrollbar scroll-smooth">
+            <div className="flex items-center gap-1.5 min-w-max">
+              {navItems.map((item) => {
+                const isActive = activeTab === item.id;
+                const Icon = item.icon;
+                const badgeCount = 
+                  item.id === "appointments" ? upcoming.length :
+                  item.id === "records" ? (screenings.length + prescriptions.length) :
+                  item.id === "billing" ? invoices.filter(i => i.status !== "paid").length :
+                  undefined;
+
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id as typeof activeTab)}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap",
+                      isActive
+                        ? "bg-primary text-white shadow-sm"
+                        : "bg-slate-100/90 text-slate-600 hover:bg-slate-200/70 hover:text-slate-900"
+                    )}
+                  >
+                    <Icon className="h-3.5 w-3.5 shrink-0" />
+                    <span>{item.shortLabel}</span>
+                    {typeof badgeCount === "number" && badgeCount > 0 && (
+                      <span className={cn(
+                        "ml-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-extrabold leading-tight",
+                        isActive ? "bg-white/25 text-white" : "bg-slate-200 text-slate-700"
+                      )}>
+                        {badgeCount}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
         {/* Main Content Area */}
-        <main className="flex-1 p-6 lg:p-10 max-w-6xl mx-auto w-full">
+        <main className="flex-1 px-4 py-6 sm:p-6 lg:p-10 max-w-6xl mx-auto w-full min-w-0">
           {/* Header Row */}
-          <div className="flex flex-wrap items-center justify-between gap-6 mb-10">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-slate-900">
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
                 {navItems.find(n => n.id === activeTab)?.label}
               </h1>
-              <p className="text-slate-500 mt-1">View your visits, clinical reports, and prescriptions.</p>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                {activeTab === "overview" && "View your upcoming visits, recent clinical reports, and quick actions."}
+                {activeTab === "appointments" && "Manage your scheduled visits, reschedule, or add to your calendar."}
+                {activeTab === "records" && "Access your visual acuity screening reports and prescriptions."}
+                {activeTab === "billing" && "Review your invoices, payment receipts, and balance records."}
+                {activeTab === "profile" && "Personal demographics and general medical background information."}
+              </p>
             </div>
-            <div className="flex gap-3">
-              <Button asChild className="rounded-xl font-bold bg-primary hover:bg-primary/90 text-white px-6 h-12 shadow-sm">
-                <Link to="/book"><CalendarPlus className="h-5 w-5 mr-2" /> Book Appointment</Link>
+            <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+              <Button asChild className="w-full sm:w-auto rounded-xl font-bold bg-primary hover:bg-primary/90 text-white px-5 h-11 shadow-sm transition-transform active:scale-[0.98]">
+                <Link to="/book" className="flex items-center justify-center">
+                  <CalendarPlus className="h-4 w-4 mr-2 shrink-0" /> Book Appointment
+                </Link>
               </Button>
             </div>
           </div>
 
           {welcomeAlert && (
-            <Card className="mb-6 p-5 bg-emerald-50 border-emerald-200 rounded-2xl flex items-center justify-between gap-4 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
-              <div className="flex items-center gap-4">
-                <div className="h-11 w-11 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 shrink-0">
-                  <CheckCircle2 className="h-6 w-6" />
+            <Card className="mb-6 p-4 sm:p-5 bg-emerald-50 border-emerald-200 rounded-2xl flex items-start sm:items-center justify-between gap-3 sm:gap-4 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0 pr-2">
+                <div className="h-10 w-10 sm:h-11 sm:w-11 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 shrink-0 mt-0.5 sm:mt-0">
+                  <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6" />
                 </div>
-                <div>
-                  <h3 className="font-bold text-emerald-900 text-base">{welcomeAlert.title}</h3>
-                  <p className="text-sm text-emerald-700 mt-0.5">{welcomeAlert.message}</p>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-emerald-900 text-sm sm:text-base">{welcomeAlert.title}</h3>
+                  <p className="text-xs sm:text-sm text-emerald-700 mt-0.5 leading-relaxed">{welcomeAlert.message}</p>
                 </div>
               </div>
               <button 
                 onClick={() => setWelcomeAlert(null)}
-                className="text-emerald-500 hover:text-emerald-700 p-1.5 rounded-lg hover:bg-emerald-100/50 transition-colors"
+                className="text-emerald-500 hover:text-emerald-700 p-1.5 rounded-lg hover:bg-emerald-100/50 transition-colors shrink-0 -mr-1"
                 aria-label="Dismiss alert"
               >
                 <X className="h-4 w-4" />
@@ -268,41 +350,41 @@ const Dashboard = () => {
           )}
 
           {profile && !profile.registrationCompleted && (
-            <Card className="mb-10 p-6 bg-amber-50 border-amber-200 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
-              <div className="flex items-center gap-4">
-                <div className="h-12 w-12 bg-amber-100 rounded-full flex items-center justify-center text-amber-600 shrink-0">
-                  <User className="h-6 w-6" />
+            <Card className="mb-8 p-4 sm:p-6 bg-amber-50 border-amber-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+              <div className="flex items-start sm:items-center gap-3.5 sm:gap-4">
+                <div className="h-10 w-10 sm:h-12 sm:w-12 bg-amber-100 rounded-full flex items-center justify-center text-amber-600 shrink-0 mt-0.5 sm:mt-0">
+                  <User className="h-5 w-5 sm:h-6 sm:w-6" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-amber-900">Complete Your Patient Registration</h3>
-                  <p className="text-sm text-amber-700">Required for us to process your clinical records correctly.</p>
+                  <h3 className="font-bold text-amber-900 text-sm sm:text-base">Complete Your Patient Registration</h3>
+                  <p className="text-xs sm:text-sm text-amber-700 mt-0.5">Required for us to process your clinical records correctly.</p>
                 </div>
               </div>
-              <Button asChild className="bg-amber-600 hover:bg-amber-700 text-white rounded-xl px-6 font-bold h-11 shrink-0">
-                <Link to="/register-patient">Complete Now <ArrowRight className="h-4 w-4 ml-2" /></Link>
+              <Button asChild className="w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white rounded-xl px-5 font-bold h-11 shrink-0 shadow-sm">
+                <Link to="/register-patient" className="flex items-center justify-center">Complete Now <ArrowRight className="h-4 w-4 ml-2" /></Link>
               </Button>
             </Card>
           )}
 
           {/* Tab Content */}
-          <div className="space-y-8">
+          <div className="space-y-6 sm:space-y-8">
             {activeTab === "overview" && (
-              <div className="space-y-8 animate-in fade-in duration-500">
+              <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500">
                 <NotificationPrompt />
                 {clinicSettings && clinicSettings.showAnnouncement && clinicSettings.announcementBody && !announcementDismissed && (
-                  <Card className="relative overflow-hidden border border-indigo-500/30 bg-gradient-to-r from-indigo-700 via-primary to-indigo-800 text-white p-6 rounded-2xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 group">
-                    <div className="flex items-start gap-4 z-10">
-                      <div className="p-3 bg-white/10 rounded-xl border border-white/20 text-white shrink-0 group-hover:scale-105 transition-transform duration-200">
-                        <Megaphone className="h-6 w-6" />
+                  <Card className="relative overflow-hidden border border-indigo-500/30 bg-gradient-to-r from-indigo-700 via-primary to-indigo-800 text-white p-4 sm:p-6 rounded-2xl shadow-sm group">
+                    <div className="flex items-start gap-3 sm:gap-4 pr-8 sm:pr-10 z-10">
+                      <div className="p-2.5 sm:p-3 bg-white/10 rounded-xl border border-white/20 text-white shrink-0 group-hover:scale-105 transition-transform duration-200">
+                        <Megaphone className="h-5 w-5 sm:h-6 sm:w-6" />
                       </div>
-                      <div className="space-y-1">
-                        <Badge className="bg-white/15 text-white border-none px-2.5 py-0.5 text-[9px] uppercase tracking-wider font-extrabold">
+                      <div className="space-y-1 min-w-0">
+                        <Badge className="bg-white/15 text-white border-none px-2 py-0.5 text-[9px] uppercase tracking-wider font-extrabold">
                           Clinic Announcement
                         </Badge>
-                        <h3 className="text-lg font-bold tracking-tight">
+                        <h3 className="text-base sm:text-lg font-bold tracking-tight">
                           {clinicSettings.announcementTitle || "Important Notice"}
                         </h3>
-                        <p className="text-white/90 text-sm leading-relaxed max-w-2xl font-medium">
+                        <p className="text-white/90 text-xs sm:text-sm leading-relaxed max-w-2xl font-medium break-words">
                           {clinicSettings.announcementBody}
                         </p>
                       </div>
@@ -310,7 +392,7 @@ const Dashboard = () => {
                     
                     <button 
                       onClick={handleDismissAnnouncement}
-                      className="absolute top-4 right-4 p-1.5 hover:bg-white/15 text-white/80 hover:text-white rounded-full transition-colors z-10"
+                      className="absolute top-3 right-3 sm:top-4 sm:right-4 p-1.5 hover:bg-white/15 text-white/80 hover:text-white rounded-full transition-colors z-10"
                       aria-label="Dismiss announcement"
                     >
                       <X className="h-4 w-4" />
@@ -318,43 +400,43 @@ const Dashboard = () => {
                   </Card>
                 )}
 
-                <div className="grid gap-8 lg:grid-cols-2">
-                  <div className="space-y-8">
+                <div className="grid gap-6 lg:grid-cols-2">
+                  <div className="space-y-6 sm:space-y-8">
                     <SectionTitle title="Next Appointment" />
-                  {upcoming.length > 0 ? (
-                    <AppointmentCard a={upcoming[0]} onCancel={cancelAppointment} onReschedule={(x) => { setReschedule(x); setRNew({ date: x.appointmentDate, time: x.appointmentTime }); }} canManage />
-                  ) : (
-                    <EmptyState icon={Calendar} title="No upcoming visits" desc="You don't have any appointments scheduled yet." actionLabel="Schedule Now" actionLink="/book" />
-                  )}
+                    {upcoming.length > 0 ? (
+                      <AppointmentCard a={upcoming[0]} onCancel={cancelAppointment} onReschedule={(x) => { setReschedule(x); setRNew({ date: x.appointmentDate, time: x.appointmentTime }); }} canManage />
+                    ) : (
+                      <EmptyState icon={Calendar} title="No upcoming visits" desc="You don't have any appointments scheduled yet." actionLabel="Schedule Now" actionLink="/book" />
+                    )}
 
-                  <SectionTitle title="Quick Actions" />
-                  <div className="grid grid-cols-2 gap-4">
-                    <QuickActionCard icon={History} label="Medical History" sub="Update your profile" link="/medical-history" color="bg-blue-50 text-blue-600" />
-                    <QuickActionCard icon={Star} label="Write Review" sub="Share your experience" link="/reviews" color="bg-yellow-50 text-yellow-600" />
+                    <SectionTitle title="Quick Actions" />
+                    <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                      <QuickActionCard icon={History} label="Medical History" sub="Update your profile" link="/medical-history" color="bg-blue-50 text-blue-600" />
+                      <QuickActionCard icon={Star} label="Write Review" sub="Share your experience" link="/reviews" color="bg-yellow-50 text-yellow-600" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-6 sm:space-y-8">
+                    <SectionTitle title="Recent Records" />
+                    {screenings.length > 0 ? (
+                      <div className="space-y-3.5 sm:space-y-4">
+                        {screenings.slice(0, 2).map(s => <ScreeningCard key={s.id} s={s} />)}
+                        <Button variant="ghost" onClick={() => setActiveTab("records")} className="w-full font-bold text-primary h-11 rounded-xl">View All Records <ChevronRight className="h-4 w-4 ml-1" /></Button>
+                      </div>
+                    ) : (
+                      <EmptyState icon={ClipboardList} title="No records found" desc="Your clinical reports will appear here after your first visit." />
+                    )}
                   </div>
                 </div>
-
-                <div className="space-y-8">
-                  <SectionTitle title="Recent Records" />
-                  {screenings.length > 0 ? (
-                    <div className="space-y-4">
-                      {screenings.slice(0, 2).map(s => <ScreeningCard key={s.id} s={s} />)}
-                      <Button variant="ghost" onClick={() => setActiveTab("records")} className="w-full font-bold text-primary">View All Records <ChevronRight className="h-4 w-4 ml-1" /></Button>
-                    </div>
-                  ) : (
-                    <EmptyState icon={ClipboardList} title="No records found" desc="Your clinical reports will appear here after your first visit." />
-                  )}
-                </div>
               </div>
-            </div>
-          )}
+            )}
 
             {activeTab === "profile" && (
-              <div className="grid gap-8 lg:grid-cols-2 animate-in fade-in duration-500">
-                <div className="space-y-6">
+              <div className="grid gap-6 lg:grid-cols-2 animate-in fade-in duration-500">
+                <div className="space-y-5 sm:space-y-6">
                   <SectionTitle title="Personal Information" />
-                  <Card className="p-6 rounded-2xl border-slate-200 bg-white">
-                    <div className="space-y-4">
+                  <Card className="p-4 sm:p-6 rounded-2xl border-slate-200 bg-white shadow-xs">
+                    <div className="space-y-3.5 sm:space-y-4">
                       <ProfileField label="Full Name" value={profile?.fullName} />
                       <ProfileField label="Email Address" value={profile?.email} />
                       <ProfileField label="Phone Number" value={profile?.phone} />
@@ -367,19 +449,19 @@ const Dashboard = () => {
                   </Card>
                   
                   <SectionTitle title="Emergency Contact" />
-                  <Card className="p-6 rounded-2xl border-slate-200 bg-white">
-                    <div className="space-y-4">
+                  <Card className="p-4 sm:p-6 rounded-2xl border-slate-200 bg-white shadow-xs">
+                    <div className="space-y-3.5 sm:space-y-4">
                       <ProfileField label="Contact Name" value={profile?.emergencyContactName} />
                       <ProfileField label="Phone Number" value={profile?.emergencyContactPhone} />
                     </div>
                   </Card>
                 </div>
 
-                <div className="space-y-6">
+                <div className="space-y-5 sm:space-y-6">
                   <SectionTitle title="Medical History" />
-                  <Card className="p-6 rounded-2xl border-slate-200 bg-white">
+                  <Card className="p-4 sm:p-6 rounded-2xl border-slate-200 bg-white shadow-xs">
                     {medicalHistory ? (
-                      <div className="space-y-4">
+                      <div className="space-y-3.5 sm:space-y-4">
                         <ProfileField label="Ocular History" value={medicalHistory.ocularHistory} />
                         <ProfileField label="Systemic Conditions" value={medicalHistory.systemicConditions} />
                         <ProfileField label="Current Medications" value={medicalHistory.currentMedications} />
@@ -391,8 +473,8 @@ const Dashboard = () => {
                     )}
                   </Card>
 
-                  <div className="pt-4">
-                    <Button asChild variant="outline" className="w-full h-12 rounded-xl font-bold border-slate-200 hover:border-primary hover:text-primary">
+                  <div className="pt-2">
+                    <Button asChild variant="outline" className="w-full h-11 sm:h-12 rounded-xl font-bold border-slate-200 hover:border-primary hover:text-primary transition-colors">
                       <Link to="/profile"><Settings className="h-4 w-4 mr-2" /> Edit Profile Information</Link>
                     </Button>
                   </div>
@@ -401,11 +483,11 @@ const Dashboard = () => {
             )}
 
             {activeTab === "appointments" && (
-              <div className="space-y-10">
+              <div className="space-y-8 sm:space-y-10">
                 <div>
                   <SectionTitle title="Upcoming" />
-                  {loading ? <Loader /> : upcoming.length === 0 ? <EmptyState icon={Calendar} title="Clear Schedule" desc="No upcoming visits found." /> : (
-                    <div className="grid gap-4 md:grid-cols-2">
+                  {loading ? <Loader /> : upcoming.length === 0 ? <EmptyState icon={Calendar} title="Clear Schedule" desc="No upcoming visits found." actionLabel="Book Appointment" actionLink="/book" /> : (
+                    <div className="grid gap-3.5 sm:gap-4 sm:grid-cols-2">
                       {upcoming.map(a => <AppointmentCard key={a.id} a={a} onCancel={cancelAppointment} onReschedule={(x) => { setReschedule(x); setRNew({ date: x.appointmentDate, time: x.appointmentTime }); }} canManage />)}
                     </div>
                   )}
@@ -413,7 +495,7 @@ const Dashboard = () => {
                 {past.length > 0 && (
                   <div>
                     <SectionTitle title="Past Visits" />
-                    <div className="grid gap-4 md:grid-cols-2 opacity-75">
+                    <div className="grid gap-3.5 sm:gap-4 sm:grid-cols-2 opacity-80">
                       {past.map(a => <AppointmentCard key={a.id} a={a} onCancel={() => {}} onReschedule={() => {}} />)}
                     </div>
                   </div>
@@ -422,11 +504,11 @@ const Dashboard = () => {
             )}
 
             {activeTab === "records" && (
-              <div className="grid gap-8 lg:grid-cols-2">
+              <div className="grid gap-6 lg:grid-cols-2">
                 <div>
                   <SectionTitle title="Screening Reports" />
                   {screenings.length === 0 ? <EmptyState icon={Eye} title="No screenings" desc="No diagnostic records available." /> : (
-                    <div className="space-y-4">
+                    <div className="space-y-3.5 sm:space-y-4">
                       {screenings.map(s => <ScreeningCard key={s.id} s={s} />)}
                     </div>
                   )}
@@ -434,14 +516,14 @@ const Dashboard = () => {
                 <div>
                   <SectionTitle title="Active Prescriptions" />
                   {prescriptions.length === 0 ? <EmptyState icon={FileText} title="No prescriptions" desc="Your active prescriptions will be listed here." /> : (
-                    <div className="space-y-4">
+                    <div className="space-y-3.5 sm:space-y-4">
                       {prescriptions.map(p => (
-                        <Card key={p.id} className="p-5 rounded-2xl border border-slate-200">
-                          <div className="flex justify-between items-start mb-3">
-                            <h4 className="font-bold">{p.doctorName}</h4>
-                            <span className="text-[10px] font-bold text-slate-400">{new Date(p.issuedAt).toLocaleDateString('en-GB')}</span>
+                        <Card key={p.id} className="p-4 sm:p-5 rounded-2xl border border-slate-200 bg-white shadow-xs">
+                          <div className="flex justify-between items-start mb-3 gap-2">
+                            <h4 className="font-bold text-slate-900 text-sm sm:text-base">{p.doctorName}</h4>
+                            <span className="text-[10px] font-bold text-slate-400 shrink-0">{new Date(p.issuedAt).toLocaleDateString('en-GB')}</span>
                           </div>
-                          <p className="text-sm text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100 whitespace-pre-wrap">{p.prescriptionDetails}</p>
+                          <p className="text-xs sm:text-sm text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100 whitespace-pre-wrap leading-relaxed">{p.prescriptionDetails}</p>
                         </Card>
                       ))}
                     </div>
@@ -454,21 +536,21 @@ const Dashboard = () => {
               <div className="max-w-3xl">
                 <SectionTitle title="Invoices" />
                 {invoices.length === 0 ? <EmptyState icon={CreditCard} title="Clear Balance" desc="No invoices or pending payments found." /> : (
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     {invoices.map(inv => (
-                      <Card key={inv.id} className="p-5 rounded-2xl border border-slate-200 flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-4">
-                          <div className="h-10 w-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500">
+                      <Card key={inv.id} className="p-4 sm:p-5 rounded-2xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-white shadow-xs">
+                        <div className="flex items-center gap-3.5 min-w-0">
+                          <div className="h-10 w-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 shrink-0">
                             <FileText className="h-5 w-5" />
                           </div>
-                          <div>
-                            <h4 className="font-bold">{inv.description}</h4>
-                            <p className="text-xs text-slate-400">{new Date(inv.createdAt).toLocaleDateString('en-GB')}</p>
+                          <div className="min-w-0">
+                            <h4 className="font-bold text-slate-900 text-sm sm:text-base truncate">{inv.description}</h4>
+                            <p className="text-xs text-slate-400 mt-0.5">{new Date(inv.createdAt).toLocaleDateString('en-GB')}</p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="font-bold text-lg">GH₵ {inv.amount}</p>
-                          <Badge variant={inv.status === 'paid' ? 'secondary' : 'outline'} className={cn("rounded-md uppercase text-[9px] font-bold", inv.status === 'paid' && "bg-green-50 text-green-700 border-green-100")}>
+                        <div className="flex items-center justify-between sm:flex-col sm:items-end gap-1 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                          <p className="font-bold text-base sm:text-lg text-slate-900">GH₵ {inv.amount}</p>
+                          <Badge variant={inv.status === 'paid' ? 'secondary' : 'outline'} className={cn("rounded-md uppercase text-[9px] font-bold px-2 py-0.5", inv.status === 'paid' && "bg-green-50 text-green-700 border-green-100")}>
                             {inv.status}
                           </Badge>
                         </div>
@@ -482,34 +564,34 @@ const Dashboard = () => {
         </main>
       </div>
 
-      {/* Reschedule Dialog (remains same logic) */}
+      {/* Reschedule Dialog (Mobile Optimized) */}
       <Dialog open={!!reschedule} onOpenChange={(o) => !o && setReschedule(null)}>
-        <DialogContent className="rounded-2xl p-8 max-w-md border-none shadow-2xl">
+        <DialogContent className="rounded-2xl p-5 sm:p-8 max-w-md w-[calc(100vw-2rem)] sm:w-full max-h-[90vh] overflow-y-auto border-none shadow-2xl">
           <DialogHeader className="mb-4">
-            <DialogTitle className="text-xl font-bold">Reschedule Visit</DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl font-bold">Reschedule Visit</DialogTitle>
             <DialogDescription className="text-xs font-bold text-primary uppercase">{reschedule?.service}</DialogDescription>
           </DialogHeader>
-          <div className="space-y-6">
-            <div className="space-y-2">
+          <div className="space-y-4 sm:space-y-6">
+            <div className="space-y-1.5 sm:space-y-2">
               <Label className="text-xs font-bold uppercase text-slate-500 ml-1">New Date</Label>
-              <Input type="date" min={minDate} value={rNew.date} onChange={(e) => setRNew({ ...rNew, date: e.target.value, time: "" })} className="rounded-xl h-12 border-slate-200" />
+              <Input type="date" min={minDate} value={rNew.date} onChange={(e) => setRNew({ ...rNew, date: e.target.value, time: "" })} className="rounded-xl h-11 sm:h-12 border-slate-200 text-sm" />
               {rSunday && <p className="text-[10px] font-bold text-red-500 ml-1">Closed on Sundays</p>}
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1.5 sm:space-y-2">
               <Label className="text-xs font-bold uppercase text-slate-500 ml-1">Available Slots</Label>
               <Select value={rNew.time} onValueChange={(v) => setRNew({ ...rNew, time: v })} disabled={!rNew.date || rSunday}>
-                <SelectTrigger className="rounded-xl h-12 border-slate-200"><SelectValue placeholder="Choose a time" /></SelectTrigger>
-                <SelectContent className="rounded-xl">
+                <SelectTrigger className="rounded-xl h-11 sm:h-12 border-slate-200 text-sm"><SelectValue placeholder="Choose a time" /></SelectTrigger>
+                <SelectContent className="rounded-xl max-h-56">
                   {rSlots.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
           </div>
-          <DialogFooter className="mt-8 flex flex-col gap-2">
-            <Button onClick={submitReschedule} disabled={!rNew.date || !rNew.time || rSaving} className="w-full rounded-xl font-bold h-12">
+          <DialogFooter className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-2">
+            <Button onClick={submitReschedule} disabled={!rNew.date || !rNew.time || rSaving} className="w-full rounded-xl font-bold h-11 sm:h-12 order-1 sm:order-2">
               {rSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirm Change"}
             </Button>
-            <Button variant="ghost" onClick={() => setReschedule(null)} className="w-full rounded-xl font-bold text-slate-500 h-12">Cancel</Button>
+            <Button variant="ghost" onClick={() => setReschedule(null)} className="w-full rounded-xl font-bold text-slate-500 h-11 sm:h-12 order-2 sm:order-1">Cancel</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -518,30 +600,32 @@ const Dashboard = () => {
 };
 
 const SectionTitle = ({ title }: { title: string }) => (
-  <h2 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-4 ml-1">{title}</h2>
+  <h2 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-3 sm:mb-4 ml-1">{title}</h2>
 );
 
 const QuickActionCard = ({ icon: Icon, label, sub, link, color }: { icon: React.ElementType, label: string, sub: string, link: string, color: string }) => (
-  <Link to={link}>
-    <Card className="p-4 rounded-2xl border border-slate-200 hover:border-primary/30 hover:shadow-md transition-all group h-full">
-      <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform", color)}>
+  <Link to={link} className="block group h-full">
+    <Card className="p-3.5 sm:p-4 rounded-2xl border border-slate-200 hover:border-primary/30 hover:shadow-md transition-all active:scale-[0.98] h-full flex flex-col justify-between bg-white">
+      <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center mb-3 group-hover:scale-105 transition-transform shrink-0", color)}>
         <Icon className="h-5 w-5" />
       </div>
-      <h4 className="font-bold text-sm text-slate-900">{label}</h4>
-      <p className="text-[10px] font-bold text-slate-400 uppercase mt-0.5">{sub}</p>
+      <div>
+        <h4 className="font-bold text-xs sm:text-sm text-slate-900 leading-snug">{label}</h4>
+        <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase mt-0.5">{sub}</p>
+      </div>
     </Card>
   </Link>
 );
 
 const EmptyState = ({ icon: Icon, title, desc, actionLabel, actionLink }: { icon: React.ElementType, title: string, desc: string, actionLabel?: string, actionLink?: string }) => (
-  <Card className="p-10 text-center border-dashed border-2 rounded-2xl bg-white/50 flex flex-col items-center justify-center">
+  <Card className="p-6 sm:p-10 text-center border-dashed border-2 rounded-2xl bg-white/50 flex flex-col items-center justify-center">
     <div className="h-12 w-12 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 mb-4">
       <Icon className="h-6 w-6" />
     </div>
-    <h3 className="font-bold text-slate-900 mb-1">{title}</h3>
-    <p className="text-xs text-slate-500 mb-6 italic max-w-[200px]">{desc}</p>
+    <h3 className="font-bold text-slate-900 text-sm sm:text-base mb-1">{title}</h3>
+    <p className="text-xs text-slate-500 mb-5 italic max-w-[240px] leading-relaxed">{desc}</p>
     {actionLabel && (
-      <Button asChild size="sm" className="rounded-lg font-bold">
+      <Button asChild size="sm" className="rounded-xl font-bold h-10 px-4">
         <Link to={actionLink}>{actionLabel}</Link>
       </Button>
     )}
@@ -553,18 +637,18 @@ const Loader = () => (
 );
 
 const ScreeningCard = ({ s }: { s: Screening }) => (
-  <Card className="p-5 rounded-2xl border border-slate-200 bg-white hover:shadow-md transition-shadow">
-    <div className="flex justify-between items-center mb-3">
+  <Card className="p-4 sm:p-5 rounded-2xl border border-slate-200 bg-white hover:shadow-md transition-shadow">
+    <div className="flex flex-wrap justify-between items-center gap-2 mb-3">
       <Badge variant="outline" className="rounded-md font-bold text-[10px] uppercase text-slate-500 bg-slate-50 border-slate-100 px-2 py-0.5">
         {new Date(s.screeningDate).toLocaleDateString('en-GB')}
       </Badge>
-      <div className="flex gap-2">
+      <div className="flex gap-1.5">
         <Badge variant="secondary" className="rounded-md text-[9px] font-bold bg-blue-50 text-blue-600 border-blue-100">R: {s.vaRightEye || '-'}</Badge>
         <Badge variant="secondary" className="rounded-md text-[9px] font-bold bg-purple-50 text-purple-600 border-purple-100">L: {s.vaLeftEye || '-'}</Badge>
       </div>
     </div>
-    <h4 className="font-bold text-sm mb-1">Diagnosis</h4>
-    <p className="text-sm text-slate-600 italic line-clamp-2 leading-relaxed">"{s.diagnosis || "Consultation record saved."}"</p>
+    <h4 className="font-bold text-xs sm:text-sm mb-1 text-slate-900">Diagnosis</h4>
+    <p className="text-xs sm:text-sm text-slate-600 italic line-clamp-2 leading-relaxed">"{s.diagnosis || "Consultation record saved."}"</p>
   </Card>
 );
 
@@ -574,18 +658,18 @@ const AppointmentCard = ({ a, onCancel, onReschedule, canManage }: {
   onReschedule: (a: Appointment) => void;
   canManage?: boolean;
 }) => (
-  <Card className="p-5 rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-all">
-    <div className="flex items-start justify-between gap-4 mb-4">
-      <div className="flex items-center gap-4">
-        <div className={cn("h-12 w-12 rounded-xl flex items-center justify-center shrink-0 border", 
+  <Card className="p-4 sm:p-5 rounded-2xl border border-slate-200 bg-white shadow-xs hover:shadow-md transition-all">
+    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4 mb-4">
+      <div className="flex items-start gap-3 sm:gap-4 min-w-0">
+        <div className={cn("h-11 w-11 sm:h-12 sm:w-12 rounded-xl flex items-center justify-center shrink-0 border", 
           a.status === 'confirmed' ? "bg-blue-50 text-blue-600 border-blue-100" : "bg-slate-50 text-slate-400 border-slate-100")}>
-          {a.status === 'confirmed' ? <CheckCircle2 className="h-6 w-6" /> : <Clock className="h-6 w-6" />}
+          {a.status === 'confirmed' ? <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6" /> : <Clock className="h-5 w-5 sm:h-6 sm:w-6" />}
         </div>
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="font-bold text-slate-900">{a.service}</h3>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1">
+            <h3 className="font-bold text-slate-900 text-sm sm:text-base leading-snug break-words">{a.service}</h3>
             {a.appointmentType && (
-              <Badge className={cn("rounded-md text-[7px] font-bold uppercase tracking-wider px-1.5 py-0.5 border shrink-0", 
+              <Badge className={cn("rounded-md text-[7px] sm:text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 border shrink-0", 
                 a.appointmentType === 'virtual' 
                   ? "bg-indigo-50 text-indigo-700 border-indigo-100" 
                   : "bg-teal-50 text-teal-700 border-teal-100")} 
@@ -595,23 +679,25 @@ const AppointmentCard = ({ a, onCancel, onReschedule, canManage }: {
               </Badge>
             )}
           </div>
-          <div className="flex flex-wrap gap-x-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-            <span className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5 text-primary" /> {new Date(a.appointmentDate).toLocaleDateString("en-GB")}</span>
-            <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 text-primary" /> {a.appointmentTime}</span>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">
+            <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5 text-primary shrink-0" /> {new Date(a.appointmentDate).toLocaleDateString("en-GB")}</span>
+            <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5 text-primary shrink-0" /> {a.appointmentTime}</span>
             {a.doctorName && (
-              <span className="flex items-center gap-1.5"><User className="h-3.5 w-3.5 text-primary" /> {a.doctorName}</span>
+              <span className="flex items-center gap-1 truncate max-w-[140px]"><User className="h-3.5 w-3.5 text-primary shrink-0" /> {a.doctorName}</span>
             )}
           </div>
         </div>
       </div>
-      <Badge className={cn("rounded-md px-2 py-1 font-bold uppercase text-[8px] tracking-widest", statusStyles[a.status])} variant="secondary">
-        {a.status}
-      </Badge>
+      <div className="self-start sm:self-auto shrink-0">
+        <Badge className={cn("rounded-md px-2 py-0.5 sm:py-1 font-bold uppercase text-[8px] sm:text-[9px] tracking-wider", statusStyles[a.status])} variant="secondary">
+          {a.status}
+        </Badge>
+      </div>
     </div>
     
     {canManage && a.status !== "cancelled" && a.status !== "completed" && (
-      <div className="flex gap-2 pt-3 border-t border-slate-50 mt-3">
-        <Button asChild size="sm" variant="outline" className="flex-1 rounded-lg font-bold text-[10px] h-9 border-slate-100 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50/50">
+      <div className="grid grid-cols-2 sm:flex gap-2 pt-3 border-t border-slate-100 mt-3">
+        <Button asChild size="sm" variant="outline" className="rounded-xl font-bold text-[11px] h-10 border-slate-200 text-slate-700 hover:text-indigo-600 hover:bg-indigo-50/60">
           <a
             href={getGoogleCalendarUrl({
               title: `Eye Exam: ${a.service} - Nova Eye Care`,
@@ -624,14 +710,14 @@ const AppointmentCard = ({ a, onCancel, onReschedule, canManage }: {
             rel="noopener noreferrer"
             className="flex items-center justify-center w-full h-full"
           >
-            <CalendarPlus className="h-3.5 w-3.5 mr-1.5 text-indigo-500" /> CALENDAR
+            <CalendarPlus className="h-3.5 w-3.5 mr-1.5 text-indigo-500 shrink-0" /> Calendar
           </a>
         </Button>
-        <Button size="sm" variant="outline" onClick={() => onReschedule(a)} className="flex-1 rounded-lg font-bold text-[10px] h-9 border-slate-100 text-slate-600 hover:text-primary hover:bg-primary-soft">
-          <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> RESCHEDULE
+        <Button size="sm" variant="outline" onClick={() => onReschedule(a)} className="rounded-xl font-bold text-[11px] h-10 border-slate-200 text-slate-700 hover:text-primary hover:bg-primary-soft">
+          <RefreshCw className="h-3.5 w-3.5 mr-1.5 shrink-0" /> Reschedule
         </Button>
-        <Button size="sm" variant="ghost" className="flex-1 rounded-lg font-bold text-[10px] h-9 text-slate-400 hover:text-red-600 hover:bg-red-50" onClick={() => onCancel(a)}>
-          <CalendarX className="h-3.5 w-3.5 mr-1.5" /> CANCEL
+        <Button size="sm" variant="ghost" className="col-span-2 sm:col-span-1 sm:flex-1 rounded-xl font-bold text-[11px] h-10 text-slate-400 hover:text-red-600 hover:bg-red-50" onClick={() => onCancel(a)}>
+          <CalendarX className="h-3.5 w-3.5 mr-1.5 shrink-0" /> Cancel
         </Button>
       </div>
     )}
@@ -639,9 +725,9 @@ const AppointmentCard = ({ a, onCancel, onReschedule, canManage }: {
 );
 
 const ProfileField = ({ label, value }: { label: string; value?: string | null }) => (
-  <div className="flex flex-col border-b border-slate-50 pb-3 last:border-0 last:pb-0">
+  <div className="flex flex-col border-b border-slate-100 pb-3 last:border-0 last:pb-0">
     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{label}</span>
-    <span className="text-sm font-medium text-slate-900">{value || <span className="text-slate-300 italic">Not provided</span>}</span>
+    <span className="text-xs sm:text-sm font-medium text-slate-900 break-words">{value || <span className="text-slate-300 italic">Not provided</span>}</span>
   </div>
 );
 

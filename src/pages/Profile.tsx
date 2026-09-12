@@ -72,8 +72,8 @@ const Profile = () => {
         </div>
       </section>
 
-      <section className="container py-10 max-w-2xl">
-        <Card className="p-6 md:p-8 border shadow-sm rounded-xl">
+      <section className="container py-6 sm:py-10 max-w-2xl px-4">
+        <Card className="p-5 sm:p-8 border shadow-sm rounded-2xl">
           {loading ? (
             <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
           ) : (
@@ -84,7 +84,7 @@ const Profile = () => {
                   <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input id="fullName" value={form.fullName}
                     onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-                    className="pl-9 h-11" />
+                    className="pl-9 h-11 rounded-xl" />
                 </div>
               </div>
               <div>
@@ -93,7 +93,7 @@ const Profile = () => {
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input id="phone" type="tel" value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  className="pl-9 h-11" />
+                  className="pl-9 h-11 rounded-xl" />
               </div>
             </div>
             <div>
@@ -103,19 +103,19 @@ const Profile = () => {
                 <Input id="nationality" value={form.nationality}
                   onChange={(e) => setForm({ ...form, nationality: e.target.value })}
                   placeholder="e.g. Ghanaian"
-                  className="pl-9 h-11" />
+                  className="pl-9 h-11 rounded-xl" />
               </div>
             </div>
             <div>
               <Label htmlFor="email">Email Address</Label>
                 <div className="relative mt-1.5">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input id="email" type="email" value={form.email} disabled className="pl-9 h-11 bg-muted" />
+                  <Input id="email" type="email" value={form.email} disabled className="pl-9 h-11 bg-muted rounded-xl" />
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">Email cannot be changed from here. Contact us if you need to update it.</p>
               </div>
-              <Button type="submit" size="lg" disabled={saving} className="rounded-lg font-bold">
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Save className="h-4 w-4" /> Save changes</>}
+              <Button type="submit" size="lg" disabled={saving} className="w-full sm:w-auto rounded-xl font-bold h-11 sm:h-12 px-6">
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Save className="h-4 w-4 mr-2" /> Save changes</>}
               </Button>
             </form>
           )}

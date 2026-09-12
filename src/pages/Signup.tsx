@@ -39,6 +39,11 @@ const Signup = () => {
       if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
         return;
       }
+      if (error.code === 'auth/unauthorized-domain') {
+        const domain = window.location.hostname;
+        toast.error(`Domain "${domain}" is not authorized in Firebase Console. Please add "${domain}" under Firebase Authentication > Settings > Authorized domains.`);
+        return;
+      }
       const message = error.response?.data?.message || error.message || "Google Authentication failed.";
       toast.error(message);
     } finally {

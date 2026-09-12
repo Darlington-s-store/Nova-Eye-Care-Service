@@ -643,7 +643,108 @@ export const apiService = {
       const { data } = await api.delete('/sms/logs', { params: status ? { status } : {} });
       return data;
     }
+  },
+
+  // System Telemetry & Security Monitoring
+  system: {
+    getMetrics: async (): Promise<SystemMetrics> => {
+      const { data } = await api.get('/system/metrics');
+      return data;
+    },
+    getAuditLogs: async (params?: { action?: string; limit?: number }): Promise<AuditLogItem[]> => {
+      const { data } = await api.get('/system/audit-logs', { params });
+      return data;
+    },
+    getLockedUsers: async (): Promise<LockedUserItem[]> => {
+      const { data } = await api.get('/system/locked-users');
+      return data;
+    },
+    unlockUser: async (params: { userId?: string; email?: string }): Promise<{ message: string; user?: any }> => {
+      const { data } = await api.post('/system/unlock-user', params);
+      return data;
+    }
   }
 };
 
+export interface SystemMetrics {
+  timestamp: string;
+  system: {
+    uptimeSeconds: number;
+    uptimeFormatted: string;
+    nodeVersion: string;
+    platform: string;
+    cpus: number;
+    memory: {
+      rssMB: string;
+      heapTotalMB: string;
+      heapUsedMB: string;
+      heapUtilizationPercent: string;
+    };
+  };
+  database: {
+    status: 'healthy' | 'degraded' | 'slow';
+    latencyMs: number;
+    provider: string;
+    version: string;
+    pool: {
+      total: number;
+      idle: number;
+      waiting: number;
+    };
+  };
+  providers: {
+    database: {
+      status: string;
+      latencyMs: number;
+      provider: string;
+      version: string;
+      pool: {
+        total: number;
+        idle: number;
+        waiting: number;
+      };
+    };
+    sms: {
+      status: string;
+      provider: string;
+      senderId: string;
+    };
+    email: {
+      status: string;
+      provider: string;
+    };
+  };
+  security: {
+    lockedAccountsCount: number;
+    failedLogins24h: number;
+    totalUsers: number;
+    totalAppointments: number;
+    totalAuditLogs: number;
+    alerts: Array<{ level: string; message: string }>;
+  };
+}
+
+export interface AuditLogItem {
+  id: number;
+  userId: string | null;
+  action: string;
+  details: any;
+  ip: string;
+  createdAt: string;
+  email?: string;
+  fullName?: string;
+  role?: string;
+}
+
+export interface LockedUserItem {
+  id: string;
+  email: string;
+  fullName: string;
+  phone: string;
+  role: string;
+  failedAttempts: number;
+  lockedUntil: string | null;
+}
+
 export default api;
+

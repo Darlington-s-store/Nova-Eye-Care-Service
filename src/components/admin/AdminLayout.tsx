@@ -9,7 +9,7 @@ import { apiService } from "@/lib/api";
 import {
   LayoutDashboard, CalendarDays, Users, Star, MessageSquare, BookOpen,
   Home as HomeIcon, Settings, Briefcase, Eye, FileText, Settings2, ChevronLeft, User, LogOut,
-  BarChart2
+  BarChart2, ShieldCheck
 } from "lucide-react";
 import logo from "@/assets/logo.jpeg";
 import { NotificationBell } from "@/components/NotificationBell";
@@ -28,6 +28,7 @@ const allItems = [
   { to: "/admin/appointments", label: "Appointments", icon: CalendarDays },
   { to: "/admin/reviews", label: "Reviews", icon: Star },
   { to: "/admin/users", label: "Users", icon: Users },
+  { to: "/admin/monitoring", label: "Security & Monitor", icon: ShieldCheck },
   { to: "/admin/services", label: "Services", icon: Briefcase },
   { to: "/admin/screenings", label: "Eye Screenings", icon: Eye },
   { to: "/admin/notifications", label: "Notifications", icon: MessageSquare },

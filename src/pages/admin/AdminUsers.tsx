@@ -538,11 +538,12 @@ const AdminUsers = () => {
                         <SelectContent>
                           <SelectItem value="user">Patient (User)</SelectItem>
                           <SelectItem value="admin">Administrator</SelectItem>
+                          <SelectItem value="super_admin">Super Administrator (Overall Boss)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="p-4 bg-muted/40 rounded-xl border border-muted/50 text-xs text-muted-foreground leading-relaxed">
-                      Changing a user's role to <strong>Administrator</strong> will grant them access to this Admin Dashboard, clinical patient folders, and system notifications. Please exercise high administrative caution.
+                      Assigning <strong>Super Administrator</strong> grants overarching privileges over all system telemetry, security lockouts, and personnel accounts. Regular administrators cannot modify Super Admins.
                     </div>
                   </div>
                 </Card>
@@ -593,6 +594,11 @@ const AdminUsers = () => {
                           <h2 className="text-2xl font-bold text-foreground tracking-tight">
                             {selectedUser.fullName || "Guest User"}
                           </h2>
+                          {selectedUser.role === "super_admin" && (
+                            <Badge className="bg-amber-500/15 text-amber-700 border-amber-300 text-xs font-bold py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+                              <Shield className="h-3 w-3 text-amber-600" /> Super Admin (Overall Boss)
+                            </Badge>
+                          )}
                           {selectedUser.role === "admin" && (
                             <Badge className="bg-primary/10 text-primary border-primary/20 text-xs font-semibold py-0.5 rounded-full">
                               Admin
@@ -798,13 +804,20 @@ const AdminUsers = () => {
 
                       <div className="border-t border-muted/50 my-2" />
 
-                      <Button 
-                        variant="outline" 
-                        className="w-full justify-start rounded-xl text-destructive border-destructive/20 hover:bg-destructive/5 hover:text-destructive gap-2 h-11 transition-all"
-                        onClick={() => handleDeleteUser(selectedUser.id, selectedUser.fullName || "Guest User")}
-                      >
-                        <Trash2 className="h-4 w-4" /> Delete Patient Folder
-                      </Button>
+                      {selectedUser.role === "super_admin" ? (
+                        <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-800 flex items-center gap-2">
+                          <Shield className="h-4 w-4 text-amber-600 shrink-0" />
+                          <span>Protected Root Account: Super Administrator accounts cannot be deleted.</span>
+                        </div>
+                      ) : (
+                        <Button 
+                          variant="outline" 
+                          className="w-full justify-start rounded-xl text-destructive border-destructive/20 hover:bg-destructive/5 hover:text-destructive gap-2 h-11 transition-all"
+                          onClick={() => handleDeleteUser(selectedUser.id, selectedUser.fullName || "Guest User")}
+                        >
+                          <Trash2 className="h-4 w-4" /> Delete Patient Folder
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </Card>
@@ -860,6 +873,11 @@ const AdminUsers = () => {
                     <div className="flex items-center gap-4">
                       <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary border border-primary/20 relative shrink-0">
                         <User className="h-5 w-5" />
+                        {user.role === "super_admin" && (
+                          <div className="absolute -bottom-1 -right-1 bg-amber-500 text-white p-1 rounded-full border border-background shadow-sm">
+                            <Shield className="h-3 w-3" />
+                          </div>
+                        )}
                         {user.role === "admin" && (
                           <div className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground p-1 rounded-full border border-background">
                             <Shield className="h-3 w-3" />
@@ -871,6 +889,11 @@ const AdminUsers = () => {
                           <h3 className="font-bold text-lg text-foreground group-hover:text-primary transition-colors">
                             {user.fullName || "Guest User"}
                           </h3>
+                          {user.role === "super_admin" && (
+                            <Badge className="bg-amber-500/15 text-amber-700 hover:bg-amber-500/25 border-amber-300 text-[10px] h-5 rounded-full px-2 font-bold flex items-center gap-1">
+                              <Shield className="h-2.5 w-2.5 text-amber-600" /> Super Admin
+                            </Badge>
+                          )}
                           {user.role === "admin" && (
                             <Badge className="bg-primary/10 text-primary hover:bg-primary/20 border-primary/20 text-[10px] h-5 rounded-full px-2">
                               Admin
@@ -1009,6 +1032,7 @@ const AdminUsers = () => {
                     <SelectContent>
                       <SelectItem value="user">Patient (User)</SelectItem>
                       <SelectItem value="admin">Administrator</SelectItem>
+                      <SelectItem value="super_admin">Super Administrator (Overall Boss)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

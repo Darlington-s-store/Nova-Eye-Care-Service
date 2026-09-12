@@ -181,6 +181,7 @@ export const signInWithGoogleFirebase = async () => {
   const provider = new GoogleAuthProvider();
   provider.addScope('profile');
   provider.addScope('email');
+  provider.setCustomParameters({ prompt: 'select_account' });
   const result = await signInWithPopup(auth, provider);
   const idToken = await result.user.getIdToken();
   return {

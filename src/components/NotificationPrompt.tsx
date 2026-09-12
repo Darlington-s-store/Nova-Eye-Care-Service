@@ -41,9 +41,15 @@ export const NotificationPrompt: React.FC<NotificationPromptProps> = ({
     }
 
     // Register foreground push listener
-    onForegroundMessageListener((payload: any) => {
-      const title = payload?.notification?.title || payload?.data?.title || 'Nova Eye Care';
-      const body = payload?.notification?.body || payload?.data?.body || 'New update available.';
+    interface ForegroundPayload {
+      notification?: { title?: string; body?: string };
+      data?: { title?: string; body?: string };
+    }
+
+    onForegroundMessageListener((payload: unknown) => {
+      const p = payload as ForegroundPayload | undefined;
+      const title = p?.notification?.title || p?.data?.title || 'Nova Eye Care';
+      const body = p?.notification?.body || p?.data?.body || 'New update available.';
       toast({
         title: `🔔 ${title}`,
         description: body,
@@ -69,10 +75,11 @@ export const NotificationPrompt: React.FC<NotificationPromptProps> = ({
           variant: 'destructive',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to initialize device notifications.';
       toast({
         title: 'Notification Error',
-        description: err.message || 'Failed to initialize device notifications.',
+        description: message,
         variant: 'destructive',
       });
     } finally {
@@ -89,10 +96,11 @@ export const NotificationPrompt: React.FC<NotificationPromptProps> = ({
         title: 'Push Notifications Disabled',
         description: 'You will no longer receive push alerts on this device.',
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to remove device registration.';
       toast({
         title: 'Error',
-        description: err.message || 'Failed to remove device registration.',
+        description: message,
         variant: 'destructive',
       });
     } finally {
@@ -108,10 +116,12 @@ export const NotificationPrompt: React.FC<NotificationPromptProps> = ({
         title: 'Test Notification Sent!',
         description: response.message || 'Check your phone/device notification shade.',
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const apiErr = err as { response?: { data?: { message?: string } }; message?: string };
+      const message = apiErr?.response?.data?.message || apiErr?.message || 'Could not dispatch test push.';
       toast({
         title: 'Test Push Failed',
-        description: err.response?.data?.message || err.message || 'Could not dispatch test push.',
+        description: message,
         variant: 'destructive',
       });
     } finally {

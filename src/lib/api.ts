@@ -393,6 +393,18 @@ export const apiService = {
     clearAll: async (): Promise<void> => {
       await api.delete('/notifications/admin/clear-all');
     },
+    registerDeviceToken: async (payload: { token: string; platform?: string; deviceName?: string }): Promise<{ success: boolean; message: string }> => {
+      const { data } = await api.post('/notifications/device-token', payload);
+      return data;
+    },
+    unregisterDeviceToken: async (payload: { token: string }): Promise<{ success: boolean; message: string }> => {
+      const { data } = await api.delete('/notifications/device-token', { data: payload });
+      return data;
+    },
+    sendTestPush: async (): Promise<{ success: boolean; message: string; results?: unknown }> => {
+      const { data } = await api.post('/notifications/test-push');
+      return data;
+    },
   },
 
   // CMS
@@ -686,6 +698,16 @@ export const apiService = {
     }
   }
 };
+
+export interface NotificationItem {
+  id: string;
+  user_id: string;
+  type: string;
+  title: string;
+  message: string;
+  is_read: boolean;
+  created_at: string;
+}
 
 export interface SystemMetrics {
   timestamp: string;

@@ -29,6 +29,7 @@ import {
   LogOut, Settings, Bell, Menu, X, Megaphone
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NotificationPrompt } from "@/components/NotificationPrompt";
 
 // Using types from api.ts
 
@@ -287,6 +288,7 @@ const Dashboard = () => {
           <div className="space-y-8">
             {activeTab === "overview" && (
               <div className="space-y-8 animate-in fade-in duration-500">
+                <NotificationPrompt />
                 {clinicSettings && clinicSettings.showAnnouncement && clinicSettings.announcementBody && !announcementDismissed && (
                   <Card className="relative overflow-hidden border border-indigo-500/30 bg-gradient-to-r from-indigo-700 via-primary to-indigo-800 text-white p-6 rounded-2xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 group">
                     <div className="flex items-start gap-4 z-10">

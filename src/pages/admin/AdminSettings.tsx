@@ -8,9 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { apiService } from "@/lib/api";
 import { toast } from "sonner";
-import { Shield, Lock, Mail, User, Loader2, Save, Clock, ShieldAlert, MessageSquare, Globe, Edit } from "lucide-react";
+import { Shield, Lock, Mail, User, Loader2, Save, Clock, ShieldAlert, MessageSquare, Globe, Edit, Bell } from "lucide-react";
 import { ClinicContact } from "@/lib/cms";
 import { useAuth } from "@/hooks/useAuth";
+import { NotificationPrompt } from "@/components/NotificationPrompt";
 
 const AdminSettings = () => {
   const { isSuperAdmin } = useAuth();
@@ -419,6 +420,22 @@ const AdminSettings = () => {
               </Button>
             </form>
           </Card>
+        </section>
+
+        {/* Phone & Device Push Notifications */}
+        <section className="grid lg:grid-cols-3 gap-6 pt-8 border-t">
+          <div className="lg:col-span-1">
+            <h2 className="text-lg font-bold flex items-center gap-2">
+              <Bell className="h-5 w-5 text-primary" />
+              Push Notifications
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Receive real-time push alerts on your phone whenever a patient books or modifies an appointment.
+            </p>
+          </div>
+          <div className="lg:col-span-2">
+            <NotificationPrompt />
+          </div>
         </section>
 
         {/* Public Website Contact Information */}

@@ -20,8 +20,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const data = await apiService.auth.getMe();
       
-      // Map backend 'user' role to frontend 'patient' role
-      const frontendRole: Role = data.role === 'admin' ? 'admin' : 'patient';
+      // Map backend roles to frontend roles (super_admin, admin, patient)
+      let frontendRole: Role = 'patient';
+      if (data.role === 'super_admin') {
+        frontendRole = 'super_admin';
+      } else if (data.role === 'admin') {
+        frontendRole = 'admin';
+      }
       
       const mappedUser: NovaUser = {
         id: data.id,
@@ -60,8 +65,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     user,
     session: user,
     roles,
-    isAdmin: roles.includes("admin"),
-    isPatient: roles.includes("patient") || roles.includes("admin"),
+    isSuperAdmin: roles.includes("super_admin"),
+    isAdmin: roles.includes("admin") || roles.includes("super_admin"),
+    isPatient: roles.includes("patient") || roles.includes("admin") || roles.includes("super_admin"),
     loading,
     refresh: checkAuth
   };

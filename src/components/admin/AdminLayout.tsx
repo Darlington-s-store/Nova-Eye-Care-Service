@@ -9,10 +9,11 @@ import { apiService } from "@/lib/api";
 import {
   LayoutDashboard, CalendarDays, Users, Star, MessageSquare, BookOpen,
   Home as HomeIcon, Settings, Briefcase, Eye, FileText, Settings2, ChevronLeft, User, LogOut,
-  BarChart2, ShieldCheck
+  BarChart2, ShieldCheck, Shield
 } from "lucide-react";
 import logo from "@/assets/logo.jpeg";
 import { NotificationBell } from "@/components/NotificationBell";
+import { useAuth } from "@/hooks/useAuth";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,13 +23,22 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const allItems = [
+interface AdminNavItem {
+  to: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  end?: boolean;
+  superAdminOnly?: boolean;
+}
+
+const allItems: AdminNavItem[] = [
   { to: "/admin", label: "Overview", icon: LayoutDashboard, end: true },
   { to: "/admin/analytics", label: "Analytics", icon: BarChart2 },
   { to: "/admin/appointments", label: "Appointments", icon: CalendarDays },
   { to: "/admin/reviews", label: "Reviews", icon: Star },
-  { to: "/admin/users", label: "Users", icon: Users },
-  { to: "/admin/monitoring", label: "Security & Monitor", icon: ShieldCheck },
+  { to: "/admin/users", label: "Patients", icon: Users },
+  { to: "/admin/administrators", label: "Administrators", icon: Shield, superAdminOnly: true },
+  { to: "/admin/monitoring", label: "Security & Monitor", icon: ShieldCheck, superAdminOnly: true },
   { to: "/admin/services", label: "Services", icon: Briefcase },
   { to: "/admin/screenings", label: "Eye Screenings", icon: Eye },
   { to: "/admin/notifications", label: "Notifications", icon: MessageSquare },
@@ -42,6 +52,9 @@ const AdminSidebarInner = () => {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
+  const { isSuperAdmin } = useAuth();
+
+  const visibleItems = allItems.filter(item => !item.superAdminOnly || isSuperAdmin);
 
   return (
     <Sidebar collapsible="icon" className="border-r border-slate-800 bg-slate-900 text-slate-100">
@@ -59,7 +72,7 @@ const AdminSidebarInner = () => {
         <SidebarGroup className="px-3 py-4">
           <SidebarGroupContent>
             <SidebarMenu className="gap-1">
-              {allItems.map((it) => {
+              {visibleItems.map((it) => {
                 const isActive = it.end ? location.pathname === it.to : location.pathname.startsWith(it.to);
                 return (
                   <SidebarMenuItem key={it.to}>
@@ -97,6 +110,7 @@ interface AdminLayoutProps {
 export const AdminLayout = ({ children, title, subtitle }: AdminLayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { isSuperAdmin } = useAuth();
   
   const signOut = () => {
     apiService.auth.logout();
@@ -124,7 +138,13 @@ export const AdminLayout = ({ children, title, subtitle }: AdminLayoutProps) => 
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="h-10 px-3 flex items-center gap-2 rounded-lg border-border hover:bg-muted transition-colors">
                     <User className="h-4 w-4 text-primary" />
-                    <span className="hidden sm:block text-sm font-semibold">Administrator</span>
+                    {isSuperAdmin ? (
+                      <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded-md">
+                        <Shield className="h-3 w-3 text-amber-600" /> Super Admin
+                      </span>
+                    ) : (
+                      <span className="hidden sm:block text-sm font-semibold">Administrator</span>
+                    )}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 p-1 rounded-lg shadow-lg border-border">

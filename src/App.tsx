@@ -37,6 +37,7 @@ import AdminCMS from "./pages/admin/AdminCMS.tsx";
 import AdminScreenings from "./pages/admin/AdminScreenings.tsx";
 import AdminSMS from "./pages/admin/AdminSMS.tsx";
 import AdminMonitoring from "./pages/admin/AdminMonitoring.tsx";
+import AdminManagement from "./pages/admin/AdminManagement.tsx";
 import RegisterPatient from "./pages/RegisterPatient.tsx";
 import MedicalHistory from "./pages/MedicalHistory.tsx";
 import Notifications from "./pages/Notifications.tsx";
@@ -136,7 +137,8 @@ const App = () => (
               <Route path="/admin/cms" element={<ProtectedRoute requireAdmin><AdminCMS /></ProtectedRoute>} />
               <Route path="/admin/screenings" element={<ProtectedRoute requireAdmin><AdminScreenings /></ProtectedRoute>} />
               <Route path="/admin/sms" element={<ProtectedRoute requireAdmin><AdminSMS /></ProtectedRoute>} />
-              <Route path="/admin/monitoring" element={<ProtectedRoute requireAdmin><AdminMonitoring /></ProtectedRoute>} />
+              <Route path="/admin/administrators" element={<ProtectedRoute requireSuperAdmin><AdminManagement /></ProtectedRoute>} />
+              <Route path="/admin/monitoring" element={<ProtectedRoute requireSuperAdmin><AdminMonitoring /></ProtectedRoute>} />
 
             </Routes>
           </MaintenanceManager>

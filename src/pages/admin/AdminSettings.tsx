@@ -10,8 +10,10 @@ import { apiService } from "@/lib/api";
 import { toast } from "sonner";
 import { Shield, Lock, Mail, User, Loader2, Save, Clock, ShieldAlert, MessageSquare, Globe, Edit } from "lucide-react";
 import { ClinicContact } from "@/lib/cms";
+import { useAuth } from "@/hooks/useAuth";
 
 const AdminSettings = () => {
+  const { isSuperAdmin } = useAuth();
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState({ fullName: "", email: "" });
   const [passwords, setPasswords] = useState({ current: "", new: "", confirm: "" });
@@ -285,21 +287,33 @@ const AdminSettings = () => {
                     <Label className="font-bold flex items-center gap-2 text-base">
                       <ShieldAlert className="h-5 w-5 text-muted-foreground" />
                       Maintenance Mode
+                      {!isSuperAdmin && (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full">
+                          <Lock className="w-3 h-3" /> Super Admin Only
+                        </span>
+                      )}
                     </Label>
                     <p className="text-xs text-muted-foreground">
                       When active, the entire website will be hidden behind a maintenance screen. 
-                      Only Admins can still access the dashboard.
+                      {isSuperAdmin ? " Only Administrators can still access the dashboard." : " Only the Super Admin can toggle system maintenance."}
                     </p>
                   </div>
                   <div className="flex items-center space-x-2">
                     <input 
                       type="checkbox" 
                       id="maint_mode"
-                      className="h-5 w-5 accent-primary rounded" 
+                      disabled={!isSuperAdmin}
+                      className={`h-5 w-5 accent-primary rounded ${!isSuperAdmin ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`} 
                       checked={clinic.maintenanceMode}
-                      onChange={(e) => setClinic({ ...clinic, maintenanceMode: e.target.checked })}
+                      onChange={(e) => {
+                        if (!isSuperAdmin) {
+                          toast.error("Only Super Admin can toggle Maintenance Mode");
+                          return;
+                        }
+                        setClinic({ ...clinic, maintenanceMode: e.target.checked });
+                      }}
                     />
-                    <Label htmlFor="maint_mode" className="font-bold cursor-pointer">
+                    <Label htmlFor="maint_mode" className={`font-bold ${!isSuperAdmin ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}>
                       {clinic.maintenanceMode ? "ENABLED" : "OFF"}
                     </Label>
                   </div>

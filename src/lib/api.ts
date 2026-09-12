@@ -272,6 +272,17 @@ export const apiService = {
     adminResetPassword: async (resetData: { userId: string; newPassword: string }): Promise<void> => {
       await api.post('/auth/admin-reset-password', resetData);
     },
+    getPendingAdmins: async (): Promise<{ email: string; createdAt: string }[]> => {
+      const { data } = await api.get('/auth/pending-admins');
+      return data;
+    },
+    addPendingAdmin: async (email: string): Promise<{ email: string; createdAt: string }> => {
+      const { data } = await api.post('/auth/pending-admins', { email });
+      return data;
+    },
+    removePendingAdmin: async (email: string): Promise<void> => {
+      await api.delete(`/auth/pending-admins/${encodeURIComponent(email)}`);
+    },
     getCaptcha: async (): Promise<{ question: string; captchaToken: string }> => {
       const { data } = await api.get('/auth/captcha');
       return data;

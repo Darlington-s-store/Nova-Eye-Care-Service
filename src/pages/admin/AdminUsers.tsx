@@ -14,8 +14,9 @@ import { Label } from "@/components/ui/label";
 import { 
   Search, User, Mail, Phone, ArrowRight, Loader2, KeyRound, 
   MapPin, HeartPulse, PhoneCall, Info, Edit3, Trash2, Save, Undo, Plus, Shield, Eye,
-  ArrowLeft, Printer, UserCheck, AlertTriangle, FileText, MessageSquare
+  ArrowLeft, Printer, UserCheck, AlertTriangle, FileText, MessageSquare, Lock
 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 type UserProfile = {
   id: string;
@@ -63,6 +64,7 @@ const initialNewUserState = {
 
 const AdminUsers = () => {
   const navigate = useNavigate();
+  const { isSuperAdmin } = useAuth();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -529,21 +531,39 @@ const AdminUsers = () => {
                   </h3>
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="edit-role">User Role</Label>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="edit-role">User Role</Label>
+                        {!isSuperAdmin && (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
+                            <Lock className="w-3 h-3" /> Super Admin Only
+                          </span>
+                        )}
+                      </div>
                       <Select 
                         value={editForm.role || "user"} 
                         onValueChange={(val) => setEditForm(prev => ({ ...prev, role: val }))}
+                        disabled={!isSuperAdmin}
                       >
-                        <SelectTrigger id="edit-role" className="rounded-xl"><SelectValue placeholder="Select role" /></SelectTrigger>
+                        <SelectTrigger id="edit-role" className={`rounded-xl ${!isSuperAdmin ? "opacity-60 cursor-not-allowed" : ""}`}>
+                          <SelectValue placeholder="Select role" />
+                        </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="user">Patient (User)</SelectItem>
-                          <SelectItem value="admin">Administrator</SelectItem>
-                          <SelectItem value="super_admin">Super Administrator (Overall Boss)</SelectItem>
+                          {isSuperAdmin && (
+                            <>
+                              <SelectItem value="admin">Administrator</SelectItem>
+                              <SelectItem value="super_admin">Super Administrator (Overall Boss)</SelectItem>
+                            </>
+                          )}
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="p-4 bg-muted/40 rounded-xl border border-muted/50 text-xs text-muted-foreground leading-relaxed">
-                      Assigning <strong>Super Administrator</strong> grants overarching privileges over all system telemetry, security lockouts, and personnel accounts. Regular administrators cannot modify Super Admins.
+                      {isSuperAdmin ? (
+                        <>Assigning <strong>Super Administrator</strong> grants overarching privileges over all system telemetry, administrative personnel, and security lockouts.</>
+                      ) : (
+                        <>Role assignments and elevations are reserved strictly for the <strong>Super Administrator</strong>.</>
+                      )}
                     </div>
                   </div>
                 </Card>
@@ -808,6 +828,11 @@ const AdminUsers = () => {
                         <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-800 flex items-center gap-2">
                           <Shield className="h-4 w-4 text-amber-600 shrink-0" />
                           <span>Protected Root Account: Super Administrator accounts cannot be deleted.</span>
+                        </div>
+                      ) : !isSuperAdmin ? (
+                        <div className="p-3 bg-muted/40 rounded-xl border border-muted/50 text-xs text-muted-foreground flex items-center gap-2">
+                          <Lock className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <span>Permanent deletion of patient records requires Super Admin privileges.</span>
                         </div>
                       ) : (
                         <Button 

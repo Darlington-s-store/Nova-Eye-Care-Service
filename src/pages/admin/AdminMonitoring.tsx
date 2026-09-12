@@ -50,7 +50,7 @@ export default function AdminMonitoring() {
       setMetrics(metricsData);
       setAuditLogs(logsData);
       setLockedUsers(lockedData);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to load monitoring telemetry:", err);
       if (!isSilent) {
         toast.error("Failed to fetch system telemetry");
@@ -77,7 +77,8 @@ export default function AdminMonitoring() {
       toast.success(res.message || "Account unlocked successfully");
       setManualUnlockEmail("");
       await fetchDashboardData(true);
-    } catch (err: any) {
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
       toast.error(err.response?.data?.message || "Failed to unlock account");
     } finally {
       setUnlocking(false);

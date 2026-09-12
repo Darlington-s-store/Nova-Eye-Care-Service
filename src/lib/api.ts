@@ -659,7 +659,7 @@ export const apiService = {
       const { data } = await api.get('/system/locked-users');
       return data;
     },
-    unlockUser: async (params: { userId?: string; email?: string }): Promise<{ message: string; user?: any }> => {
+    unlockUser: async (params: { userId?: string; email?: string }): Promise<{ message: string; user?: Record<string, unknown> }> => {
       const { data } = await api.post('/system/unlock-user', params);
       return data;
     }
@@ -728,7 +728,7 @@ export interface AuditLogItem {
   id: number;
   userId: string | null;
   action: string;
-  details: any;
+  details: Record<string, unknown> | string | null;
   ip: string;
   createdAt: string;
   email?: string;

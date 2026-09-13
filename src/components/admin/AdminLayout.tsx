@@ -83,7 +83,7 @@ const AdminSidebarInner = () => {
     <Sidebar collapsible="icon" className="border-r border-slate-800 bg-slate-900 text-slate-100">
       <SidebarContent className="bg-slate-900">
         <div className={`px-6 py-6 border-b border-slate-800 ${collapsed ? "px-2" : ""}`}>
-          <Link to="/admin" className="flex items-center gap-3">
+          <Link to={location.pathname.startsWith("/admin") ? "/admin" : "/"} className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-lg overflow-hidden shrink-0 border border-slate-800">
               <img src={logo} alt="NOVA Logo" className="h-full w-full object-contain" />
             </div>
@@ -137,8 +137,10 @@ export const AdminLayout = ({ children, title, subtitle }: AdminLayoutProps) => 
   
   const signOut = () => {
     apiService.auth.logout();
-    navigate("/admin/login", { replace: true });
+    navigate(location.pathname.startsWith("/admin") ? "/admin/login" : "/login", { replace: true });
   };
+
+  const publicSiteUrl = import.meta.env.VITE_PUBLIC_SITE_URL;
 
   return (
     <SidebarProvider>
@@ -175,10 +177,17 @@ export const AdminLayout = ({ children, title, subtitle }: AdminLayoutProps) => 
                     Account Actions
                   </DropdownMenuLabel>
                   <DropdownMenuItem asChild className="cursor-pointer focus:bg-muted py-2 px-3 rounded-md">
-                    <Link to="/" className="flex items-center w-full gap-2">
-                      <HomeIcon className="h-4 w-4" />
-                      <span className="text-sm font-medium">View Website</span>
-                    </Link>
+                    {publicSiteUrl ? (
+                      <a href={publicSiteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center w-full gap-2">
+                        <HomeIcon className="h-4 w-4" />
+                        <span className="text-sm font-medium">View Website</span>
+                      </a>
+                    ) : (
+                      <Link to="/" className="flex items-center w-full gap-2">
+                        <HomeIcon className="h-4 w-4" />
+                        <span className="text-sm font-medium">View Website</span>
+                      </Link>
+                    )}
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild className="cursor-pointer focus:bg-muted py-2 px-3 rounded-md">
                     <Link to="/admin/settings" className="flex items-center w-full gap-2">
@@ -202,12 +211,12 @@ export const AdminLayout = ({ children, title, subtitle }: AdminLayoutProps) => 
           <main className="flex-1 p-6 lg:p-10">
             <div className="max-w-6xl mx-auto">
               <div className="mb-8">
-                {location.pathname !== "/admin" && (
+                {location.pathname !== "/admin" && location.pathname !== "/" && (
                   <Button 
                     variant="link" 
                     size="sm" 
                     className="p-0 h-auto text-primary mb-4 flex items-center gap-1 hover:no-underline font-semibold"
-                    onClick={() => navigate("/admin")}
+                    onClick={() => navigate(location.pathname.startsWith("/admin") ? "/admin" : "/")}
                   >
                     <ChevronLeft className="h-4 w-4" />
                     Back to Dashboard

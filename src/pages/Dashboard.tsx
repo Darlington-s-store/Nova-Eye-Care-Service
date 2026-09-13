@@ -58,13 +58,16 @@ const Dashboard = () => {
   const [announcementDismissed, setAnnouncementDismissed] = useState(false);
   const [welcomeAlert, setWelcomeAlert] = useState<{ title: string; message: string } | null>(null);
 
+  const adminUrl = import.meta.env.VITE_ADMIN_URL || "/admin";
+  const isAdminExternal = adminUrl.startsWith("http://") || adminUrl.startsWith("https://");
+
   useEffect(() => {
     const justRegistered = sessionStorage.getItem("nova_just_registered");
     const justLoggedIn = sessionStorage.getItem("nova_just_logged_in");
     if (justRegistered) {
       setWelcomeAlert({
-        title: "Account Created & Verified Successfully!",
-        message: "Welcome to NOVA Eye Care. Your account has been verified via SMS and you are now securely logged in."
+        title: "Welcome to NOVA Eye Care!",
+        message: "Your patient account has been created successfully. You can now book appointments, view your medical history, and access prescriptions."
       });
       sessionStorage.removeItem("nova_just_registered");
     } else if (justLoggedIn) {
@@ -78,9 +81,13 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (!authLoading && user && isAdmin) {
-      navigate("/admin", { replace: true });
+      if (isAdminExternal) {
+        window.location.href = adminUrl;
+      } else {
+        navigate(adminUrl, { replace: true });
+      }
     }
-  }, [authLoading, user, isAdmin, navigate]);
+  }, [authLoading, user, isAdmin, navigate, isAdminExternal, adminUrl]);
 
   useEffect(() => {
     if (!user || isAdmin) return;
@@ -232,7 +239,11 @@ const Dashboard = () => {
             </Button>
             {isAdmin && (
               <Button asChild variant="ghost" className="w-full justify-start rounded-xl font-bold text-slate-500 hover:text-primary h-11">
-                <Link to="/admin"><ShieldCheck className="h-4 w-4 mr-3" /> Admin Portal</Link>
+                {isAdminExternal ? (
+                  <a href={adminUrl}><ShieldCheck className="h-4 w-4 mr-3" /> Admin Portal</a>
+                ) : (
+                  <Link to="/admin"><ShieldCheck className="h-4 w-4 mr-3" /> Admin Portal</Link>
+                )}
               </Button>
             )}
           </div>
@@ -256,7 +267,11 @@ const Dashboard = () => {
               </Button>
               {isAdmin && (
                 <Button asChild size="sm" variant="ghost" className="h-9 w-9 p-0 rounded-xl text-slate-500 hover:text-primary">
-                  <Link to="/admin" title="Admin Portal"><ShieldCheck className="h-4 w-4" /></Link>
+                  {isAdminExternal ? (
+                    <a href={adminUrl} title="Admin Portal"><ShieldCheck className="h-4 w-4" /></a>
+                  ) : (
+                    <Link to="/admin" title="Admin Portal"><ShieldCheck className="h-4 w-4" /></Link>
+                  )}
                 </Button>
               )}
             </div>

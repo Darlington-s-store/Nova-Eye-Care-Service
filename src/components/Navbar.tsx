@@ -53,6 +53,9 @@ export const Navbar = () => {
     };
   }, [open]);
 
+  const adminUrl = import.meta.env.VITE_ADMIN_URL || "/admin";
+  const isAdminExternal = adminUrl.startsWith("http://") || adminUrl.startsWith("https://");
+
   const handleLogout = async () => {
     try {
       apiService.auth.logout();
@@ -131,10 +134,17 @@ export const Navbar = () => {
                 </DropdownMenuLabel>
                 {isAdmin ? (
                   <DropdownMenuItem asChild className="rounded-lg cursor-pointer focus:bg-primary-soft">
-                    <Link to="/admin" className="flex items-center w-full">
-                      <ShieldCheck className="mr-2 h-4 w-4 text-primary" />
-                      <span className="font-bold text-primary">Admin Dashboard</span>
-                    </Link>
+                    {isAdminExternal ? (
+                      <a href={adminUrl} className="flex items-center w-full">
+                        <ShieldCheck className="mr-2 h-4 w-4 text-primary" />
+                        <span className="font-bold text-primary">Admin Dashboard</span>
+                      </a>
+                    ) : (
+                      <Link to="/admin" className="flex items-center w-full">
+                        <ShieldCheck className="mr-2 h-4 w-4 text-primary" />
+                        <span className="font-bold text-primary">Admin Dashboard</span>
+                      </Link>
+                    )}
                   </DropdownMenuItem>
                 ) : (
                   <>
@@ -229,10 +239,17 @@ export const Navbar = () => {
                   <>
                     {isAdmin ? (
                       <Button asChild variant="outline" className="w-full rounded-xl h-12 font-bold justify-start px-5 bg-primary/5 border-primary/20" onClick={() => setOpen(false)}>
-                        <Link to="/admin" className="flex items-center">
-                          <ShieldCheck className="mr-2 h-4 w-4 text-primary" />
-                          Admin Dashboard
-                        </Link>
+                        {isAdminExternal ? (
+                          <a href={adminUrl} className="flex items-center">
+                            <ShieldCheck className="mr-2 h-4 w-4 text-primary" />
+                            Admin Dashboard
+                          </a>
+                        ) : (
+                          <Link to="/admin" className="flex items-center">
+                            <ShieldCheck className="mr-2 h-4 w-4 text-primary" />
+                            Admin Dashboard
+                          </Link>
+                        )}
                       </Button>
                     ) : (
                       <>

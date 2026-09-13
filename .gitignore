@@ -29,4 +29,5 @@ dist-ssr
 # Build artifacts
 *.zip
 dist/
+dist-admin/
 Backend/

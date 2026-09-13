@@ -33,6 +33,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           id: data.id,
           email: data.email,
           fullName: data.fullName,
+          phone: data.phone,
           role: frontendRole
         };
         

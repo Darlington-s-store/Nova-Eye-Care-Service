@@ -122,7 +122,9 @@ const VerifyOtp = () => {
       sessionStorage.removeItem("signup_data");
       sessionStorage.removeItem("signup_otp_token");
       
-      window.location.href = "/dashboard";
+      const redirectTarget = sessionStorage.getItem("nova_redirect_after_auth");
+      sessionStorage.removeItem("nova_redirect_after_auth");
+      window.location.href = redirectTarget || "/dashboard";
     } catch (err) {
       const error = err as { response?: { data?: { message?: string; errors?: { msg: string }[] } } };
       const message = error.response?.data?.errors?.[0]?.msg || error.response?.data?.message || (err as Error).message || "Verification failed.";

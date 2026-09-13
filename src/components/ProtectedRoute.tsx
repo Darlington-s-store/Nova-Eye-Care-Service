@@ -22,8 +22,14 @@ export const ProtectedRoute = ({ children, requireAdmin, requireSuperAdmin }: Pr
   }
 
   if (!session) {
+    const fullPath = location.pathname + location.search;
+    try {
+      sessionStorage.setItem("nova_redirect_after_auth", fullPath);
+    } catch {
+      // ignore storage errors
+    }
     const redirectTo = (requireAdmin || requireSuperAdmin) ? "/admin/login" : "/login";
-    return <Navigate to={redirectTo} state={{ from: location.pathname }} replace />;
+    return <Navigate to={redirectTo} state={{ from: fullPath }} replace />;
   }
 
   if (requireSuperAdmin && !isSuperAdmin) {

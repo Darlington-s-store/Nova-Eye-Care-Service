@@ -7,9 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { TIME_SLOTS_WEEKDAY, TIME_SLOTS_SATURDAY, CLINIC } from "@/lib/clinic";
 import { apiService } from "@/lib/api";
-import { CheckCircle2, CalendarCheck, Loader2, Clock, Phone, Mail, Sparkles, ShieldCheck, ArrowRight, ArrowLeft, MapPin, Video, User, FileText, Smartphone } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { CheckCircle2, CalendarCheck, Loader2, Clock, Phone, Mail, Sparkles, ShieldCheck, ArrowRight, ArrowLeft, MapPin, Video, User, FileText, Smartphone, Edit3, Info, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { PageHero } from "@/components/PageHero";
@@ -46,6 +48,7 @@ const ReviewItem = ({ label, value, icon: Icon }: { label: string; value: string
 const Book = () => {
   const [searchParams] = useSearchParams();
   const presetSlug = searchParams.get("service");
+  const { user } = useAuth();
 
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({
@@ -60,6 +63,8 @@ const Book = () => {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<typeof form | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [confirmedReview, setConfirmedReview] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const [services, setServices] = useState<{name: string, slug: string, short: string}[]>([]);
   const [loadingServices, setLoadingServices] = useState(true);
@@ -122,17 +127,25 @@ const Book = () => {
           setUserId(p.id);
           setForm((f) => ({
             ...f,
-            full_name: f.full_name || p.fullName || "",
-            phone: f.phone || p.phone || "",
-            email: f.email || p.email || "",
+            full_name: f.full_name || p.fullName || user?.fullName || "",
+            phone: f.phone || p.phone || user?.phone || "",
+            email: f.email || p.email || user?.email || "",
           }));
         }
       } catch (err) {
-        // Not logged in or error, ignore
+        if (user) {
+          setUserId(user.id);
+          setForm((f) => ({
+            ...f,
+            full_name: f.full_name || user.fullName || "",
+            phone: f.phone || user.phone || "",
+            email: f.email || user.email || "",
+          }));
+        }
       }
     };
     loadProfile();
-  }, []);
+  }, [user]);
 
   const dayOfWeek = form.appointment_date ? new Date(form.appointment_date).getDay() : null;
   const isSaturday = dayOfWeek === 6;
@@ -168,8 +181,8 @@ const Book = () => {
   };
   const prev = () => setStep((s) => Math.max(s - 1, 0));
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleProceedToConfirm = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (step < STEPS.length - 1) {
       next();
       return;
@@ -183,6 +196,28 @@ const Book = () => {
       const fieldErrors: Record<string, string> = {};
       parsed.error.issues.forEach((i) => { fieldErrors[i.path[0] as string] = i.message; });
       setErrors(fieldErrors);
+      return;
+    }
+    if (!confirmedReview) {
+      toast.error("Please check the confirmation box acknowledging your appointment details.");
+      return;
+    }
+    setErrors({});
+    setShowConfirmModal(true);
+  };
+
+  const handleFinalSubmit = async () => {
+    if (isSunday) {
+      setErrors({ appointment_date: "We are closed on Sundays. Please pick another day." });
+      setShowConfirmModal(false);
+      return;
+    }
+    const parsed = schema.safeParse(form);
+    if (!parsed.success) {
+      const fieldErrors: Record<string, string> = {};
+      parsed.error.issues.forEach((i) => { fieldErrors[i.path[0] as string] = i.message; });
+      setErrors(fieldErrors);
+      setShowConfirmModal(false);
       return;
     }
     setSubmitting(true);
@@ -200,12 +235,18 @@ const Book = () => {
         notes: parsed.data.notes ?? null,
       });
       
+      setShowConfirmModal(false);
       setSuccess(form);
       toast.success("Appointment booked! An alert has been sent to your SMS and email.");
       setForm({ full_name: "", phone: "", email: "", service: "", appointment_date: "", appointment_time: "", appointment_type: "in_person", doctor_name: "", notes: "" });
+      setConfirmedReview(false);
       setStep(0);
-    } catch (err) {
-      setErrors({ form: err.response?.data?.message || "Failed to book appointment" });
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      const msg = error.response?.data?.message || "Failed to book appointment. Please try again.";
+      setErrors({ form: msg });
+      toast.error(msg);
+      setShowConfirmModal(false);
     } finally {
       setSubmitting(false);
     }
@@ -365,7 +406,7 @@ const Book = () => {
                   })}
                 </div>
   
-                <form onSubmit={onSubmit} className="space-y-8">
+                <form onSubmit={handleProceedToConfirm} className="space-y-8">
                     {step === 0 && (
                       <div className="space-y-6">
                         <div>
@@ -565,8 +606,25 @@ const Book = () => {
                       <div className="space-y-8">
                         <div>
                           <h2 className="font-bold text-2xl mb-2 tracking-tight">Your contact details</h2>
-                          <p className="text-muted-foreground">Please provide active details so we can call to confirm.</p>
+                          <p className="text-muted-foreground">Please review and confirm your active details so we can call and send SMS alerts.</p>
                         </div>
+
+                        {/* Authenticated Account Badge */}
+                        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200/80 flex items-center justify-between gap-3 text-emerald-950">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="h-9 w-9 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                              <ShieldCheck className="h-5 w-5" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">Authenticated Patient Account</p>
+                              <p className="text-xs font-semibold text-emerald-950 truncate">Booking linked to {user?.email || form.email}</p>
+                            </div>
+                          </div>
+                          <span className="text-[11px] bg-emerald-200/70 text-emerald-800 font-bold px-2.5 py-1 rounded-full shrink-0">
+                            Verified
+                          </span>
+                        </div>
+
                         <div className="grid gap-6 sm:grid-cols-2">
                           <div className="space-y-2">
                             <Label htmlFor="full_name" className="text-sm font-bold">Full name *</Label>
@@ -595,34 +653,114 @@ const Book = () => {
                     {step === 3 && (
                       <div className="space-y-8 animate-in fade-in duration-300">
                         <div>
-                          <h2 className="font-bold text-2xl mb-2 tracking-tight">Review your booking</h2>
-                          <p className="text-muted-foreground">Please double-check your appointment details before submitting.</p>
+                          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold mb-2">
+                            <CheckCircle2 className="h-3.5 w-3.5" /> Step 4 of 4
+                          </div>
+                          <h2 className="font-bold text-2xl md:text-3xl text-slate-900 tracking-tight">Review & Confirm Your Appointment</h2>
+                          <p className="text-muted-foreground text-sm md:text-base mt-1">
+                            Please carefully review your consultation details below. You will be prompted to confirm before final booking.
+                          </p>
                         </div>
                         
                         <div className="grid gap-6 md:grid-cols-2">
-                          <Card className="p-6 rounded-2xl border border-border/60 bg-muted/10 space-y-4">
-                            <h3 className="font-bold text-sm text-primary uppercase tracking-wider">Appointment Info</h3>
+                          <Card className="p-6 rounded-2xl border border-border/80 bg-slate-50/60 space-y-4 relative">
+                            <div className="flex items-center justify-between border-b border-border/40 pb-3">
+                              <h3 className="font-bold text-xs text-primary uppercase tracking-wider flex items-center gap-1.5">
+                                <Sparkles className="h-3.5 w-3.5" /> Appointment Details
+                              </h3>
+                              <Button 
+                                type="button" 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => setStep(0)} 
+                                className="h-7 px-2 text-xs font-bold text-primary hover:text-primary hover:bg-primary/10 rounded-lg gap-1"
+                              >
+                                <Edit3 className="h-3 w-3" /> Edit
+                              </Button>
+                            </div>
                             <div className="space-y-3">
                               <ReviewItem label="Service" value={form.service} icon={Sparkles} />
                               <ReviewItem label="Date" value={form.appointment_date ? new Date(form.appointment_date).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" }) : ""} icon={CalendarCheck} />
                               <ReviewItem label="Time Slot" value={form.appointment_time} icon={Clock} />
-                              <ReviewItem label="Consultation Type" value={form.appointment_type === "virtual" ? "Virtual (Online Consultation)" : "In-Person (Clinic Visit)"} icon={form.appointment_type === "virtual" ? Video : MapPin} />
-                              <ReviewItem label="Assigned Doctor" value={form.doctor_name || "Any Available Doctor"} icon={User} />
+                              <ReviewItem label="Consultation Type" value={form.appointment_type === "virtual" ? "Virtual (Online Video Consultation)" : "In-Person (Clinic Visit in Abuakwa)"} icon={form.appointment_type === "virtual" ? Video : MapPin} />
+                              <ReviewItem label="Doctor / Specialist" value={form.doctor_name || "First Available Eye Specialist"} icon={User} />
                             </div>
                           </Card>
 
-                          <Card className="p-6 rounded-2xl border border-border/60 bg-muted/10 space-y-4">
-                            <h3 className="font-bold text-sm text-primary uppercase tracking-wider">Your Details</h3>
+                          <Card className="p-6 rounded-2xl border border-border/80 bg-slate-50/60 space-y-4 relative">
+                            <div className="flex items-center justify-between border-b border-border/40 pb-3">
+                              <h3 className="font-bold text-xs text-primary uppercase tracking-wider flex items-center gap-1.5">
+                                <User className="h-3.5 w-3.5" /> Patient & Contact
+                              </h3>
+                              <Button 
+                                type="button" 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => setStep(2)} 
+                                className="h-7 px-2 text-xs font-bold text-primary hover:text-primary hover:bg-primary/10 rounded-lg gap-1"
+                              >
+                                <Edit3 className="h-3 w-3" /> Edit
+                              </Button>
+                            </div>
                             <div className="space-y-3">
                               <ReviewItem label="Full Name" value={form.full_name} icon={User} />
                               <ReviewItem label="Phone Number" value={form.phone} icon={Phone} />
                               <ReviewItem label="Email Address" value={form.email} icon={Mail} />
-                              {form.notes && <ReviewItem label="Notes for clinic" value={form.notes} icon={FileText} />}
+                              <ReviewItem label="Notes for clinic" value={form.notes || "None provided"} icon={FileText} />
                             </div>
                           </Card>
                         </div>
 
-                        {errors.form && <p className="text-sm font-semibold text-destructive text-center bg-destructive/5 py-3 rounded-lg">{errors.form}</p>}
+                        {/* Visit Guidelines Card */}
+                        <div className="p-5 rounded-2xl border border-slate-200 bg-white shadow-sm space-y-3">
+                          <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                            <Info className="h-4 w-4 text-primary" /> What Happens Next?
+                          </h4>
+                          <div className="grid sm:grid-cols-3 gap-3 text-xs text-slate-600 leading-relaxed">
+                            <div className="p-3 bg-slate-50 rounded-xl">
+                              <strong className="block text-slate-900 font-semibold mb-0.5">1. Instant Alerts</strong>
+                              SMS confirmation to <strong>{form.phone}</strong> and an email immediately upon booking.
+                            </div>
+                            <div className="p-3 bg-slate-50 rounded-xl">
+                              <strong className="block text-slate-900 font-semibold mb-0.5">2. Doctor Review</strong>
+                              Our optometrists prepare your file. Virtual video links will be available in your portal.
+                            </div>
+                            <div className="p-3 bg-slate-50 rounded-xl">
+                              <strong className="block text-slate-900 font-semibold mb-0.5">3. Full Portal Control</strong>
+                              View, reschedule, or cancel your visit anytime from your Patient Portal.
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Mandatory Review Confirmation Checkbox */}
+                        <div className={`p-5 rounded-2xl border-2 transition-all ${
+                          confirmedReview ? "border-primary bg-primary/5 shadow-sm" : "border-amber-200 bg-amber-50/50"
+                        }`}>
+                          <label className="flex items-start gap-3.5 cursor-pointer select-none">
+                            <input 
+                              type="checkbox"
+                              id="confirm-review-checkbox"
+                              checked={confirmedReview}
+                              onChange={(e) => setConfirmedReview(e.target.checked)}
+                              className="h-5 w-5 rounded border-slate-300 text-primary focus:ring-primary mt-0.5 cursor-pointer"
+                            />
+                            <div className="text-sm">
+                              <span className="font-bold text-slate-900 block text-sm sm:text-base">
+                                I confirm that I have reviewed all my appointment details and they are accurate.
+                              </span>
+                              <span className="text-xs text-slate-500 mt-1 block leading-relaxed">
+                                I understand that appointment alerts will be sent to <strong>{form.phone}</strong> and <strong>{form.email}</strong>.
+                              </span>
+                            </div>
+                          </label>
+                        </div>
+
+                        {errors.form && (
+                          <div className="p-4 rounded-xl bg-destructive/10 text-destructive text-sm font-semibold flex items-center gap-2">
+                            <AlertCircle className="h-4 w-4 shrink-0" />
+                            <span>{errors.form}</span>
+                          </div>
+                        )}
                       </div>
                     )}
   
@@ -634,26 +772,98 @@ const Book = () => {
                       )}
                       {step < STEPS.length - 1 ? (
                         <Button type="button" variant="hero" size="lg" onClick={next} disabled={!canNext()} className="flex-1 h-14 rounded-xl font-bold shadow-sm">
-                          Continue <ArrowRight className="h-4 w-4 ml-2" />
+                          Continue to {STEPS[step + 1]} <ArrowRight className="h-4 w-4 ml-2" />
                         </Button>
                       ) : (
-                        <Button type="submit" variant="hero" size="lg" className="flex-1 h-14 rounded-xl font-bold shadow-sm" disabled={submitting}>
-                          {submitting ? <><Loader2 className="h-5 w-5 animate-spin mr-2" /> Submitting...</> : "Confirm booking"}
+                        <Button 
+                          type="button" 
+                          variant="hero" 
+                          size="lg" 
+                          className="flex-1 h-14 rounded-xl font-bold shadow-sm" 
+                          disabled={!confirmedReview || submitting}
+                          onClick={() => handleProceedToConfirm()}
+                        >
+                          Confirm & Book Appointment <ArrowRight className="h-4 w-4 ml-2" />
                         </Button>
                       )}
                     </div>
-  
-                    {!userId && step === STEPS.length - 1 && (
-                      <p className="text-center text-sm text-muted-foreground pt-2">
-                        Want to track and reschedule? <Link to="/signup" className="text-primary font-bold hover:underline">Create an account</Link>.
-                      </p>
-                    )}
                   </form>
               </Card>
             </div>
           </div>
         </div>
       </section>
+
+      {/* Final Review & Confirmation Dialog Modal */}
+      <Dialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
+        <DialogContent className="max-w-md p-6 sm:p-8 rounded-[2rem] border-slate-200">
+          <DialogHeader className="text-left space-y-2">
+            <div className="h-12 w-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-1">
+              <CalendarCheck className="h-6 w-6" />
+            </div>
+            <DialogTitle className="text-2xl font-extrabold text-slate-900 tracking-tight">
+              Confirm Your Appointment
+            </DialogTitle>
+            <DialogDescription className="text-sm text-slate-500">
+              Please take a final look to confirm your booking at NOVA Eye Care.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="my-4 p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5 text-xs">
+            <div className="flex justify-between items-center py-1.5 border-b border-slate-200/60">
+              <span className="text-slate-500 font-medium">Service</span>
+              <span className="font-bold text-slate-900 text-right">{form.service}</span>
+            </div>
+            <div className="flex justify-between items-center py-1.5 border-b border-slate-200/60">
+              <span className="text-slate-500 font-medium">Date & Time</span>
+              <span className="font-bold text-slate-900 text-right">
+                {form.appointment_date ? new Date(form.appointment_date).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }) : ""} at {form.appointment_time}
+              </span>
+            </div>
+            <div className="flex justify-between items-center py-1.5 border-b border-slate-200/60">
+              <span className="text-slate-500 font-medium">Mode</span>
+              <span className="font-bold text-slate-900">
+                {form.appointment_type === "virtual" ? "Virtual (Online Video)" : "In-Person (Clinic Visit)"}
+              </span>
+            </div>
+            <div className="flex justify-between items-center py-1.5 border-b border-slate-200/60">
+              <span className="text-slate-500 font-medium">Specialist</span>
+              <span className="font-bold text-slate-900">{form.doctor_name || "First Available Specialist"}</span>
+            </div>
+            <div className="flex justify-between items-center py-1.5">
+              <span className="text-slate-500 font-medium">Patient</span>
+              <span className="font-bold text-slate-900">{form.full_name} ({form.phone})</span>
+            </div>
+          </div>
+
+          <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 mt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowConfirmModal(false)}
+              disabled={submitting}
+              className="h-12 rounded-xl font-bold w-full sm:w-auto"
+            >
+              Go Back & Edit
+            </Button>
+            <Button
+              type="button"
+              variant="hero"
+              onClick={handleFinalSubmit}
+              disabled={submitting}
+              className="h-12 rounded-xl font-bold w-full sm:flex-1 shadow-sm"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" /> Submitting...
+                </>
+              ) : (
+                "Yes, Submit Booking"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };

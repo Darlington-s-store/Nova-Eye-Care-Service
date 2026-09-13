@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,13 +7,14 @@ import { Label } from "@/components/ui/label";
 import { apiService } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Eye, EyeOff, Loader2, ArrowLeft, Mail, Smartphone } from "lucide-react";
+import { Eye, EyeOff, Loader2, ArrowLeft, Mail, Smartphone, CalendarCheck } from "lucide-react";
 import logo from "@/assets/logo.jpeg";
 import heroGeneral from "@/assets/hero.jpeg";
 import { signInWithGoogleFirebase } from "@/lib/firebase";
 
 const Signup = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, refresh } = useAuth();
   const [showPw, setShowPw] = useState(false);
   const [signUpStep, setSignUpStep] = useState(1);
@@ -25,6 +26,9 @@ const Signup = () => {
 
   const [sendingOtp, setSendingOtp] = useState(false);
 
+  const redirectTarget = (location.state as { from?: string } | undefined)?.from || sessionStorage.getItem("nova_redirect_after_auth");
+  const isBookingRedirect = !!(redirectTarget && redirectTarget.startsWith("/book"));
+
   const handleFirebaseGoogleSignup = async () => {
     setSendingOtp(true);
     try {
@@ -33,7 +37,8 @@ const Signup = () => {
       await apiService.auth.loginWithGoogle(idToken);
       await refresh();
       toast.success("Welcome back!");
-      window.location.href = "/dashboard";
+      sessionStorage.removeItem("nova_redirect_after_auth");
+      window.location.href = redirectTarget || "/dashboard";
     } catch (err: unknown) {
       const error = err as { code?: string; message?: string; response?: { data?: { message?: string } } };
       if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
@@ -89,9 +94,14 @@ const Signup = () => {
 
   useEffect(() => {
     if (user) {
-      navigate("/dashboard", { replace: true });
+      if (redirectTarget) {
+        sessionStorage.removeItem("nova_redirect_after_auth");
+        navigate(redirectTarget, { replace: true });
+      } else {
+        navigate("/dashboard", { replace: true });
+      }
     }
-  }, [user, navigate]);
+  }, [user, navigate, redirectTarget]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-950 font-sans relative overflow-hidden p-6">
@@ -135,6 +145,16 @@ const Signup = () => {
               </div>
             ))}
           </div>
+
+          {isBookingRedirect && (
+            <div className="mb-6 p-4 rounded-xl bg-blue-50 border border-blue-200 flex items-start gap-3 text-blue-900 animate-in fade-in">
+              <CalendarCheck className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
+              <div className="text-xs leading-relaxed text-left">
+                <strong className="block text-sm font-bold text-blue-950 mb-0.5">Create Account to Complete Booking</strong>
+                Please register your patient profile so we can confirm, link, and notify you about your upcoming appointment.
+              </div>
+            </div>
+          )}
 
           <div className="text-center mb-6">
             <Link to="/" className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-slate-50 border border-slate-200 p-1 mb-4 transition-transform hover:scale-105 duration-300">
@@ -522,7 +542,7 @@ const Signup = () => {
             variant="outline" 
             className="w-full h-12 rounded-xl font-bold border-slate-200 text-slate-700 hover:bg-slate-50 transition-all"
           >
-            <Link to="/login">
+            <Link to="/login" state={{ from: redirectTarget }}>
               Sign In to Portal
             </Link>
           </Button>

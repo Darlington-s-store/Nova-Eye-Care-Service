@@ -18,7 +18,7 @@ import {
   MicOff, 
   MessageSquare, 
   Radio, 
-  Languages 
+  Globe 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -59,6 +59,26 @@ const QUICK_PROMPTS: Record<Lang, { label: string; query: string }[]> = {
     { label: "Ani Si / Wusiwusi", query: "M'ani so ayɛ me wusiwusi na ɛyɛ me ya, dɛn na menyɛ?" },
   ],
 };
+
+/**
+ * Phonetic adaptation for speech synthesis engines to pronounce Asante Twi accurately
+ */
+function twiToPhoneticTTS(text: string): string {
+  return text
+    .replace(/ɛ/g, "eh")
+    .replace(/Ɛ/g, "Eh")
+    .replace(/ɔ/g, "aw")
+    .replace(/Ɔ/g, "Aw")
+    .replace(/\bky/gi, "ch")
+    .replace(/\btw/gi, "chw")
+    .replace(/\bdw/gi, "jw")
+    .replace(/\bgy/gi, "j")
+    .replace(/\bnye\b/gi, "nyeh")
+    .replace(/nhwehwɛmu/gi, "n-hweh-hweh-mu")
+    .replace(/wusiwusi/gi, "woo-see-woo-see")
+    .replace(/akwaaba/gi, "ah-kwaa-bah")
+    .replace(/medaase/gi, "meh-daa-seh");
+}
 
 export const ChatWidget = () => {
   const [lang, setLang] = useState<Lang>("en");
@@ -136,6 +156,14 @@ export const ChatWidget = () => {
       }
       return prev;
     });
+
+    if (isVoiceModeRef.current) {
+      if (newLang === "twi") {
+        speakTextAloud("Akwaaba! Me din de NOVA. Kasa na mentie wo.");
+      } else {
+        speakTextAloud("Switched to English. I am listening.");
+      }
+    }
   };
 
   // ===================== SPEECH RECOGNITION SETUP =====================
@@ -177,7 +205,8 @@ export const ChatWidget = () => {
 
       recognition.continuous = false;
       recognition.interimResults = true;
-      recognition.lang = langRef.current === "twi" ? "en-GH" : "en-US";
+      // Use Akan-Ghana or Ghanaian English for natural local phonetics
+      recognition.lang = langRef.current === "twi" ? "ak-GH" : "en-US";
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       recognition.onstart = () => {
@@ -210,6 +239,15 @@ export const ChatWidget = () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       recognition.onerror = (event: any) => {
         console.warn("Speech recognition error:", event.error);
+        if (event.error === "language-not-supported" && langRef.current === "twi") {
+          // Fallback to Ghanaian English if ak-GH is not installed on device
+          try {
+            recognition.lang = "en-GH";
+            recognition.start();
+            return;
+          } catch {}
+        }
+
         if (event.error === "not-allowed") {
           setVoiceError(
             langRef.current === "twi"
@@ -253,10 +291,10 @@ export const ChatWidget = () => {
     window.speechSynthesis.cancel();
     stopListening();
 
-    const clean = text
+    let clean = text
       .replace(/[*_#`[\]()]/g, "")
       .replace(/https?:\/\/\S+/g, "")
-      .replace(/👉|🚗|📍|⏰|📋|📅|💡|🚨|👋/g, "")
+      .replace(/👉|🚗|📍|⏰|📋|📅|💡|🚨|👋|🇬🇭/g, "")
       .replace(/\n+/g, " ")
       .trim();
 
@@ -265,12 +303,21 @@ export const ChatWidget = () => {
       return;
     }
 
+    // Apply phonetic conversion if Twi language
+    if (langRef.current === "twi") {
+      clean = twiToPhoneticTTS(clean);
+    }
+
     const utterance = new SpeechSynthesisUtterance(clean);
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
+    utterance.rate = 0.95; // Slightly measured rate for maximum clarity
+    utterance.pitch = 1.05;
 
     const voices = window.speechSynthesis.getVoices();
-    const naturalVoice = voices.find(v => (v.name.includes("Natural") || v.name.includes("Google") || v.name.includes("Samantha")) && v.lang.startsWith("en"));
+    // Prioritize natural or African/British English voices for best Twi cadence
+    const naturalVoice = voices.find(v => 
+      (v.name.includes("Natural") || v.name.includes("Google") || v.name.includes("Samantha") || v.name.includes("Great Britain")) &&
+      v.lang.startsWith("en")
+    );
     if (naturalVoice) utterance.voice = naturalVoice;
 
     utterance.onstart = () => {
@@ -310,7 +357,11 @@ export const ChatWidget = () => {
     setError(null);
     setVoiceError(null);
     setTimeout(() => {
-      startListening();
+      if (langRef.current === "twi") {
+        speakTextAloud("Akwaaba! Me din de NOVA. Kasa kyerɛ me fa w'ani ho na memboa wo.");
+      } else {
+        speakTextAloud("Hello! I am NOVA. How can I help with your eye care today?");
+      }
     }, 400);
   };
 
@@ -337,7 +388,7 @@ export const ChatWidget = () => {
     try {
       recognition.continuous = false;
       recognition.interimResults = true;
-      recognition.lang = lang === "twi" ? "en-GH" : "en-US";
+      recognition.lang = lang === "twi" ? "ak-GH" : "en-US";
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       recognition.onstart = () => setIsListening(true);
@@ -351,6 +402,13 @@ export const ChatWidget = () => {
       };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       recognition.onerror = (event: any) => {
+        if (event.error === "language-not-supported" && lang === "twi") {
+          try {
+            recognition.lang = "en-GH";
+            recognition.start();
+            return;
+          } catch {}
+        }
         if (event.error === "not-allowed") {
           setError(lang === "twi" ? "Kwan nni hɔ ma maekrofoun no." : "Microphone permission denied.");
         }
@@ -617,7 +675,7 @@ export const ChatWidget = () => {
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
               </span>
               <Mic className="h-4 w-4 text-primary" />
-              <span>{lang === "twi" ? "Kasa kyerɛ NOVA" : "Voice Agent"}</span>
+              <span>{lang === "twi" ? "🇬🇭 Kasa Twi wɔ Nne So" : "Voice Agent"}</span>
             </motion.button>
 
             {/* Main Chat Circle Launcher */}
@@ -710,7 +768,7 @@ export const ChatWidget = () => {
                       lang === "twi" ? "bg-white text-primary shadow-xs font-black" : "text-white/85 hover:text-white"
                     }`}
                   >
-                    TWI
+                    🇬🇭 TWI
                   </button>
                 </div>
 
@@ -773,12 +831,13 @@ export const ChatWidget = () => {
             {/* ======================= BODY ======================= */}
             {isVoiceMode ? (
               /* =================== VOICE AGENT CALL SCREEN =================== */
-              <div className="flex-1 flex flex-col justify-between p-5 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white relative overflow-hidden">
+              <div className="flex-1 flex flex-col justify-between p-4 sm:p-5 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white relative overflow-hidden">
                 <div className="absolute inset-0 pointer-events-none opacity-20">
                   <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-teal-500 rounded-full blur-3xl" />
                   <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 w-48 h-48 bg-primary rounded-full blur-3xl" />
                 </div>
 
+                {/* Top Voice Header with Language Switcher */}
                 <div className="relative z-10 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="flex h-2.5 w-2.5">
@@ -786,25 +845,34 @@ export const ChatWidget = () => {
                       <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                     </span>
                     <span className="text-xs font-semibold text-emerald-400 tracking-wider uppercase">
-                      {lang === "twi" ? "🇬🇭 Asante Twi Voice Live" : "Voice AI Active"}
+                      {lang === "twi" ? "🇬🇭 Twi Nne Nkɔmmɔ" : "Voice AI Active"}
                     </span>
                   </div>
 
-                  <span className="text-xs text-slate-400 font-mono">
-                    {isMuted 
-                      ? (lang === "twi" ? "MIC ATO MU" : "MIC MUTED") 
-                      : isSpeakingVoice 
-                      ? (lang === "twi" ? "NOVA REKASA" : "NOVA SPEAKING") 
-                      : loading 
-                      ? (lang === "twi" ? "REDWENE HO" : "PROCESSING") 
-                      : isListening 
-                      ? (lang === "twi" ? "RETIE WO" : "LISTENING") 
-                      : "READY"}
-                  </span>
+                  {/* Language Switcher on Voice Screen */}
+                  <div className="flex items-center rounded-xl bg-slate-800/90 border border-slate-700/80 p-0.5 text-xs font-bold shadow-xs">
+                    <button
+                      onClick={() => toggleLanguage("twi")}
+                      className={`px-2 py-1 rounded-lg transition-all flex items-center gap-1 ${
+                        lang === "twi" ? "bg-primary text-white shadow-xs" : "text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      <span>🇬🇭</span>
+                      <span>Asante Twi</span>
+                    </button>
+                    <button
+                      onClick={() => toggleLanguage("en")}
+                      className={`px-2 py-1 rounded-lg transition-all ${
+                        lang === "en" ? "bg-primary text-white shadow-xs" : "text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      English
+                    </button>
+                  </div>
                 </div>
 
                 {/* Center Dynamic Animated Soundwave Orb */}
-                <div className="relative z-10 flex flex-col items-center justify-center my-auto py-6">
+                <div className="relative z-10 flex flex-col items-center justify-center my-auto py-4">
                   <div className="relative flex items-center justify-center">
                     <AnimatePresence>
                       {(isListening || isSpeakingVoice) && (
@@ -888,7 +956,7 @@ export const ChatWidget = () => {
                   </div>
 
                   {/* Verbal Status Prompt */}
-                  <div className="mt-6 text-center">
+                  <div className="mt-5 text-center">
                     <h4 className="font-bold text-base text-slate-100">
                       {isMuted 
                         ? (lang === "twi" ? "Maekrofoun no ato mu" : "Microphone Muted") 
@@ -897,21 +965,21 @@ export const ChatWidget = () => {
                         : loading 
                         ? (lang === "twi" ? "NOVA redwene ho..." : "NOVA is Thinking...") 
                         : isListening 
-                        ? (lang === "twi" ? "Retie wo... (Kasa seesei)" : "Listening... (Speak now)") 
-                        : (lang === "twi" ? "Klike so na kasa" : "Tap Orb to Speak")}
+                        ? (lang === "twi" ? "Retie wo... (Kasa Twi seesei)" : "Listening... (Speak now)") 
+                        : (lang === "twi" ? "Klike so na kasa Twi" : "Tap Orb to Speak")}
                     </h4>
-                    <p className="text-xs text-slate-400 mt-1 max-w-[260px]">
+                    <p className="text-xs text-slate-400 mt-1 max-w-[280px]">
                       {isSpeakingVoice 
                         ? (lang === "twi" ? "Klike orb no so sɛ worepɛ sɛ wobisa asɛmfoforɔ" : "Tap orb or 'Interrupt' to ask another question") 
                         : isListening 
-                        ? (lang === "twi" ? "Bisa fa ani nhwehwɛmu, boɔ, DVLA, anaa beaeɛ a yɛwɔ" : "Ask about exams, prices, DVLA, or eye symptoms") 
-                        : (lang === "twi" ? "Fa wo nne kasa kyerɛ NOVA tee" : "Hands-free voice consultation")}
+                        ? (lang === "twi" ? "Bisa me fa ani nhwehwɛmu, boɔ, DVLA, anaa beaeɛ a yɛwɔ" : "Ask about exams, prices, DVLA, or eye symptoms") 
+                        : (lang === "twi" ? "Fa wo nne kasa Twi kyerɛ NOVA tee" : "Hands-free voice consultation")}
                     </p>
                   </div>
                 </div>
 
                 {/* Subtitle / Live Transcript Card */}
-                <div className="relative z-10 bg-slate-800/80 backdrop-blur-md rounded-2xl p-3.5 border border-slate-700/60 max-h-36 overflow-y-auto space-y-2 text-xs leading-relaxed shadow-lg">
+                <div className="relative z-10 bg-slate-800/80 backdrop-blur-md rounded-2xl p-3.5 border border-slate-700/60 max-h-32 overflow-y-auto space-y-2 text-xs leading-relaxed shadow-lg">
                   {liveTranscript ? (
                     <div className="text-emerald-300 flex items-start gap-1.5 font-medium">
                       <span className="font-bold shrink-0 text-white">{lang === "twi" ? "Wo:" : "You:"}</span>
@@ -941,7 +1009,7 @@ export const ChatWidget = () => {
                 </div>
 
                 {/* Bottom Control Bar */}
-                <div className="relative z-10 pt-4 flex items-center justify-around border-t border-slate-800/80">
+                <div className="relative z-10 pt-3 flex items-center justify-around border-t border-slate-800/80">
                   <button
                     onClick={() => {
                       if (isMuted) {
@@ -962,7 +1030,7 @@ export const ChatWidget = () => {
                     }`}>
                       {isMuted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
                     </div>
-                    <span className="text-[10px] font-medium">{isMuted ? (lang === "twi" ? "Bue" : "Unmute") : (lang === "twi" ? "To mu" : "Mute")}</span>
+                    <span className="text-[10px] font-medium">{isMuted ? (lang === "twi" ? "Bue Mic" : "Unmute") : (lang === "twi" ? "To mu" : "Mute")}</span>
                   </button>
 
                   {isSpeakingVoice && (
@@ -974,7 +1042,7 @@ export const ChatWidget = () => {
                       <div className="h-11 w-11 rounded-full flex items-center justify-center border border-amber-400/50 bg-amber-500/20">
                         <VolumeX className="h-5 w-5" />
                       </div>
-                      <span className="text-[10px] font-bold">{lang === "twi" ? "Gyae" : "Interrupt"}</span>
+                      <span className="text-[10px] font-bold">{lang === "twi" ? "Gyae Nne" : "Interrupt"}</span>
                     </button>
                   )}
 

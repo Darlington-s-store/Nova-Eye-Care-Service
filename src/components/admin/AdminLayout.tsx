@@ -140,7 +140,8 @@ export const AdminLayout = ({ children, title, subtitle }: AdminLayoutProps) => 
     navigate(location.pathname.startsWith("/admin") ? "/admin/login" : "/login", { replace: true });
   };
 
-  const publicSiteUrl = import.meta.env.VITE_PUBLIC_SITE_URL;
+  const publicSiteUrl = import.meta.env.VITE_PUBLIC_SITE_URL || (import.meta.env.PROD ? "https://novaeyecareservice.com" : "/");
+  const isExternalPublicSite = publicSiteUrl.startsWith("http://") || publicSiteUrl.startsWith("https://");
 
   return (
     <SidebarProvider>
@@ -177,7 +178,7 @@ export const AdminLayout = ({ children, title, subtitle }: AdminLayoutProps) => 
                     Account Actions
                   </DropdownMenuLabel>
                   <DropdownMenuItem asChild className="cursor-pointer focus:bg-muted py-2 px-3 rounded-md">
-                    {publicSiteUrl ? (
+                    {isExternalPublicSite ? (
                       <a href={publicSiteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center w-full gap-2">
                         <HomeIcon className="h-4 w-4" />
                         <span className="text-sm font-medium">View Website</span>

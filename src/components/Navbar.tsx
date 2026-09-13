@@ -53,7 +53,7 @@ export const Navbar = () => {
     };
   }, [open]);
 
-  const adminUrl = import.meta.env.VITE_ADMIN_URL || "/admin";
+  const adminUrl = import.meta.env.VITE_ADMIN_URL || (import.meta.env.PROD ? "https://admin.novaeyecareservice.com" : "/admin");
   const isAdminExternal = adminUrl.startsWith("http://") || adminUrl.startsWith("https://");
 
   const handleLogout = async () => {

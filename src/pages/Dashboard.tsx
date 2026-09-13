@@ -58,7 +58,7 @@ const Dashboard = () => {
   const [announcementDismissed, setAnnouncementDismissed] = useState(false);
   const [welcomeAlert, setWelcomeAlert] = useState<{ title: string; message: string } | null>(null);
 
-  const adminUrl = import.meta.env.VITE_ADMIN_URL || "/admin";
+  const adminUrl = import.meta.env.VITE_ADMIN_URL || (import.meta.env.PROD ? "https://admin.novaeyecareservice.com" : "/admin");
   const isAdminExternal = adminUrl.startsWith("http://") || adminUrl.startsWith("https://");
 
   useEffect(() => {

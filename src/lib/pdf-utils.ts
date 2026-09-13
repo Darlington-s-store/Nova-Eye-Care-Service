@@ -79,7 +79,7 @@ export const generateScreeningPDF = (data: ScreeningData) => {
   doc.setFontSize(8);
   doc.setTextColor(150, 150, 150);
   doc.text("This is a computer-generated medical record from the Nova Eye Care Portal.", 20, footerY);
-  doc.text("www.novaeyecare.com | Specialized Eye Health Services", pageWidth - 20, footerY, { align: "right" });
+  doc.text("www.novaeyecareservice.com | Specialized Eye Health Services", pageWidth - 20, footerY, { align: "right" });
 
   doc.save(`Nova_Screening_${data.patientName.replace(/\s+/g, '_')}.pdf`);
 };

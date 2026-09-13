@@ -10,14 +10,15 @@ import {
   Sparkles, 
   MapPin, 
   Phone, 
-  PhoneCall,
-  PhoneOff,
-  Type,
-  Bot,
-  Mic,
-  MicOff,
-  MessageSquare,
-  Radio
+  PhoneCall, 
+  PhoneOff, 
+  Type, 
+  Bot, 
+  Mic, 
+  MicOff, 
+  MessageSquare, 
+  Radio, 
+  Languages 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -25,26 +26,44 @@ import { motion, AnimatePresence } from "framer-motion";
 import { apiService } from "@/lib/api";
 
 type Msg = { role: "user" | "assistant"; content: string };
+type Lang = "en" | "twi";
 
 const CHAT_URL = `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/chatbot/chat`;
 
-const INITIAL_GREETING: Msg = {
-  role: "assistant",
-  content:
-    "Hello! 👋 I am **NOVA**, your AI Patient Care Concierge at NOVA Eye Care Services.\n\nHow can I help you today? You can speak to me with your voice or type your questions about our **eye tests**, **DVLA licensing**, **pricing**, **opening hours**, or **visual symptoms**.",
+const INITIAL_GREETINGS: Record<Lang, Msg> = {
+  en: {
+    role: "assistant",
+    content:
+      "Hello! 👋 I am **NOVA**, your AI Patient Care Concierge at NOVA Eye Care Services.\n\nHow can I help you today? You can speak to me with your voice or type your questions about our **eye tests**, **DVLA licensing**, **pricing**, **opening hours**, or **visual symptoms**.",
+  },
+  twi: {
+    role: "assistant",
+    content:
+      "Akwaaba! 👋 Me din de **NOVA**, wo AI Ani Sohwɛfoɔ wɔ NOVA Eye Care Services wɔ Abuakwa.\n\nƐte sɛn? Wobɛtumi de wo nne akasa akyerɛ me anaa atwerɛ me biribiara a worepɛ afa yɛn **ani nhwehwɛmu**, **DVLA kwan so ani sɔhwɛ**, **boɔ a yɛgye**, **beaeɛ a yɛwɔ**, anaa **w'ani a ɛreyɛ wo ya** ho.",
+  },
 };
 
-const QUICK_PROMPTS = [
-  { label: "Eye Exam Services", query: "What eye care services do you offer?" },
-  { label: "Prices & Fees", query: "How much do your eye tests and services cost?" },
-  { label: "DVLA Driver Test", query: "Tell me about the DVLA eye test for driver license." },
-  { label: "Abuakwa Location", query: "Where is your clinic located in Abuakwa?" },
-  { label: "Dry or Blurry Eyes", query: "My eyes are blurry and strained, what should I do?" },
-];
+const QUICK_PROMPTS: Record<Lang, { label: string; query: string }[]> = {
+  en: [
+    { label: "Eye Exam Services", query: "What eye care services do you offer?" },
+    { label: "Prices & Fees", query: "How much do your eye tests and services cost?" },
+    { label: "DVLA Driver Test", query: "Tell me about the DVLA eye test for driver license." },
+    { label: "Abuakwa Location", query: "Where is your clinic located in Abuakwa?" },
+    { label: "Dry or Blurry Eyes", query: "My eyes are blurry and strained, what should I do?" },
+  ],
+  twi: [
+    { label: "Ani Nhwehwɛmu", query: "Ani ho dwumadi bɛn na mowɔ wɔ Nova Eye Care?" },
+    { label: "Boɔ a Yɛgye", query: "Ani nhwehwɛmu no, boɔ ahe na mogye?" },
+    { label: "DVLA Ani Sɔhwɛ", query: "Kyerɛ me DVLA laseense ani sɔhwɛ no ho asɛm." },
+    { label: "Abuakwa Beaeɛ", query: "Ɛhe koraa na mo asopiti no wɔ wɔ Abuakwa?" },
+    { label: "Ani Si / Wusiwusi", query: "M'ani so ayɛ me wusiwusi na ɛyɛ me ya, dɛn na menyɛ?" },
+  ],
+};
 
 export const ChatWidget = () => {
+  const [lang, setLang] = useState<Lang>("en");
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<Msg[]>([INITIAL_GREETING]);
+  const [messages, setMessages] = useState<Msg[]>([INITIAL_GREETINGS.en]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,11 +87,13 @@ export const ChatWidget = () => {
   const isMutedRef = useRef(isMuted);
   const isSpeakingVoiceRef = useRef(isSpeakingVoice);
   const loadingRef = useRef(loading);
+  const langRef = useRef(lang);
 
   isVoiceModeRef.current = isVoiceMode;
   isMutedRef.current = isMuted;
   isSpeakingVoiceRef.current = isSpeakingVoice;
   loadingRef.current = loading;
+  langRef.current = lang;
 
   useEffect(() => {
     const checkSettings = async () => {
@@ -106,6 +127,17 @@ export const ChatWidget = () => {
     };
   }, []);
 
+  // Toggle language and update greeting if still fresh
+  const toggleLanguage = (newLang: Lang) => {
+    setLang(newLang);
+    setMessages((prev) => {
+      if (prev.length <= 1) {
+        return [INITIAL_GREETINGS[newLang]];
+      }
+      return prev;
+    });
+  };
+
   // ===================== SPEECH RECOGNITION SETUP =====================
   const getSpeechRecognition = () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -130,7 +162,11 @@ export const ChatWidget = () => {
 
     const recognition = getSpeechRecognition();
     if (!recognition) {
-      setVoiceError("Speech recognition is not supported in this browser. Please try Chrome, Edge, or Safari.");
+      setVoiceError(
+        langRef.current === "twi"
+          ? "Wo braosa yi nnye nne nkyerɛwedeɛ. Yɛsrɛ wo fa Chrome, Edge, anaa Safari bue."
+          : "Speech recognition is not supported in this browser. Please try Chrome, Edge, or Safari."
+      );
       return;
     }
 
@@ -141,7 +177,7 @@ export const ChatWidget = () => {
 
       recognition.continuous = false;
       recognition.interimResults = true;
-      recognition.lang = "en-US";
+      recognition.lang = langRef.current === "twi" ? "en-GH" : "en-US";
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       recognition.onstart = () => {
@@ -167,7 +203,6 @@ export const ChatWidget = () => {
         if (final.trim()) {
           stopListening();
           setLiveTranscript("");
-          // Send recognized text to chatbot
           send(final.trim());
         }
       };
@@ -176,10 +211,13 @@ export const ChatWidget = () => {
       recognition.onerror = (event: any) => {
         console.warn("Speech recognition error:", event.error);
         if (event.error === "not-allowed") {
-          setVoiceError("Microphone access blocked. Please enable microphone permissions in your browser.");
+          setVoiceError(
+            langRef.current === "twi"
+              ? "Kwan nni hɔ ma maekrofoun no. Yɛsrɛ wo bue maekrofoun no wɔ wo braosa no so."
+              : "Microphone access blocked. Please enable microphone permissions in your browser."
+          );
           setIsListening(false);
         } else if (event.error === "no-speech") {
-          // Restart listening if still in voice mode and not muted
           if (isVoiceModeRef.current && !isSpeakingVoiceRef.current && !isMutedRef.current && !loadingRef.current) {
             setTimeout(() => startListening(), 400);
           }
@@ -188,7 +226,6 @@ export const ChatWidget = () => {
 
       recognition.onend = () => {
         setIsListening(false);
-        // Automatically restart listening if in voice mode, not speaking, not thinking, not muted
         if (isVoiceModeRef.current && !isSpeakingVoiceRef.current && !loadingRef.current && !isMutedRef.current) {
           setTimeout(() => {
             if (isVoiceModeRef.current && !isSpeakingVoiceRef.current && !loadingRef.current && !isMutedRef.current) {
@@ -214,9 +251,8 @@ export const ChatWidget = () => {
     }
 
     window.speechSynthesis.cancel();
-    stopListening(); // Stop mic while speaking to prevent self-pickup
+    stopListening();
 
-    // Clean text of markdown, links, bullets
     const clean = text
       .replace(/[*_#`[\]()]/g, "")
       .replace(/https?:\/\/\S+/g, "")
@@ -233,7 +269,6 @@ export const ChatWidget = () => {
     utterance.rate = 1.0;
     utterance.pitch = 1.0;
 
-    // Pick best natural English voice if available
     const voices = window.speechSynthesis.getVoices();
     const naturalVoice = voices.find(v => (v.name.includes("Natural") || v.name.includes("Google") || v.name.includes("Samantha")) && v.lang.startsWith("en"));
     if (naturalVoice) utterance.voice = naturalVoice;
@@ -245,7 +280,6 @@ export const ChatWidget = () => {
     utterance.onend = () => {
       setIsSpeakingVoice(false);
       if (onFinish) onFinish();
-      // Resume listening in voice mode
       if (isVoiceModeRef.current && !isMutedRef.current) {
         setTimeout(() => startListening(), 400);
       }
@@ -271,18 +305,15 @@ export const ChatWidget = () => {
     }
   };
 
-  // Switch to Voice Mode
   const enterVoiceMode = () => {
     setIsVoiceMode(true);
     setError(null);
     setVoiceError(null);
-    // Greet or start listening
     setTimeout(() => {
       startListening();
     }, 400);
   };
 
-  // Exit Voice Mode
   const exitVoiceMode = () => {
     stopListening();
     if (window.speechSynthesis) window.speechSynthesis.cancel();
@@ -291,7 +322,6 @@ export const ChatWidget = () => {
     setLiveTranscript("");
   };
 
-  // Inline Dictation in Text Chat Mode
   const toggleTextDictation = () => {
     if (isListening) {
       stopListening();
@@ -300,14 +330,14 @@ export const ChatWidget = () => {
 
     const recognition = getSpeechRecognition();
     if (!recognition) {
-      setError("Speech recognition is not supported in this browser.");
+      setError(lang === "twi" ? "Braosa yi nnye nne nkyerɛwedeɛ." : "Speech recognition is not supported in this browser.");
       return;
     }
 
     try {
       recognition.continuous = false;
       recognition.interimResults = true;
-      recognition.lang = "en-US";
+      recognition.lang = lang === "twi" ? "en-GH" : "en-US";
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       recognition.onstart = () => setIsListening(true);
@@ -322,7 +352,7 @@ export const ChatWidget = () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       recognition.onerror = (event: any) => {
         if (event.error === "not-allowed") {
-          setError("Microphone permission denied.");
+          setError(lang === "twi" ? "Kwan nni hɔ ma maekrofoun no." : "Microphone permission denied.");
         }
         setIsListening(false);
       };
@@ -357,12 +387,11 @@ export const ChatWidget = () => {
     stopListening();
     setSpeakingIndex(null);
     setIsSpeakingVoice(false);
-    setMessages([INITIAL_GREETING]);
+    setMessages([INITIAL_GREETINGS[lang]]);
     setError(null);
     setLiveTranscript("");
   };
 
-  // Main Send Function
   const send = async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || loading) return;
@@ -378,7 +407,7 @@ export const ChatWidget = () => {
       assistantSoFar += chunk;
       setMessages((prev) => {
         const last = prev[prev.length - 1];
-        if (last?.role === "assistant" && last !== INITIAL_GREETING && prev.length > next.length) {
+        if (last?.role === "assistant" && !Object.values(INITIAL_GREETINGS).includes(last) && prev.length > next.length) {
           return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: assistantSoFar } : m));
         }
         return [...prev, { role: "assistant", content: assistantSoFar }];
@@ -386,24 +415,28 @@ export const ChatWidget = () => {
     };
 
     try {
-      const apiMessages = next.filter((m) => m !== INITIAL_GREETING);
+      const apiMessages = next.filter((m) => !Object.values(INITIAL_GREETINGS).includes(m));
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ messages: apiMessages }),
+        body: JSON.stringify({ messages: apiMessages, lang }),
       });
 
       if (resp.status === 429) { 
-        const errTxt = "Too many requests. Please wait a few moments or call us directly at +233 54 417 2089.";
+        const errTxt = lang === "twi"
+          ? "Nnipa pii rebisa nsɛm seesei ara. Yɛsrɛ wo twɛn kakra anaa frɛ yɛn wɔ +233 54 417 2089."
+          : "Too many requests. Please wait a few moments or call us directly at +233 54 417 2089.";
         setError(errTxt);
         if (isVoiceModeRef.current) speakTextAloud(errTxt);
         setLoading(false); 
         return; 
       }
       if (resp.status === 402) { 
-        const errTxt = "Live chat service is temporarily unavailable. Please call us at +233 54 417 2089 or book online.";
+        const errTxt = lang === "twi"
+          ? "Intanɛte nkɔmmɔbɔ no nnyɛ adwuma seesei. Yɛsrɛ wo frɛ yɛn wɔ +233 54 417 2089."
+          : "Live chat service is temporarily unavailable. Please call us at +233 54 417 2089 or book online.";
         setError(errTxt);
         if (isVoiceModeRef.current) speakTextAloud(errTxt);
         setLoading(false); 
@@ -445,16 +478,23 @@ export const ChatWidget = () => {
         }
       }
 
-      // If in Voice Agent Mode, speak the generated answer automatically!
       if (isVoiceModeRef.current && assistantSoFar) {
         speakTextAloud(assistantSoFar);
       }
     } catch (e) {
       console.error("Chat error:", e);
       const msg = e instanceof Error ? e.message : "Network issue.";
-      const fullError = `${msg} Please try again or call our clinic directly at +233 54 417 2089.`;
+      const fullError = lang === "twi"
+        ? `${msg} Yɛsrɛ wo sɔ hwɛ bio anaa frɛ asopiti no tee wɔ +233 54 417 2089.`
+        : `${msg} Please try again or call our clinic directly at +233 54 417 2089.`;
       setError(fullError);
-      if (isVoiceModeRef.current) speakTextAloud("I had trouble connecting. Please try again or call us at 0544172089.");
+      if (isVoiceModeRef.current) {
+        speakTextAloud(
+          lang === "twi"
+            ? "Mente wo nka yie. Yɛsrɛ wo sɔ hwɛ bio anaa frɛ yɛn wɔ 0544172089."
+            : "I had trouble connecting. Please try again or call us at 0544172089."
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -552,7 +592,6 @@ export const ChatWidget = () => {
     return tokens;
   };
 
-  // Last assistant message for voice transcript display
   const lastAssistantMessage = [...messages].reverse().find(m => m.role === "assistant");
   const lastUserMessage = [...messages].reverse().find(m => m.role === "user");
 
@@ -578,7 +617,7 @@ export const ChatWidget = () => {
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
               </span>
               <Mic className="h-4 w-4 text-primary" />
-              <span>Voice Agent</span>
+              <span>{lang === "twi" ? "Kasa kyerɛ NOVA" : "Voice Agent"}</span>
             </motion.button>
 
             {/* Main Chat Circle Launcher */}
@@ -629,7 +668,9 @@ export const ChatWidget = () => {
                 <div>
                   <div className="flex items-center gap-1.5">
                     <h3 className="font-bold text-base leading-tight">
-                      {isVoiceMode ? "NOVA Voice Call" : "NOVA AI Concierge"}
+                      {isVoiceMode 
+                        ? (lang === "twi" ? "NOVA Nne Nkɔmmɔ" : "NOVA Voice Call") 
+                        : (lang === "twi" ? "NOVA Ani Sohwɛfoɔ" : "NOVA AI Concierge")}
                     </h3>
                     <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/20 font-medium tracking-wide uppercase">
                       {isVoiceMode ? "Voice Live" : "AI Care"}
@@ -639,34 +680,60 @@ export const ChatWidget = () => {
                     <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
                     <p className="text-xs text-white/90 font-medium">
                       {isVoiceMode 
-                        ? (isSpeakingVoice ? "Speaking to you..." : isListening ? "Listening to you..." : loading ? "Thinking..." : "Connected") 
-                        : "Licensed Clinic Support • Abuakwa"}
+                        ? (isSpeakingVoice 
+                            ? (lang === "twi" ? "NOVA rekasa kyerɛ wo..." : "Speaking to you...") 
+                            : isListening 
+                            ? (lang === "twi" ? "NOVA retie wo kasa..." : "Listening to you...") 
+                            : loading 
+                            ? (lang === "twi" ? "Redwene asɛm no ho..." : "Thinking...") 
+                            : (lang === "twi" ? "Ayɛ krado" : "Connected")) 
+                        : (lang === "twi" ? "Abuakwa Ani Asopiti • Twi / Eng" : "Licensed Clinic Support • Abuakwa")}
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
+                {/* 🇬🇭 Language Selector Pill (EN | TWI) */}
+                <div className="flex items-center rounded-lg bg-white/20 p-0.5 border border-white/20 text-[10px] font-bold shadow-xs">
+                  <button
+                    onClick={() => toggleLanguage("en")}
+                    className={`px-1.5 py-0.5 rounded-md transition-all ${
+                      lang === "en" ? "bg-white text-primary shadow-xs font-black" : "text-white/85 hover:text-white"
+                    }`}
+                  >
+                    EN
+                  </button>
+                  <button
+                    onClick={() => toggleLanguage("twi")}
+                    className={`px-1.5 py-0.5 rounded-md transition-all ${
+                      lang === "twi" ? "bg-white text-primary shadow-xs font-black" : "text-white/85 hover:text-white"
+                    }`}
+                  >
+                    TWI
+                  </button>
+                </div>
+
                 {/* Voice Call Mode Toggle Button */}
                 {!isVoiceMode ? (
                   <button
                     onClick={enterVoiceMode}
-                    title="Switch to Hands-Free Voice Agent Call"
+                    title={lang === "twi" ? "Bisa asɛm de wo nne" : "Switch to Hands-Free Voice Agent Call"}
                     aria-label="Start Voice Call"
                     className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold transition-all shadow-xs"
                   >
                     <PhoneCall className="h-3.5 w-3.5 text-emerald-300 animate-pulse" />
-                    <span className="hidden sm:inline">Voice Call</span>
+                    <span className="hidden sm:inline">{lang === "twi" ? "Nne" : "Voice Call"}</span>
                   </button>
                 ) : (
                   <button
                     onClick={exitVoiceMode}
-                    title="Switch back to Text Chat"
+                    title={lang === "twi" ? "Kɔ atwerɛ mu" : "Switch back to Text Chat"}
                     aria-label="Switch to Text Mode"
                     className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold transition-all shadow-xs"
                   >
                     <MessageSquare className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Text Mode</span>
+                    <span className="hidden sm:inline">{lang === "twi" ? "Atwerɛ" : "Text Mode"}</span>
                   </button>
                 )}
 
@@ -707,13 +774,11 @@ export const ChatWidget = () => {
             {isVoiceMode ? (
               /* =================== VOICE AGENT CALL SCREEN =================== */
               <div className="flex-1 flex flex-col justify-between p-5 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white relative overflow-hidden">
-                {/* Background Ambient Glow */}
                 <div className="absolute inset-0 pointer-events-none opacity-20">
                   <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-teal-500 rounded-full blur-3xl" />
                   <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 w-48 h-48 bg-primary rounded-full blur-3xl" />
                 </div>
 
-                {/* Top Status & Call Indicator */}
                 <div className="relative z-10 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="flex h-2.5 w-2.5">
@@ -721,19 +786,26 @@ export const ChatWidget = () => {
                       <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                     </span>
                     <span className="text-xs font-semibold text-emerald-400 tracking-wider uppercase">
-                      Voice AI Active
+                      {lang === "twi" ? "🇬🇭 Asante Twi Voice Live" : "Voice AI Active"}
                     </span>
                   </div>
 
                   <span className="text-xs text-slate-400 font-mono">
-                    {isMuted ? "MIC MUTED" : isSpeakingVoice ? "NOVA SPEAKING" : loading ? "PROCESSING" : isListening ? "LISTENING" : "READY"}
+                    {isMuted 
+                      ? (lang === "twi" ? "MIC ATO MU" : "MIC MUTED") 
+                      : isSpeakingVoice 
+                      ? (lang === "twi" ? "NOVA REKASA" : "NOVA SPEAKING") 
+                      : loading 
+                      ? (lang === "twi" ? "REDWENE HO" : "PROCESSING") 
+                      : isListening 
+                      ? (lang === "twi" ? "RETIE WO" : "LISTENING") 
+                      : "READY"}
                   </span>
                 </div>
 
                 {/* Center Dynamic Animated Soundwave Orb */}
                 <div className="relative z-10 flex flex-col items-center justify-center my-auto py-6">
                   <div className="relative flex items-center justify-center">
-                    {/* Outer Glowing Energy Waves */}
                     <AnimatePresence>
                       {(isListening || isSpeakingVoice) && (
                         <>
@@ -763,7 +835,6 @@ export const ChatWidget = () => {
                       )}
                     </AnimatePresence>
 
-                    {/* Thinking Orbital Spinner */}
                     {loading && (
                       <motion.div
                         animate={{ rotate: 360 }}
@@ -820,21 +891,21 @@ export const ChatWidget = () => {
                   <div className="mt-6 text-center">
                     <h4 className="font-bold text-base text-slate-100">
                       {isMuted 
-                        ? "Microphone Muted" 
+                        ? (lang === "twi" ? "Maekrofoun no ato mu" : "Microphone Muted") 
                         : isSpeakingVoice 
-                        ? "NOVA is Speaking..." 
+                        ? (lang === "twi" ? "NOVA rekasa kyerɛ wo..." : "NOVA is Speaking...") 
                         : loading 
-                        ? "NOVA is Thinking..." 
+                        ? (lang === "twi" ? "NOVA redwene ho..." : "NOVA is Thinking...") 
                         : isListening 
-                        ? "Listening... (Speak now)" 
-                        : "Tap Orb to Speak"}
+                        ? (lang === "twi" ? "Retie wo... (Kasa seesei)" : "Listening... (Speak now)") 
+                        : (lang === "twi" ? "Klike so na kasa" : "Tap Orb to Speak")}
                     </h4>
                     <p className="text-xs text-slate-400 mt-1 max-w-[260px]">
                       {isSpeakingVoice 
-                        ? "Tap orb or 'Interrupt' to ask another question" 
+                        ? (lang === "twi" ? "Klike orb no so sɛ worepɛ sɛ wobisa asɛmfoforɔ" : "Tap orb or 'Interrupt' to ask another question") 
                         : isListening 
-                        ? "Ask about exams, prices, DVLA, or eye symptoms" 
-                        : "Hands-free voice consultation"}
+                        ? (lang === "twi" ? "Bisa fa ani nhwehwɛmu, boɔ, DVLA, anaa beaeɛ a yɛwɔ" : "Ask about exams, prices, DVLA, or eye symptoms") 
+                        : (lang === "twi" ? "Fa wo nne kasa kyerɛ NOVA tee" : "Hands-free voice consultation")}
                     </p>
                   </div>
                 </div>
@@ -843,12 +914,12 @@ export const ChatWidget = () => {
                 <div className="relative z-10 bg-slate-800/80 backdrop-blur-md rounded-2xl p-3.5 border border-slate-700/60 max-h-36 overflow-y-auto space-y-2 text-xs leading-relaxed shadow-lg">
                   {liveTranscript ? (
                     <div className="text-emerald-300 flex items-start gap-1.5 font-medium">
-                      <span className="font-bold shrink-0 text-white">You:</span>
+                      <span className="font-bold shrink-0 text-white">{lang === "twi" ? "Wo:" : "You:"}</span>
                       <span className="italic">"{liveTranscript}..."</span>
                     </div>
-                  ) : lastUserMessage && lastUserMessage.content !== INITIAL_GREETING.content ? (
+                  ) : lastUserMessage && !Object.values(INITIAL_GREETINGS).map(g => g.content).includes(lastUserMessage.content) ? (
                     <div className="text-slate-300 flex items-start gap-1.5">
-                      <span className="font-bold shrink-0 text-slate-400">You:</span>
+                      <span className="font-bold shrink-0 text-slate-400">{lang === "twi" ? "Wo:" : "You:"}</span>
                       <span className="line-clamp-2">"{lastUserMessage.content}"</span>
                     </div>
                   ) : null}
@@ -871,7 +942,6 @@ export const ChatWidget = () => {
 
                 {/* Bottom Control Bar */}
                 <div className="relative z-10 pt-4 flex items-center justify-around border-t border-slate-800/80">
-                  {/* Mic Mute / Unmute */}
                   <button
                     onClick={() => {
                       if (isMuted) {
@@ -892,10 +962,9 @@ export const ChatWidget = () => {
                     }`}>
                       {isMuted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
                     </div>
-                    <span className="text-[10px] font-medium">{isMuted ? "Unmute" : "Mute"}</span>
+                    <span className="text-[10px] font-medium">{isMuted ? (lang === "twi" ? "Bue" : "Unmute") : (lang === "twi" ? "To mu" : "Mute")}</span>
                   </button>
 
-                  {/* Interrupt Button (When NOVA is speaking) */}
                   {isSpeakingVoice && (
                     <button
                       onClick={interruptSpeaking}
@@ -905,11 +974,10 @@ export const ChatWidget = () => {
                       <div className="h-11 w-11 rounded-full flex items-center justify-center border border-amber-400/50 bg-amber-500/20">
                         <VolumeX className="h-5 w-5" />
                       </div>
-                      <span className="text-[10px] font-bold">Interrupt</span>
+                      <span className="text-[10px] font-bold">{lang === "twi" ? "Gyae" : "Interrupt"}</span>
                     </button>
                   )}
 
-                  {/* Switch to Text Mode */}
                   <button
                     onClick={exitVoiceMode}
                     aria-label="Switch to Text View"
@@ -918,10 +986,9 @@ export const ChatWidget = () => {
                     <div className="h-11 w-11 rounded-full flex items-center justify-center border border-slate-700 bg-slate-800">
                       <MessageSquare className="h-5 w-5" />
                     </div>
-                    <span className="text-[10px] font-medium">Text Chat</span>
+                    <span className="text-[10px] font-medium">{lang === "twi" ? "Atwerɛ" : "Text Chat"}</span>
                   </button>
 
-                  {/* End Call */}
                   <button
                     onClick={exitVoiceMode}
                     aria-label="End Voice Call"
@@ -930,21 +997,20 @@ export const ChatWidget = () => {
                     <div className="h-11 w-11 rounded-full flex items-center justify-center bg-rose-600 hover:bg-rose-500 text-white shadow-lg">
                       <PhoneOff className="h-5 w-5" />
                     </div>
-                    <span className="text-[10px] font-bold">End Call</span>
+                    <span className="text-[10px] font-bold">{lang === "twi" ? "Gyae Call" : "End Call"}</span>
                   </button>
                 </div>
               </div>
             ) : (
               /* =================== TEXT CHAT MODE =================== */
               <>
-                {/* Quick Actions Bar */}
                 <div className="bg-muted/60 border-b border-border/50 px-3 py-1.5 flex items-center justify-between text-xs text-muted-foreground shrink-0">
                   <button
                     onClick={enterVoiceMode}
                     className="flex items-center gap-1.5 text-[11px] font-semibold text-primary hover:underline transition-all"
                   >
                     <Radio className="h-3.5 w-3.5 text-emerald-500 animate-pulse" />
-                    <span>Talk with Voice Agent</span>
+                    <span>{lang === "twi" ? "🇬🇭 Kasa Twi wɔ Nne So" : "Talk with Voice Agent"}</span>
                   </button>
 
                   <a
@@ -955,12 +1021,19 @@ export const ChatWidget = () => {
                   </a>
                 </div>
 
-                {/* Messages Scroll Area */}
                 <div ref={scrollRef} className="flex-1 overflow-y-auto p-3.5 sm:p-4 space-y-3.5 bg-slate-50/50 dark:bg-slate-950/40">
                   {messages.map((m, i) => {
                     const isAssistant = m.role === "assistant";
-                    const containsBooking = isAssistant && (m.content.toLowerCase().includes("book") || m.content.toLowerCase().includes("appointment"));
-                    const containsLocation = isAssistant && (m.content.toLowerCase().includes("abuakwa") || m.content.toLowerCase().includes("address"));
+                    const containsBooking = isAssistant && (
+                      m.content.toLowerCase().includes("book") || 
+                      m.content.toLowerCase().includes("appointment") ||
+                      m.content.toLowerCase().includes("beaeɛ to hɔ")
+                    );
+                    const containsLocation = isAssistant && (
+                      m.content.toLowerCase().includes("abuakwa") || 
+                      m.content.toLowerCase().includes("address") ||
+                      m.content.toLowerCase().includes("beaeɛ")
+                    );
 
                     return (
                       <motion.div 
@@ -982,7 +1055,6 @@ export const ChatWidget = () => {
                           {isAssistant ? renderFormattedMessage(m.content) : m.content}
                         </div>
 
-                        {/* Action buttons & TTS for assistant */}
                         {isAssistant && (
                           <div className="flex flex-wrap items-center gap-1.5 mt-1.5 ml-1 text-xs">
                             <button
@@ -996,9 +1068,9 @@ export const ChatWidget = () => {
                               }`}
                             >
                               {speakingIndex === i ? (
-                                <><VolumeX className="h-3 w-3" /> Stop Voice</>
+                                <><VolumeX className="h-3 w-3" /> {lang === "twi" ? "Gyae Nne" : "Stop Voice"}</>
                               ) : (
-                                <><Volume2 className="h-3 w-3" /> Listen</>
+                                <><Volume2 className="h-3 w-3" /> {lang === "twi" ? "Tie Nne" : "Listen"}</>
                               )}
                             </button>
 
@@ -1007,7 +1079,7 @@ export const ChatWidget = () => {
                                 onClick={() => { setOpen(false); navigate("/book"); }}
                                 className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-primary/10 text-primary border border-primary/25 hover:bg-primary hover:text-white transition-all shadow-xs"
                               >
-                                <CalendarPlus className="h-3 w-3" /> Book Appointment
+                                <CalendarPlus className="h-3 w-3" /> {lang === "twi" ? "Fa Beaeɛ To Hɔ" : "Book Appointment"}
                               </button>
                             )}
 
@@ -1018,7 +1090,7 @@ export const ChatWidget = () => {
                                 rel="noopener noreferrer"
                                 className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 transition-colors"
                               >
-                                <MapPin className="h-3 w-3" /> View Map
+                                <MapPin className="h-3 w-3" /> {lang === "twi" ? "Hwɛ Mape So" : "View Map"}
                               </a>
                             )}
                           </div>
@@ -1027,7 +1099,6 @@ export const ChatWidget = () => {
                     );
                   })}
                   
-                  {/* Thinking Indicator */}
                   {loading && messages[messages.length - 1]?.role === "user" && (
                     <motion.div 
                       initial={{ opacity: 0, scale: 0.8 }}
@@ -1036,7 +1107,7 @@ export const ChatWidget = () => {
                     >
                       <div className="bg-card border border-border/80 rounded-2xl rounded-bl-none px-4 py-3 flex items-center gap-2 shadow-sm">
                         <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                          <Bot className="h-3.5 w-3.5 text-primary animate-bounce" /> NOVA is thinking
+                          <Bot className="h-3.5 w-3.5 text-primary animate-bounce" /> {lang === "twi" ? "NOVA redwene ho" : "NOVA is thinking"}
                         </span>
                         <div className="flex gap-1">
                           <motion.span animate={{ y: [-2, 2, -2] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0 }} className="h-1.5 w-1.5 rounded-full bg-primary/40" />
@@ -1062,16 +1133,18 @@ export const ChatWidget = () => {
                        className="pt-2 space-y-2.5"
                     >
                       <div className="flex items-center justify-between">
-                        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider pl-1">Suggested Questions:</p>
+                        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider pl-1">
+                          {lang === "twi" ? "Nsɛmmisa a Wɔtaa Bisa:" : "Suggested Questions:"}
+                        </p>
                         <button
                           onClick={enterVoiceMode}
                           className="text-[11px] font-bold text-primary flex items-center gap-1 hover:underline"
                         >
-                          <Mic className="h-3 w-3" /> Try Voice Mode
+                          <Mic className="h-3 w-3" /> {lang === "twi" ? "Sɔ Nne Hwɛ" : "Try Voice Mode"}
                         </button>
                       </div>
                       <div className="flex flex-wrap gap-1.5">
-                        {QUICK_PROMPTS.map((p, idx) => (
+                        {QUICK_PROMPTS[lang].map((p, idx) => (
                           <button
                             key={idx}
                             onClick={() => send(p.query)}
@@ -1086,13 +1159,12 @@ export const ChatWidget = () => {
                         onClick={() => { setOpen(false); navigate("/book"); }}
                         className="w-full inline-flex items-center justify-center gap-2 text-sm font-bold px-4 py-2.5 rounded-xl bg-gradient-to-r from-primary to-teal-600 text-white hover:opacity-95 transition-all shadow-sm"
                       >
-                        <CalendarPlus className="h-4 w-4" /> Book Appointment Online
+                        <CalendarPlus className="h-4 w-4" /> {lang === "twi" ? "Fa Beaeɛ To Hɔ wɔ Intanɛte So" : "Book Appointment Online"}
                       </button>
                     </motion.div>
                   )}
                 </div>
 
-                {/* Input Form with Inline Voice Dictation */}
                 <form
                   onSubmit={(e) => { e.preventDefault(); send(input); }}
                   className="border-t border-border p-3 flex items-center gap-2 bg-card shrink-0"
@@ -1100,14 +1172,17 @@ export const ChatWidget = () => {
                   <input
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder={isListening ? "Listening to your voice..." : "Ask about eye care, prices, hours..."}
+                    placeholder={
+                      isListening 
+                        ? (lang === "twi" ? "Meretie wo nne..." : "Listening to your voice...") 
+                        : (lang === "twi" ? "Bisa fa ani nhwehwɛmu, boɔ, mmrɛ..." : "Ask about eye care, prices, hours...")
+                    }
                     disabled={loading}
                     className={`flex-1 rounded-xl border bg-background px-3.5 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary transition-all placeholder:text-muted-foreground/60 shadow-inner ${
                       isListening ? "border-emerald-500 ring-1 ring-emerald-500 bg-emerald-50/10" : "border-input"
                     }`}
                   />
 
-                  {/* Microphone Dictation Button */}
                   <button
                     type="button"
                     onClick={toggleTextDictation}

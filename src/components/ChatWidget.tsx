@@ -156,6 +156,7 @@ export const ChatWidget = () => {
   const isSpeakingVoiceRef = useRef(isSpeakingVoice);
   const loadingRef = useRef(loading);
   const langRef = useRef(lang);
+  const sendRef = useRef<(text: string) => Promise<void>>(() => Promise.resolve());
 
   isVoiceModeRef.current = isVoiceMode;
   isMutedRef.current = isMuted;
@@ -190,7 +191,7 @@ export const ChatWidget = () => {
     return () => {
       if (window.speechSynthesis) window.speechSynthesis.cancel();
       if (recognitionRef.current) {
-        try { recognitionRef.current.stop(); } catch {}
+        try { recognitionRef.current.stop(); } catch { /* ignore */ }
       }
     };
   }, []);
@@ -227,7 +228,7 @@ export const ChatWidget = () => {
       try {
         recognitionRef.current.onend = null;
         recognitionRef.current.stop();
-      } catch {}
+      } catch { /* ignore */ }
       recognitionRef.current = null;
     }
     setIsListening(false);
@@ -248,7 +249,7 @@ export const ChatWidget = () => {
 
     try {
       if (recognitionRef.current) {
-        try { recognitionRef.current.stop(); } catch {}
+        try { recognitionRef.current.stop(); } catch { /* ignore */ }
       }
 
       recognition.continuous = false;
@@ -256,7 +257,6 @@ export const ChatWidget = () => {
       // Use Akan-Ghana or Ghanaian English for natural local phonetics
       recognition.lang = langRef.current === "twi" ? "ak-GH" : "en-US";
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       recognition.onstart = () => {
         setIsListening(true);
         setVoiceError(null);
@@ -280,7 +280,7 @@ export const ChatWidget = () => {
         if (final.trim()) {
           stopListening();
           setLiveTranscript("");
-          send(final.trim());
+          sendRef.current(final.trim());
         }
       };
 
@@ -293,7 +293,7 @@ export const ChatWidget = () => {
             recognition.lang = "en-GH";
             recognition.start();
             return;
-          } catch {}
+          } catch { /* ignore */ }
         }
 
         if (event.error === "not-allowed") {
@@ -403,9 +403,9 @@ export const ChatWidget = () => {
     }
   };
 
-  const enterVoiceMode = (preferredLang?: Lang) => {
-    const targetLang = preferredLang || langRef.current;
-    if (preferredLang && preferredLang !== lang) {
+  const enterVoiceMode = (preferredLang?: Lang | React.MouseEvent) => {
+    const targetLang = (typeof preferredLang === "string" ? preferredLang : null) || langRef.current;
+    if (typeof preferredLang === "string" && preferredLang !== lang) {
       setLang(preferredLang);
       langRef.current = preferredLang;
     }
@@ -446,7 +446,6 @@ export const ChatWidget = () => {
       recognition.interimResults = true;
       recognition.lang = lang === "twi" ? "ak-GH" : "en-US";
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       recognition.onstart = () => setIsListening(true);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       recognition.onresult = (event: any) => {
@@ -463,7 +462,7 @@ export const ChatWidget = () => {
             recognition.lang = "en-GH";
             recognition.start();
             return;
-          } catch {}
+          } catch { /* ignore */ }
         }
         if (event.error === "not-allowed") {
           setError(lang === "twi" ? "Kwan nni hɔ ma maekrofoun no." : "Microphone permission denied.");
@@ -617,6 +616,8 @@ export const ChatWidget = () => {
       setLoading(false);
     }
   };
+
+  sendRef.current = send;
 
   const renderFormattedMessage = (content: string) => {
     const lines = content.split("\n");
@@ -835,7 +836,7 @@ export const ChatWidget = () => {
                 {/* Voice Call Mode Toggle Button */}
                 {!isVoiceMode ? (
                   <button
-                    onClick={enterVoiceMode}
+                    onClick={() => enterVoiceMode()}
                     title={lang === "twi" ? "Bisa asɛm de wo nne" : "Switch to Hands-Free Voice Agent Call"}
                     aria-label="Start Voice Call"
                     className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold transition-all shadow-xs"
@@ -1152,7 +1153,7 @@ export const ChatWidget = () => {
               <>
                 <div className="bg-muted/60 border-b border-border/50 px-3 py-1.5 flex items-center justify-between text-xs text-muted-foreground shrink-0">
                   <button
-                    onClick={enterVoiceMode}
+                    onClick={() => enterVoiceMode()}
                     className="flex items-center gap-1.5 text-[11px] font-semibold text-primary hover:underline transition-all"
                   >
                     <Radio className="h-3.5 w-3.5 text-emerald-500 animate-pulse" />
@@ -1283,7 +1284,7 @@ export const ChatWidget = () => {
                           {lang === "twi" ? "Nsɛmmisa a Wɔtaa Bisa:" : "Suggested Questions:"}
                         </p>
                         <button
-                          onClick={enterVoiceMode}
+                          onClick={() => enterVoiceMode()}
                           className="text-[11px] font-bold text-primary flex items-center gap-1 hover:underline"
                         >
                           <Mic className="h-3 w-3" /> {lang === "twi" ? "Sɔ Nne Hwɛ" : "Try Voice Mode"}

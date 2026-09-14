@@ -61,23 +61,71 @@ const QUICK_PROMPTS: Record<Lang, { label: string; query: string }[]> = {
 };
 
 /**
- * Phonetic adaptation for speech synthesis engines to pronounce Asante Twi accurately
+ * Rich phonetic adaptation for speech synthesis engines to pronounce Asante Twi accurately
  */
 function twiToPhoneticTTS(text: string): string {
-  return text
+  let res = text;
+
+  // 1. Currencies & numbers spoken in Twi
+  res = res
+    .replace(/GHS\s*30(\.00)?/gi, "cedis aduasa")
+    .replace(/GHS\s*50(\.00)?/gi, "cedis aduonum")
+    .replace(/GHS\s*60(\.00)?/gi, "cedis aduonsia")
+    .replace(/GHS\s*70(\.00)?/gi, "cedis aduɔson")
+    .replace(/GHS\s*(\d+(\.\d+)?)/gi, "$1 Ghana cedis")
+    .replace(/\b0544172089\b/g, "zero five four, four one seven, two zero eight nine")
+    .replace(/\+233\s*54\s*417\s*2089/g, "zero five four, four one seven, two zero eight nine");
+
+  // 2. Twi vowels & digraphs
+  res = res
     .replace(/ɛ/g, "eh")
     .replace(/Ɛ/g, "Eh")
     .replace(/ɔ/g, "aw")
     .replace(/Ɔ/g, "Aw")
     .replace(/\bky/gi, "ch")
+    .replace(/ky/gi, "ch")
     .replace(/\btw/gi, "chw")
+    .replace(/tw/gi, "chw")
     .replace(/\bdw/gi, "jw")
+    .replace(/dw/gi, "jw")
     .replace(/\bgy/gi, "j")
+    .replace(/gy/gi, "j")
+    .replace(/\bhy/gi, "sh")
+    .replace(/hy/gi, "sh")
     .replace(/\bnye\b/gi, "nyeh")
-    .replace(/nhwehwɛmu/gi, "n-hweh-hweh-mu")
-    .replace(/wusiwusi/gi, "woo-see-woo-see")
-    .replace(/akwaaba/gi, "ah-kwaa-bah")
-    .replace(/medaase/gi, "meh-daa-seh");
+    .replace(/\bnyinaa\b/gi, "nyee-naa");
+
+  // 3. Common clinical Akan vocabulary phonetics
+  res = res
+    .replace(/\bakwaaba\b/gi, "ah-kwaa-bah")
+    .replace(/\bmedaase\b/gi, "meh-daa-seh")
+    .replace(/\bnhwehwɛmu\b/gi, "n-hweh-hweh-moo")
+    .replace(/\bnhwehwemu\b/gi, "n-hweh-hweh-moo")
+    .replace(/\bwusiwusi\b/gi, "woo-see-woo-see")
+    .replace(/\babuaakwa\b/gi, "ah-bwah-kwah")
+    .replace(/\babuwakwa\b/gi, "ah-bwah-kwah")
+    .replace(/\babue\b/gi, "ah-boo-eh")
+    .replace(/\bbue\b/gi, "boo-eh")
+    .replace(/\bdɔkota\b/gi, "daw-kaw-tah")
+    .replace(/\bdokota\b/gi, "daw-kaw-tah")
+    .replace(/\basopiti\b/gi, "ah-so-pee-tee")
+    .replace(/\blaseense\b/gi, "laa-sen-seh")
+    .replace(/\bdrayvafoɔ\b/gi, "dray-vah-faw")
+    .replace(/\bsohwɛ\b/gi, "saw-hweh")
+    .replace(/\bsɔhwɛ\b/gi, "saw-hweh")
+    .replace(/\bsohwɛfoɔ\b/gi, "saw-hweh-faw")
+    .replace(/\bsɔhwɛfoɔ\b/gi, "saw-hweh-faw")
+    .replace(/\banifura\b/gi, "ah-nee-foo-rah")
+    .replace(/\banifurafoɔ\b/gi, "ah-nee-foo-rah-faw")
+    .replace(/\bahwehwɛ\b/gi, "ah-hweh-hweh")
+    .replace(/\bayaresabea\b/gi, "ah-yah-reh-sah-bee-ah")
+    .replace(/\bntɛmpa\b/gi, "n-tem-pah")
+    .replace(/\bntɛm\b/gi, "n-tem")
+    .replace(/\bseesei\b/gi, "say-say")
+    .replace(/\bkrado\b/gi, "krah-doh")
+    .replace(/\bGhana\b/gi, "Gah-nah");
+
+  return res;
 }
 
 export const ChatWidget = () => {
@@ -313,12 +361,15 @@ export const ChatWidget = () => {
     utterance.pitch = 1.05;
 
     const voices = window.speechSynthesis.getVoices();
-    // Prioritize natural or African/British English voices for best Twi cadence
+    // Prioritize Ghanaian/African English voices if available, then British/Natural/Google voices for authentic Twi cadence
+    const ghVoice = voices.find(v => v.lang === "en-GH" || v.lang.startsWith("ak"));
+    const africanVoice = voices.find(v => v.lang === "en-NG" || v.lang === "en-ZA");
     const naturalVoice = voices.find(v => 
-      (v.name.includes("Natural") || v.name.includes("Google") || v.name.includes("Samantha") || v.name.includes("Great Britain")) &&
+      (v.name.includes("Natural") || v.name.includes("Google") || v.name.includes("Samantha") || v.name.includes("Great Britain") || v.lang === "en-GB") &&
       v.lang.startsWith("en")
     );
-    if (naturalVoice) utterance.voice = naturalVoice;
+    const chosenVoice = ghVoice || africanVoice || naturalVoice || voices[0];
+    if (chosenVoice) utterance.voice = chosenVoice;
 
     utterance.onstart = () => {
       setIsSpeakingVoice(true);
@@ -352,12 +403,17 @@ export const ChatWidget = () => {
     }
   };
 
-  const enterVoiceMode = () => {
+  const enterVoiceMode = (preferredLang?: Lang) => {
+    const targetLang = preferredLang || langRef.current;
+    if (preferredLang && preferredLang !== lang) {
+      setLang(preferredLang);
+      langRef.current = preferredLang;
+    }
     setIsVoiceMode(true);
     setError(null);
     setVoiceError(null);
     setTimeout(() => {
-      if (langRef.current === "twi") {
+      if (targetLang === "twi") {
         speakTextAloud("Akwaaba! Me din de NOVA. Kasa kyerɛ me fa w'ani ho na memboa wo.");
       } else {
         speakTextAloud("Hello! I am NOVA. How can I help with your eye care today?");
@@ -479,7 +535,11 @@ export const ChatWidget = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ messages: apiMessages, lang }),
+        body: JSON.stringify({ 
+          messages: apiMessages, 
+          lang, 
+          isVoice: isVoiceModeRef.current 
+        }),
       });
 
       if (resp.status === 429) { 
@@ -659,23 +719,23 @@ export const ChatWidget = () => {
       <AnimatePresence>
         {!open && (
           <div className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-50 flex items-center gap-2.5">
-            {/* Quick Voice Call Launcher Pill */}
+            {/* Quick Asante Twi Voice Call Launcher Pill */}
             <motion.button
               initial={{ scale: 0, opacity: 0, x: 20 }}
               animate={{ scale: 1, opacity: 1, x: 0 }}
               exit={{ scale: 0, opacity: 0 }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => { setOpen(true); enterVoiceMode(); }}
-              aria-label="Talk to NOVA Voice Agent"
-              className="hidden sm:flex items-center gap-2 px-3.5 py-2.5 rounded-full bg-card/95 text-primary border border-primary/30 shadow-lg hover:border-primary backdrop-blur-md transition-all font-semibold text-xs"
+              onClick={() => { setOpen(true); enterVoiceMode("twi"); }}
+              aria-label="Talk to NOVA in Asante Twi"
+              className="hidden sm:flex items-center gap-2 px-3.5 py-2.5 rounded-full bg-emerald-700/95 hover:bg-emerald-600 text-white border border-emerald-400/50 shadow-xl hover:shadow-emerald-500/30 backdrop-blur-md transition-all font-bold text-xs"
             >
               <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-300 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
               </span>
-              <Mic className="h-4 w-4 text-primary" />
-              <span>{lang === "twi" ? "🇬🇭 Kasa Twi wɔ Nne So" : "Voice Agent"}</span>
+              <Mic className="h-4 w-4 text-white" />
+              <span>🇬🇭 Kasa Twi (Voice)</span>
             </motion.button>
 
             {/* Main Chat Circle Launcher */}
@@ -976,6 +1036,24 @@ export const ChatWidget = () => {
                         : (lang === "twi" ? "Fa wo nne kasa Twi kyerɛ NOVA tee" : "Hands-free voice consultation")}
                     </p>
                   </div>
+                </div>
+
+                {/* Spoken Quick Prompt Chips */}
+                <div className="relative z-10 flex items-center gap-1.5 overflow-x-auto py-1 px-0.5 no-scrollbar my-0.5">
+                  {QUICK_PROMPTS[lang].map((p, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        stopListening();
+                        send(p.query);
+                      }}
+                      disabled={loading || isSpeakingVoice}
+                      className="shrink-0 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-slate-800/90 hover:bg-teal-700/70 border border-teal-500/30 text-teal-200 hover:text-white transition-all shadow-xs disabled:opacity-50 flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>{lang === "twi" ? "🇬🇭" : "💬"}</span>
+                      <span>{p.label}</span>
+                    </button>
+                  ))}
                 </div>
 
                 {/* Subtitle / Live Transcript Card */}

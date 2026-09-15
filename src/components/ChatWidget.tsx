@@ -20,7 +20,13 @@ import {
   Radio, 
   Globe,
   ShieldCheck,
-  Activity 
+  Activity,
+  Maximize2,
+  Minimize2,
+  Eye,
+  CreditCard,
+  CheckCircle2,
+  AlertCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -32,16 +38,24 @@ type Lang = "en" | "twi";
 
 const CHAT_URL = `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/chatbot/chat`;
 
+// 22-bar symmetric acoustic sound spectrum harmonic factors for authentic voice visualization
+const ACOUSTIC_FACTORS = [
+  0.2, 0.35, 0.5, 0.7, 0.85, 0.95, 1.0, 0.95, 0.85, 0.7, 0.55,
+  0.55, 0.7, 0.85, 0.95, 1.0, 0.95, 0.85, 0.7, 0.5, 0.35, 0.2
+];
+
+const PROMPT_ICONS = [Eye, CreditCard, CheckCircle2, MapPin, Activity];
+
 const INITIAL_GREETINGS: Record<Lang, Msg> = {
   en: {
     role: "assistant",
     content:
-      "Hello! 👋 I am **NOVA**, your AI Patient Care Concierge at NOVA Eye Care Services.\n\nHow can I help you today? You can speak to me with your voice or type your questions about our **eye tests**, **DVLA licensing**, **pricing**, **opening hours**, or **visual symptoms**.",
+      "Hello! 👋 I am **NOVA**, your Patient Care Concierge at NOVA Eye Care Services.\n\nHow can I help you today? You can speak with me using hands-free voice or type your questions about our **eye tests**, **DVLA licensing**, **pricing**, **opening hours**, or **visual symptoms**.",
   },
   twi: {
     role: "assistant",
     content:
-      "Akwaaba! 👋 Me din de **NOVA**, wo AI Ani Sohwɛfoɔ wɔ NOVA Eye Care Services wɔ Abuakwa.\n\nƐte sɛn? Wobɛtumi de wo nne akasa akyerɛ me anaa atwerɛ me biribiara a worepɛ afa yɛn **ani nhwehwɛmu**, **DVLA kwan so ani sɔhwɛ**, **boɔ a yɛgye**, **beaeɛ a yɛwɔ**, anaa **w'ani a ɛreyɛ wo ya** ho.",
+      "Akwaaba! 👋 Me din de **NOVA**, wo Ani Sohwɛfoɔ wɔ NOVA Eye Care Services wɔ Abuakwa.\n\nƐte sɛn? Wobɛtumi de wo nne akasa akyerɛ me anaa atwerɛ me biribiara a worepɛ afa yɛn **ani nhwehwɛmu**, **DVLA kwan so ani sɔhwɛ**, **boɔ a yɛgye**, **beaeɛ a yɛwɔ**, anaa **w'ani a ɛreyɛ wo ya** ho.",
   },
 };
 
@@ -133,6 +147,7 @@ function twiToPhoneticTTS(text: string): string {
 export const ChatWidget = () => {
   const [lang, setLang] = useState<Lang>("en");
   const [open, setOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([INITIAL_GREETINGS.en]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -743,24 +758,25 @@ export const ChatWidget = () => {
       {/* Floating Launcher Button */}
       <AnimatePresence>
         {!open && (
-          <div className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-50 flex items-center gap-2.5">
-            {/* Quick Asante Twi Voice Call Launcher Pill */}
+          <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex items-center gap-2.5">
+            {/* Quick Voice Consultation Launcher Pill */}
             <motion.button
               initial={{ scale: 0, opacity: 0, x: 20 }}
               animate={{ scale: 1, opacity: 1, x: 0 }}
               exit={{ scale: 0, opacity: 0 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
               onClick={() => { setOpen(true); enterVoiceMode("twi"); }}
-              aria-label="Call Dr. NOVA in Asante Twi"
-              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/95 hover:bg-slate-800 text-white border border-emerald-400/60 shadow-xl hover:shadow-emerald-500/25 backdrop-blur-md transition-all font-bold text-xs cursor-pointer group"
+              aria-label="Start Voice Care Consultation in Twi"
+              className="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-full bg-slate-900/95 hover:bg-slate-800 text-white border border-teal-500/40 shadow-xl hover:shadow-teal-500/20 backdrop-blur-md transition-all font-semibold text-xs cursor-pointer group"
             >
-              <div className="relative h-6 w-6 rounded-full overflow-hidden border border-emerald-400 shrink-0">
-                <img src="/nova-concierge.jpg" alt="Dr. NOVA" className="h-full w-full object-cover" />
+              <div className="relative h-6 w-6 rounded-full overflow-hidden border border-teal-400/80 shrink-0">
+                <img src="/nova-concierge.jpg" alt="NOVA Care Specialist" className="h-full w-full object-cover" />
                 <span className="absolute bottom-0 right-0 h-1.5 w-1.5 rounded-full bg-emerald-400" />
               </div>
-              <span className="flex items-center gap-1 text-emerald-300 group-hover:text-emerald-200">
-                <span>🇬🇭 Call Dr. NOVA (Twi)</span>
+              <span className="flex items-center gap-1.5 text-teal-300 group-hover:text-teal-200">
+                <Radio className="h-3.5 w-3.5 animate-pulse text-emerald-400" />
+                <span>🇬🇭 Kasa Twi / Voice Line</span>
               </span>
             </motion.button>
 
@@ -797,47 +813,57 @@ export const ChatWidget = () => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.85, y: 40 }}
             transition={{ type: "spring", damping: 25, stiffness: 240 }}
-            className="fixed inset-0 sm:inset-auto sm:bottom-5 sm:right-5 z-50 sm:w-[420px] sm:h-[640px] flex flex-col bg-card border border-border/70 sm:rounded-2xl shadow-2xl overflow-hidden font-sans"
+            className={`fixed inset-0 sm:inset-auto sm:bottom-5 sm:right-5 z-50 flex flex-col bg-card border border-border/70 sm:rounded-2xl shadow-2xl overflow-hidden font-sans transition-all duration-300 ease-in-out w-full h-[100dvh] max-h-[100dvh] pb-[env(safe-area-inset-bottom,0px)] ${
+              isExpanded 
+                ? "sm:w-[560px] sm:h-[720px] sm:max-h-[92vh]" 
+                : "sm:w-[440px] sm:h-[660px] sm:max-h-[90vh]"
+            }`}
           >
             {/* ======================= HEADER ======================= */}
-            <div className="bg-gradient-to-r from-primary via-teal-700 to-primary text-primary-foreground p-3.5 sm:p-4 flex items-center justify-between shrink-0 shadow-sm">
-              <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-xl bg-white/15 flex items-center justify-center border border-white/20 shadow-inner">
+            <div className="bg-gradient-to-r from-primary via-teal-700 to-primary text-primary-foreground p-2.5 sm:p-3.5 flex items-center justify-between shrink-0 shadow-sm">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="h-8 w-8 rounded-xl bg-white/15 flex items-center justify-center border border-white/20 shadow-inner shrink-0">
                   {isVoiceMode ? (
-                    <Radio className="h-5 w-5 text-emerald-300 animate-pulse" />
+                    <Radio className="h-4 w-4 text-emerald-300 animate-pulse" />
                   ) : (
-                    <Bot className="h-5 w-5 text-white" />
+                    <Bot className="h-4 w-4 text-white" />
                   )}
                 </div>
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <h3 className="font-bold text-base leading-tight">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 flex-nowrap">
+                    <h3 className="font-bold text-sm sm:text-base leading-tight truncate">
                       {isVoiceMode 
-                        ? (lang === "twi" ? "NOVA Nne Nkɔmmɔ" : "NOVA Voice Call") 
+                        ? (lang === "twi" ? "NOVA Nne Nkɔmmɔ" : "NOVA Voice Care") 
                         : (lang === "twi" ? "NOVA Ani Sohwɛfoɔ" : "NOVA AI Concierge")}
                     </h3>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/20 font-medium tracking-wide uppercase">
-                      {isVoiceMode ? "Voice Live" : "AI Care"}
-                    </span>
+                    {isVoiceMode ? (
+                      <span className="text-[10px] font-mono font-bold text-emerald-300 bg-white/15 px-1.5 py-0.5 rounded border border-white/15 shrink-0">
+                        {formatDuration(callDuration)}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/20 font-semibold tracking-wide uppercase shrink-0">
+                        AI Care
+                      </span>
+                    )}
                   </div>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <p className="text-xs text-white/90 font-medium">
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                    <p className="text-[11px] text-white/90 font-medium truncate">
                       {isVoiceMode 
                         ? (isSpeakingVoice 
-                            ? (lang === "twi" ? "NOVA rekasa kyerɛ wo..." : "Speaking to you...") 
+                            ? (lang === "twi" ? "NOVA rekasa..." : "Speaking to you...") 
                             : isListening 
-                            ? (lang === "twi" ? "NOVA retie wo kasa..." : "Listening to you...") 
+                            ? (lang === "twi" ? "Retie wo..." : "Listening...") 
                             : loading 
-                            ? (lang === "twi" ? "Redwene asɛm no ho..." : "Thinking...") 
-                            : (lang === "twi" ? "Ayɛ krado" : "Connected")) 
+                            ? (lang === "twi" ? "Redwene..." : "Thinking...") 
+                            : (lang === "twi" ? "Abuakwa Asopiti" : "Abuakwa Clinic Line")) 
                         : (lang === "twi" ? "Abuakwa Ani Asopiti • Twi / Eng" : "Licensed Clinic Support • Abuakwa")}
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1 shrink-0">
                 {/* 🇬🇭 Language Selector Pill (EN | TWI) */}
                 <div className="flex items-center rounded-lg bg-white/20 p-0.5 border border-white/20 text-[10px] font-bold shadow-xs">
                   <button
@@ -858,8 +884,8 @@ export const ChatWidget = () => {
                   </button>
                 </div>
 
-                {/* Voice Call Mode Toggle Button */}
-                {!isVoiceMode ? (
+                {/* Voice Call Mode Toggle Button (Text Mode Only) */}
+                {!isVoiceMode && (
                   <button
                     onClick={() => enterVoiceMode()}
                     title={lang === "twi" ? "Bisa asɛm de wo nne" : "Switch to Hands-Free Voice Agent Call"}
@@ -869,19 +895,9 @@ export const ChatWidget = () => {
                     <PhoneCall className="h-3.5 w-3.5 text-emerald-300 animate-pulse" />
                     <span className="hidden sm:inline">{lang === "twi" ? "Nne" : "Voice Call"}</span>
                   </button>
-                ) : (
-                  <button
-                    onClick={exitVoiceMode}
-                    title={lang === "twi" ? "Kɔ atwerɛ mu" : "Switch back to Text Chat"}
-                    aria-label="Switch to Text Mode"
-                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold transition-all shadow-xs"
-                  >
-                    <MessageSquare className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">{lang === "twi" ? "Atwerɛ" : "Text Mode"}</span>
-                  </button>
                 )}
 
-                {/* Text size accessibility toggle */}
+                {/* Text size accessibility toggle (Text Mode Only) */}
                 {!isVoiceMode && (
                   <button
                     onClick={() => setLargeText(!largeText)}
@@ -893,14 +909,26 @@ export const ChatWidget = () => {
                   </button>
                 )}
 
-                {/* Reset Chat */}
+                {/* Reset Chat (Text Mode Only) */}
+                {!isVoiceMode && (
+                  <button
+                    onClick={clearChat}
+                    title="Reset conversation"
+                    aria-label="Reset conversation"
+                    className="p-1.5 rounded-lg hover:bg-white/20 text-white/80 transition-colors"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                  </button>
+                )}
+
+                {/* Desktop Expand/Collapse Toggle */}
                 <button
-                  onClick={clearChat}
-                  title="Reset conversation"
-                  aria-label="Reset conversation"
-                  className="p-1.5 rounded-lg hover:bg-white/20 text-white/80 transition-colors"
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  title={isExpanded ? "Standard view" : "Expand window"}
+                  aria-label={isExpanded ? "Standard view" : "Expand window"}
+                  className="hidden sm:flex p-1.5 rounded-lg hover:bg-white/20 text-white/80 transition-colors"
                 >
-                  <RotateCcw className="h-4 w-4" />
+                  {isExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
                 </button>
 
                 {/* Close */}
@@ -917,100 +945,56 @@ export const ChatWidget = () => {
             {/* ======================= BODY ======================= */}
             {isVoiceMode ? (
               /* =================== TELEHEALTH CLINICAL VOICE CONSULTATION SCREEN =================== */
-              <div className="flex-1 flex flex-col justify-between p-4 sm:p-5 bg-gradient-to-b from-slate-900 via-teal-950/70 to-slate-950 text-white relative overflow-hidden">
-                {/* Soft ambient clinical lighting */}
-                <div className="absolute inset-0 pointer-events-none opacity-20">
-                  <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-teal-500 rounded-full blur-3xl" />
-                  <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 w-52 h-52 bg-emerald-500 rounded-full blur-3xl" />
-                </div>
+              <div className="flex-1 min-h-0 flex flex-col justify-between p-3 sm:p-4 bg-gradient-to-b from-[#00243d] via-[#001c30] to-[#001322] text-white relative overflow-hidden select-none gap-2">
+                {/* Subtle, soft ambient clinical depth */}
+                <div className="absolute -top-20 -right-20 w-52 h-52 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute -bottom-20 -left-20 w-52 h-52 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
 
-                {/* Top Telehealth Status & Call Quality Header */}
-                <div className="relative z-10 flex items-center justify-between pb-2.5 border-b border-white/10">
-                  <div className="flex items-center gap-2">
-                    <span className="relative flex h-2.5 w-2.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                    </span>
-                    <div className="flex flex-col">
-                      <span className="text-[11px] font-bold text-emerald-300 tracking-wide uppercase flex items-center gap-1">
-                        <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-                        {lang === "twi" ? "Abuakwa Telehealth Frɛ" : "Abuakwa Clinic Line"}
-                      </span>
-                      <span className="text-[10px] text-slate-400">
-                        {lang === "twi" ? "Nkrataa & Nne a Yɛabɔ Ho Ban" : "Encrypted Clinical Audio"}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono font-bold text-slate-200 bg-white/10 px-2 py-0.5 rounded-md border border-white/10 shadow-xs">
-                      {formatDuration(callDuration)}
-                    </span>
-
-                    {/* In-Call Language Selector */}
-                    <div className="flex items-center rounded-xl bg-slate-800/90 border border-slate-700/80 p-0.5 text-xs font-bold shadow-xs">
-                      <button
-                        onClick={() => toggleLanguage("twi")}
-                        className={`px-2 py-1 rounded-lg transition-all flex items-center gap-1 ${
-                          lang === "twi" ? "bg-emerald-600 text-white shadow-xs font-bold" : "text-slate-400 hover:text-white"
-                        }`}
-                      >
-                        <span>🇬🇭</span>
-                        <span>Twi</span>
-                      </button>
-                      <button
-                        onClick={() => toggleLanguage("en")}
-                        className={`px-2 py-1 rounded-lg transition-all ${
-                          lang === "en" ? "bg-emerald-600 text-white shadow-xs font-bold" : "text-slate-400 hover:text-white"
-                        }`}
-                      >
-                        <span>🇬🇧 Eng</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Clinical Specialist Profile & Audio EQ Section */}
-                <div className="relative z-10 flex flex-col items-center justify-center my-auto py-2">
+                {/* Care Specialist Profile & Audio Acoustic Wave Section */}
+                <div className="relative z-10 shrink-0 flex flex-col items-center justify-center pt-1 pb-1 space-y-2">
                   <div className="relative flex items-center justify-center">
-                    {/* Pulsing Clinical Care Halo */}
+                    {/* Concentric Clinical Status Aura */}
                     <AnimatePresence>
                       {(isListening || isSpeakingVoice) && (
                         <motion.div
-                          initial={{ scale: 0.95, opacity: 0.3 }}
+                          initial={{ scale: 0.92, opacity: 0.2 }}
                           animate={{
-                            scale: isSpeakingVoice ? [1, 1.15, 1] : [1, 1.08, 1],
-                            opacity: [0.35, 0.75, 0.35],
+                            scale: isSpeakingVoice ? [1, 1.12, 1] : [1, 1.06, 1],
+                            opacity: [0.2, 0.45, 0.2],
                           }}
-                          transition={{ repeat: Infinity, duration: isSpeakingVoice ? 1.5 : 2.2, ease: "easeInOut" }}
-                          className={`absolute -inset-2.5 rounded-full border-2 ${
+                          transition={{
+                            repeat: Infinity,
+                            duration: isSpeakingVoice ? 1.8 : 2.4,
+                            ease: "easeInOut",
+                          }}
+                          className={`absolute -inset-2.5 rounded-full border ${
                             isSpeakingVoice
-                              ? "border-teal-400/60 bg-teal-500/10 shadow-[0_0_35px_rgba(20,184,166,0.45)]"
-                              : "border-emerald-400/60 bg-emerald-500/10 shadow-[0_0_30px_rgba(16,185,129,0.4)]"
+                              ? "border-teal-400/40 bg-teal-500/5"
+                              : "border-emerald-400/40 bg-emerald-500/5"
                           }`}
                         />
                       )}
                     </AnimatePresence>
 
-                    {/* Authentic Doctor / Concierge Portrait */}
+                    {/* Clinical Specialist Portrait */}
                     <div
                       onClick={() => {
                         if (isSpeakingVoice) interruptSpeaking();
                         else if (isListening) stopListening();
                         else startListening();
                       }}
-                      className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-full p-1 bg-gradient-to-tr from-teal-400 via-emerald-400 to-amber-300 shadow-2xl cursor-pointer hover:scale-105 transition-all"
+                      className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full p-0.5 bg-gradient-to-b from-teal-500/40 to-slate-800 border border-teal-500/30 shadow-lg cursor-pointer hover:scale-105 transition-all shrink-0"
                     >
                       <img
                         src="/nova-concierge.jpg"
-                        alt="Dr. NOVA Patient Care Concierge"
-                        className="w-full h-full rounded-full object-cover border-2 border-slate-900 shadow-inner"
+                        alt="NOVA Care Specialist"
+                        className="w-full h-full rounded-full object-cover border border-slate-700/80 shadow-inner"
                       />
 
                       {/* Status pill badge on portrait */}
-                      <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full bg-slate-900/95 border border-emerald-400/70 shadow-lg flex items-center gap-1.5 text-[10px] font-bold text-white whitespace-nowrap">
+                      <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-slate-900/95 border border-slate-700 shadow-md flex items-center gap-1 text-[9px] sm:text-[10px] font-semibold text-slate-200 whitespace-nowrap">
                         <span className={`h-1.5 w-1.5 rounded-full ${
-                          isSpeakingVoice ? "bg-teal-400 animate-ping" : isListening ? "bg-emerald-400 animate-pulse" : "bg-emerald-500"
+                          isSpeakingVoice ? "bg-teal-400 animate-ping" : isListening ? "bg-emerald-400 animate-pulse" : loading ? "bg-amber-400 animate-pulse" : "bg-emerald-500"
                         }`} />
                         <span>
                           {isSpeakingVoice 
@@ -1018,62 +1002,79 @@ export const ChatWidget = () => {
                             : isListening 
                             ? (lang === "twi" ? "Retie wo..." : "Listening...") 
                             : loading 
-                            ? (lang === "twi" ? "Redwene ho..." : "Thinking...") 
+                            ? (lang === "twi" ? "Redwene..." : "Thinking...") 
                             : (lang === "twi" ? "Krado" : "Connected")}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Doctor Title & Clinic Identity */}
-                  <div className="mt-4 text-center">
+                  {/* Clinic Specialist Identity & Guidance */}
+                  <div className="text-center space-y-0.5">
                     <div className="flex items-center justify-center gap-1.5">
-                      <h4 className="font-bold text-lg text-white">Dr. NOVA</h4>
-                      <span className="px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 text-[10px] font-bold uppercase tracking-wider border border-teal-500/40">
-                        Care Concierge
+                      <h4 className="font-bold text-sm sm:text-base text-white">
+                        {lang === "twi" ? "Dr. NOVA Ani Sohwɛfoɔ" : "Dr. NOVA • Care Concierge"}
+                      </h4>
+                      <span className="px-1.5 py-0.2 rounded-full bg-teal-500/15 text-teal-300 text-[9px] font-bold uppercase tracking-wider border border-teal-500/30">
+                        {lang === "twi" ? "Abuakwa" : "Telehealth"}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-300 mt-0.5 font-medium">
-                      Nova Eye Care Services • Abuakwa Branch
-                    </p>
-                    <p className="text-[11px] text-emerald-400 font-semibold mt-1">
+                    <p className="text-[11px] text-teal-300/95 font-medium">
                       {isMuted 
-                        ? (lang === "twi" ? "Maekrofoun no ato mu" : "Microphone Muted") 
+                        ? (lang === "twi" ? "Maekrofoun no ato mu • Bue maekrofoun no" : "Microphone muted • Tap unmute below") 
                         : isSpeakingVoice 
-                        ? (lang === "twi" ? "Dr. NOVA rekasa kyerɛ wo (Klike mfonin no so na gyae)" : "Dr. NOVA is speaking (Tap portrait to interrupt)") 
+                        ? (lang === "twi" ? "Dr. NOVA rekasa kyerɛ wo (Klike so na gyae)" : "Dr. NOVA is speaking (Tap portrait to pause)") 
                         : isListening 
-                        ? (lang === "twi" ? "Retie wo... (Kasa Twi seesei)" : "Listening... (Speak your question clearly)") 
+                        ? (lang === "twi" ? "Retie wo... Kasa Twi anaa Borɔfo seesei" : "Listening... Speak your question clearly") 
                         : loading 
-                        ? (lang === "twi" ? "Dr. NOVA redwene asɛm no ho..." : "Reviewing clinic records...") 
+                        ? (lang === "twi" ? "Dr. NOVA rehwehwɛ asopiti nkrataa mu..." : "Consulting clinic guidelines...") 
                         : (lang === "twi" ? "Klike mfonin no so na kasa Twi" : "Tap portrait to speak with Dr. NOVA")}
                     </p>
                   </div>
 
-                  {/* Realistic Medical Acoustic Waveform Equalizer */}
-                  <div className="flex items-center justify-center gap-1 h-8 mt-2.5 px-3">
-                    {[12, 22, 34, 26, 42, 24, 38, 44, 32, 26, 40, 20, 30, 16].map((h, i) => (
+                  {/* Organic Acoustic Sound Spectrum Visualizer */}
+                  <div className="flex items-center justify-center gap-1 h-6 sm:h-7 px-3">
+                    {ACOUSTIC_FACTORS.map((factor, i) => (
                       <motion.div
                         key={i}
                         animate={{
                           height: isSpeakingVoice
-                            ? [Math.max(5, h * 0.25), h, Math.max(6, h * 0.4)]
+                            ? [
+                                Math.max(3, factor * 6),
+                                Math.max(5, factor * 24),
+                                Math.max(3, factor * 10)
+                              ]
                             : isListening
-                            ? [4, 14, 6]
-                            : 4,
-                          opacity: isSpeakingVoice ? [0.65, 1, 0.75] : isListening ? 0.75 : 0.25,
+                            ? [3, Math.max(5, factor * 12), 3]
+                            : loading
+                            ? [3, 12, 3]
+                            : 3,
+                          opacity: isSpeakingVoice 
+                            ? [0.7, 1, 0.75] 
+                            : isListening 
+                            ? 0.85 
+                            : loading 
+                            ? 0.6 
+                            : 0.35,
                         }}
                         transition={{
                           repeat: Infinity,
-                          duration: isSpeakingVoice ? 0.4 + (i % 4) * 0.1 : 1.2,
+                          duration: isSpeakingVoice 
+                            ? 0.45 + (i % 5) * 0.08 
+                            : isListening 
+                            ? 1.4 
+                            : 0.8,
                           ease: "easeInOut",
-                          delay: (i * 0.05) % 0.35,
+                          delay: (i * 0.04) % 0.3,
                         }}
-                        className={`w-1 rounded-full ${
+                        className={`w-1 sm:w-1.5 rounded-full transition-colors ${
                           isSpeakingVoice
-                            ? "bg-gradient-to-t from-teal-500 to-emerald-300"
+                            ? "bg-gradient-to-t from-teal-500 to-cyan-400"
                             : isListening
                             ? "bg-emerald-400"
-                            : "bg-slate-500"
+                            : loading
+                            ? "bg-amber-400"
+                            : "bg-slate-600"
                         }`}
                       />
                     ))}
@@ -1081,58 +1082,67 @@ export const ChatWidget = () => {
                 </div>
 
                 {/* Spoken Quick Consultation Question Chips */}
-                <div className="relative z-10 flex items-center gap-1.5 overflow-x-auto py-1 px-0.5 no-scrollbar my-0.5">
-                  {QUICK_PROMPTS[lang].map((p, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => {
-                        stopListening();
-                        send(p.query);
-                      }}
-                      disabled={loading || isSpeakingVoice}
-                      className="shrink-0 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-slate-800/90 hover:bg-teal-700/70 border border-teal-500/30 text-teal-200 hover:text-white transition-all shadow-xs disabled:opacity-50 flex items-center gap-1 cursor-pointer"
-                    >
-                      <span>{lang === "twi" ? "🇬🇭" : "💬"}</span>
-                      <span>{p.label}</span>
-                    </button>
-                  ))}
+                <div className="relative z-10 flex items-center gap-1.5 overflow-x-auto py-1 px-0.5 no-scrollbar shrink-0">
+                  {QUICK_PROMPTS[lang].map((p, idx) => {
+                    const PromptIcon = PROMPT_ICONS[idx % PROMPT_ICONS.length];
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          stopListening();
+                          send(p.query);
+                        }}
+                        disabled={loading || isSpeakingVoice}
+                        className="shrink-0 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-slate-800/80 hover:bg-teal-800/60 border border-white/10 text-slate-200 hover:text-white transition-all shadow-xs disabled:opacity-50 flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                      >
+                        <PromptIcon className="h-3 w-3 text-teal-400 shrink-0" />
+                        <span>{p.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
 
                 {/* Telehealth Dialogue Transcript Card */}
-                <div className="relative z-10 bg-slate-800/90 backdrop-blur-md rounded-2xl p-3.5 border border-slate-700/70 max-h-32 overflow-y-auto space-y-2 text-xs leading-relaxed shadow-xl">
+                <div className="relative z-10 bg-slate-900/85 backdrop-blur-md rounded-xl p-3 border border-white/10 flex-1 min-h-[85px] max-h-[160px] sm:max-h-[200px] overflow-y-auto custom-scrollbar space-y-2 text-xs leading-relaxed shadow-lg">
                   {liveTranscript ? (
                     <div className="text-emerald-300 flex items-start gap-1.5 font-medium">
-                      <span className="font-bold shrink-0 text-white">{lang === "twi" ? "Wo:" : "You:"}</span>
+                      <span className="font-bold shrink-0 text-white bg-emerald-500/20 px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider">
+                        {lang === "twi" ? "Wo" : "You"}
+                      </span>
                       <span className="italic">"{liveTranscript}..."</span>
                     </div>
                   ) : lastUserMessage && !Object.values(INITIAL_GREETINGS).map(g => g.content).includes(lastUserMessage.content) ? (
                     <div className="text-slate-300 flex items-start gap-1.5">
-                      <span className="font-bold shrink-0 text-slate-400">{lang === "twi" ? "Wo:" : "You:"}</span>
+                      <span className="font-semibold shrink-0 text-slate-400 bg-white/10 px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider">
+                        {lang === "twi" ? "Wo" : "You"}
+                      </span>
                       <span className="line-clamp-2">"{lastUserMessage.content}"</span>
                     </div>
                   ) : null}
 
                   {lastAssistantMessage && (
-                    <div className="text-slate-100 flex items-start gap-2 pt-1 border-t border-slate-700/50">
-                      <span className="font-bold shrink-0 text-teal-400 flex items-center gap-1">
-                        <img src="/nova-concierge.jpg" alt="Dr. NOVA" className="h-4 w-4 rounded-full object-cover shrink-0" />
-                        Dr. NOVA:
+                    <div className="text-slate-100 flex items-start gap-2 pt-1 border-t border-white/10">
+                      <span className="font-bold shrink-0 text-teal-300 bg-teal-500/20 px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider flex items-center gap-1">
+                        NOVA
                       </span>
-                      <span className="line-clamp-3 leading-normal">
-                        {lastAssistantMessage.content.replace(/[*_#`[\]()]/g, "").slice(0, 220)}...
+                      <span className="line-clamp-3 sm:line-clamp-4 leading-normal text-slate-200">
+                        {lastAssistantMessage.content.replace(/[*_#`[\]()]/g, "").slice(0, 240)}
+                        {lastAssistantMessage.content.length > 240 ? "..." : ""}
                       </span>
                     </div>
                   )}
 
                   {voiceError && (
-                    <p className="text-xs text-rose-400 text-center font-medium pt-1">
-                      {voiceError}
-                    </p>
+                    <div className="flex items-center justify-center gap-1.5 text-xs text-rose-300 bg-rose-950/50 border border-rose-800/60 p-2 rounded-lg text-center font-medium">
+                      <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" />
+                      <span>{voiceError}</span>
+                    </div>
                   )}
                 </div>
 
                 {/* Telemedicine Style Bottom Control Dock */}
-                <div className="relative z-10 pt-3 flex items-center justify-around border-t border-white/10">
+                <div className="relative z-10 pt-2 pb-1 flex items-center justify-around border-t border-white/10 shrink-0">
+                  {/* Mute Button */}
                   <button
                     onClick={() => {
                       if (isMuted) {
@@ -1144,51 +1154,64 @@ export const ChatWidget = () => {
                       }
                     }}
                     aria-label={isMuted ? "Unmute Microphone" : "Mute Microphone"}
-                    className={`flex flex-col items-center gap-1 p-2 rounded-2xl transition-colors ${
-                      isMuted ? "text-rose-400 bg-rose-500/10" : "text-slate-300 hover:text-white"
+                    className={`flex flex-col items-center gap-1 transition-all ${
+                      isMuted ? "text-rose-400" : "text-slate-300 hover:text-white"
                     }`}
                   >
-                    <div className={`h-11 w-11 rounded-full flex items-center justify-center border ${
-                      isMuted ? "border-rose-500 bg-rose-500/20" : "border-slate-700 bg-slate-800"
+                    <div className={`h-11 w-11 rounded-full flex items-center justify-center border transition-all ${
+                      isMuted 
+                        ? "border-rose-500/60 bg-rose-500/20 text-rose-400 shadow-md" 
+                        : "border-white/10 bg-slate-800 hover:bg-slate-700 text-slate-200"
                     }`}>
                       {isMuted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
                     </div>
-                    <span className="text-[10px] font-medium">{isMuted ? (lang === "twi" ? "Bue Mic" : "Unmute") : (lang === "twi" ? "To mu" : "Mute")}</span>
+                    <span className="text-[10px] font-medium">
+                      {isMuted ? (lang === "twi" ? "Bue Mic" : "Unmute") : (lang === "twi" ? "To mu" : "Mute")}
+                    </span>
                   </button>
 
+                  {/* Interrupt Button (When NOVA is speaking) */}
                   {isSpeakingVoice && (
                     <button
                       onClick={interruptSpeaking}
                       aria-label="Interrupt NOVA Voice"
-                      className="flex flex-col items-center gap-1 p-2 text-amber-300 hover:text-amber-200 transition-colors animate-pulse"
+                      className="flex flex-col items-center gap-1 text-amber-300 hover:text-amber-200 transition-all animate-pulse"
                     >
-                      <div className="h-11 w-11 rounded-full flex items-center justify-center border border-amber-400/50 bg-amber-500/20">
+                      <div className="h-11 w-11 rounded-full flex items-center justify-center border border-amber-400/50 bg-amber-500/20 shadow-md">
                         <VolumeX className="h-5 w-5" />
                       </div>
-                      <span className="text-[10px] font-bold">{lang === "twi" ? "Gyae Nne" : "Interrupt"}</span>
+                      <span className="text-[10px] font-bold">
+                        {lang === "twi" ? "Gyae Nne" : "Pause"}
+                      </span>
                     </button>
                   )}
 
+                  {/* Switch to Text Chat */}
                   <button
                     onClick={exitVoiceMode}
                     aria-label="Switch to Text View"
-                    className="flex flex-col items-center gap-1 p-2 text-slate-300 hover:text-white transition-colors"
+                    className="flex flex-col items-center gap-1 text-slate-300 hover:text-white transition-all"
                   >
-                    <div className="h-11 w-11 rounded-full flex items-center justify-center border border-slate-700 bg-slate-800">
+                    <div className="h-11 w-11 rounded-full flex items-center justify-center border border-white/10 bg-slate-800 hover:bg-slate-700 text-slate-200">
                       <MessageSquare className="h-5 w-5" />
                     </div>
-                    <span className="text-[10px] font-medium">{lang === "twi" ? "Atwerɛ" : "Text Chat"}</span>
+                    <span className="text-[10px] font-medium">
+                      {lang === "twi" ? "Atwerɛ" : "Text Chat"}
+                    </span>
                   </button>
 
+                  {/* End Call Button */}
                   <button
                     onClick={exitVoiceMode}
                     aria-label="End Consultation Call"
-                    className="flex flex-col items-center gap-1 p-2 text-rose-400 hover:text-rose-300 transition-colors"
+                    className="flex flex-col items-center gap-1 text-rose-400 hover:text-rose-300 transition-all group"
                   >
-                    <div className="h-11 w-11 rounded-full flex items-center justify-center bg-rose-600 hover:bg-rose-500 text-white shadow-lg">
+                    <div className="h-11 w-11 rounded-full flex items-center justify-center bg-rose-600 hover:bg-rose-500 text-white shadow-lg group-hover:scale-105 transition-all">
                       <PhoneOff className="h-5 w-5" />
                     </div>
-                    <span className="text-[10px] font-bold">{lang === "twi" ? "Gyae Call" : "End Call"}</span>
+                    <span className="text-[10px] font-bold">
+                      {lang === "twi" ? "Gyae Call" : "End Call"}
+                    </span>
                   </button>
                 </div>
               </div>
@@ -1335,15 +1358,19 @@ export const ChatWidget = () => {
                         </button>
                       </div>
                       <div className="flex flex-wrap gap-1.5">
-                        {QUICK_PROMPTS[lang].map((p, idx) => (
-                          <button
-                            key={idx}
-                            onClick={() => send(p.query)}
-                            className="text-xs font-medium px-3 py-1.5 rounded-full bg-white dark:bg-card text-slate-700 dark:text-slate-200 border border-border hover:border-primary hover:text-primary transition-all shadow-2xs hover:shadow-xs text-left"
-                          >
-                            {p.label}
-                          </button>
-                        ))}
+                        {QUICK_PROMPTS[lang].map((p, idx) => {
+                          const PromptIcon = PROMPT_ICONS[idx % PROMPT_ICONS.length];
+                          return (
+                            <button
+                              key={idx}
+                              onClick={() => send(p.query)}
+                              className="text-xs font-medium px-3 py-1.5 rounded-full bg-white dark:bg-card text-slate-700 dark:text-slate-200 border border-border hover:border-primary hover:text-primary transition-all shadow-2xs hover:shadow-xs flex items-center gap-1.5"
+                            >
+                              <PromptIcon className="h-3 w-3 text-primary shrink-0" />
+                              <span>{p.label}</span>
+                            </button>
+                          );
+                        })}
                       </div>
 
                       <button
